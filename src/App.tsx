@@ -1,4 +1,3 @@
-/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
