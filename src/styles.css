@@ -33,3 +33,5 @@
 .calendar-add{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;padding:0;border:0;border-radius:50%;background:var(--deep);color:#fff;cursor:pointer;font-size:22px;line-height:1}.calendar-add:hover{filter:brightness(.94)}
 
 .wish-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px}.wish-status-select{height:38px;min-width:92px;padding:0 28px 0 11px;border:1px solid var(--line);border-radius:10px;background:#fffaf0;cursor:pointer;font-size:11px;font-weight:700}.wish-status-label{display:inline-flex;align-items:center;justify-content:center;min-width:72px;height:34px;padding:0 11px;border-radius:17px;background:#e8e0d2;color:#6f6759;font-size:10px;font-weight:700}.status-planning{background:#eee2bd;color:#7c683d}.status-done{background:#dce0cc;color:#596044}
+
+.member-loading-card{text-align:center}.loading-spinner{width:44px;height:44px;margin:0 auto 24px;border:3px solid #d9cfbc;border-top-color:var(--deep);border-radius:50%;animation:member-spin .8s linear infinite}.member-loading-card .login-copy{margin-bottom:0}@keyframes member-spin{to{transform:rotate(360deg)}}
