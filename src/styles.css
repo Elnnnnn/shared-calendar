@@ -130,3 +130,37 @@
   .wish-sheet label>span{font-size:9px}
   .sheet .primary.save,.sheet .delete{min-height:42px;font-size:11px}
 }
+
+
+/* Compact month-cell overflow indicator */
+.day{position:relative}
+.day-overflow-count{
+  position:absolute;
+  right:7px;
+  bottom:6px;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  min-width:24px;
+  height:20px;
+  padding:0 6px;
+  border:1px solid rgba(110,105,80,.25);
+  border-radius:10px;
+  background:#eee6d7;
+  color:#6e6950;
+  font-size:9px;
+  font-weight:700;
+  line-height:1;
+  box-shadow:0 1px 3px rgba(70,60,45,.08);
+  pointer-events:none;
+}
+@media(max-width:760px){
+  .day-overflow-count{
+    right:4px;
+    bottom:4px;
+    min-width:21px;
+    height:18px;
+    padding:0 5px;
+    font-size:8px;
+  }
+}
