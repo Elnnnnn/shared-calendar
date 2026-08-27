@@ -164,3 +164,35 @@
     font-size:8px;
   }
 }
+
+
+/* Form alignment refinements */
+.datetime-row input[type="date"],
+.datetime-row input[type="time"]{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  height:41px;
+  padding-top:0;
+  padding-bottom:0;
+  line-height:1;
+  text-align:left;
+}
+.datetime-row input[type="date"]::-webkit-date-and-time-value,
+.datetime-row input[type="time"]::-webkit-date-and-time-value{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  width:100%;
+  height:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  text-align:left;
+}
+.wish-sheet .primary.save{margin-top:16px}
+@media(max-width:600px){
+  .datetime-row input[type="date"],
+  .datetime-row input[type="time"]{height:44px}
+  .wish-sheet .primary.save{margin-top:14px}
+}
