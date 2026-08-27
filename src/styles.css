@@ -41,3 +41,92 @@
 /* Mobile calendar interaction fixes */
 .member-filter>button{display:flex;align-items:center;justify-content:space-between;gap:9px;height:36px;min-width:122px;padding:0 10px;border:1px solid var(--line);border-radius:11px;background:var(--white);cursor:pointer}.member-filter>button span{font-size:12px;color:var(--muted)}.member-filter-menu{position:absolute;z-index:18;top:42px;right:0;min-width:180px;padding:7px;border:1px solid #cfc2ac;border-radius:12px;background:#fffaf0;box-shadow:0 16px 40px rgba(60,50,34,.18)}
 @media(max-width:760px){html{-webkit-text-size-adjust:100%}.toolbar-right{overflow:visible;flex-wrap:wrap}.member-filter{z-index:19}.member-filter>button{min-width:132px}.member-filter-menu{right:auto;left:0}.overlay{place-items:start center;overflow-y:auto;padding:max(10px,env(safe-area-inset-top)) 8px max(10px,env(safe-area-inset-bottom))}.sheet,.admin-sheet,.security-sheet{width:100%;max-width:calc(100vw - 16px);min-width:0;max-height:none;margin:auto;border-radius:16px}.sheet{overflow-x:hidden;padding:18px 16px}.sheet h2{font-size:26px}.sheet input,.sheet select,.sheet textarea{min-width:0;max-width:100%;font-size:16px}.datetime-row{grid-template-columns:48px minmax(0,1fr)}.datetime-row>*{min-width:0}.datetime-row label:last-child{grid-column:2}.special-sheet,.wish-sheet{padding-bottom:calc(22px + env(safe-area-inset-bottom))}}
+
+
+/* Mobile add-sheet polish: calendar, special dates, and wishes */
+@media(max-width:600px){
+  .overlay{
+    overscroll-behavior:contain;
+    padding:max(8px,env(safe-area-inset-top)) 6px max(8px,env(safe-area-inset-bottom));
+  }
+  .sheet,.special-sheet,.wish-sheet{
+    width:100%;
+    max-width:calc(100vw - 12px);
+    padding:16px 14px calc(20px + env(safe-area-inset-bottom));
+    border-radius:15px;
+  }
+  .sheet-head{align-items:flex-start;gap:12px}
+  .sheet-head .eyebrow{font-size:9px}
+  .sheet h2{font-size:23px;line-height:1.15}
+  .sheet-head>button{
+    width:34px;
+    height:34px;
+    flex:none;
+    padding:0;
+    font-size:22px;
+    line-height:1;
+  }
+  .sheet label{margin-top:11px;font-size:10px}
+  .sheet input,.sheet select,.sheet textarea{
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    margin-top:5px;
+    border-radius:9px;
+    font-size:16px;
+  }
+  .sheet input,.sheet select{height:44px;padding:0 10px}
+  .sheet textarea{min-height:72px;padding:10px}
+  .sheet input[type="date"],.sheet input[type="time"]{
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    -webkit-appearance:none;
+    appearance:none;
+    text-align:left;
+  }
+  .sheet input[type="date"]::-webkit-date-and-time-value,
+  .sheet input[type="time"]::-webkit-date-and-time-value{
+    min-width:0;
+    margin:0;
+    text-align:left;
+  }
+  .event-options{gap:18px;margin-top:13px}
+  .option-toggle{font-size:11px!important}
+  .option-toggle input{width:18px!important;height:18px!important;padding:0}
+  .timezone-picker{padding:10px}
+  .datetime-row{
+    grid-template-columns:40px minmax(0,1fr);
+    align-items:center;
+    column-gap:8px;
+    row-gap:7px;
+    margin-top:11px;
+  }
+  .datetime-row>strong{font-size:11px}
+  .datetime-row label{
+    grid-column:2;
+    width:100%;
+    min-width:0;
+    margin:0;
+    overflow:hidden;
+  }
+  .datetime-row label:last-child{grid-column:2}
+  .participant-picker{margin-top:13px;padding:10px}
+  .participant-picker legend{font-size:10px}
+  .participant-picker label{
+    gap:7px;
+    margin-top:5px;
+    padding:7px 8px;
+    font-size:10px;
+  }
+  .participant-picker input{width:17px!important;height:17px!important;padding:0}
+  .special-type-picker,.special-color-picker{margin-top:13px}
+  .special-type-picker>div{gap:6px}
+  .special-type-picker button{min-height:44px;font-size:10px}
+  .special-meet-time{gap:7px}
+  .special-check{font-size:10px!important}
+  .wish-sheet label>span{font-size:9px}
+  .sheet .primary.save,.sheet .delete{min-height:42px;font-size:11px}
+}
