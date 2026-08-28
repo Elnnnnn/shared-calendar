@@ -53,8 +53,62 @@ export default function Home(){
   const [events,setEvents]=useState<CalendarEvent[]>([]);const [open,setOpen]=useState(false);const [editing,setEditing]=useState<CalendarEvent|null>(null);const today=dateKey(new Date());const [draft,setDraft]=useState({title:"",date:today,endDate:today,time:"12:00",endTime:"13:00",timezone:"Asia/Shanghai",useTimezone:false,allDay:false,participants:[] as string[],location:"",note:""});
   const [specialDays,setSpecialDays]=useState<SpecialDay[]>([]);const [specialFilter,setSpecialFilter]=useState<"all"|SpecialKind>("all");const [specialOpen,setSpecialOpen]=useState(false);const [editingSpecial,setEditingSpecial]=useState<SpecialDay|null>(null);const [specialDraft,setSpecialDraft]=useState({title:"",date:today,kind:"meet" as SpecialKind,color:"sage" as SpecialColor,startTime:"12:00",endTime:"13:00",timezone:"Asia/Shanghai",repeatYearly:false,showInCalendar:true,participants:[] as string[]});
   const [wishes,setWishes]=useState<Wish[]>([]);const [wishFilter,setWishFilter]=useState<"all"|WishCategory>("all");const [wishRegion,setWishRegion]=useState("all");const [wishStatus,setWishStatus]=useState<"all"|WishStatus>("all");const [wishOpen,setWishOpen]=useState(false);const [editingWish,setEditingWish]=useState<Wish|null>(null);const [wishDraft,setWishDraft]=useState({title:"",category:"eat_drink" as WishCategory,region:"",place:"",note:"",status:"wish" as WishStatus});
-  async function load(current?:User|null){const active=current??(await supabase.auth.getUser()).data.user;if(!active){setMember(null);setEvents([]);setSpecialDays([]);setWishes([]);setMemberLoading(false);setMemberLoadError("");return}setMemberLoading(true);setMemberLoadError("");const email=(active.email||"").toLowerCase();const [{data:memberRows,error:memberError},{data:visibilityRows}]=await Promise.all([supabase.from("shared_calendar_members").select("email,display_name,color,birthday").order("created_at"),supabase.from("shared_calendar_visibility").select("viewer_email,owner_email")]);if(memberError){setMember(null);setMemberLoadError("成员验证暂时失败，请检查网络后重试");setMemberLoading(false);return}const list=(memberRows||[]) as Member[];const permissions=(visibilityRows||[]) as Visibility[];setMembers(list);setVisibility(permissions);const mine=list.find(m=>m.email.toLowerCase()===email)||null;setMember(mine);setMemberLoading(false);setBirthday(mine?.birthday||"");const allowed=Array.from(new Set([email,...permissions.filter(row=>row.viewer_email===email).map(row=>row.owner_email)]));setSelectedOwners(current=>{const kept=current.filter(owner=>allowed.includes(owner));return kept.length?kept:allowed});if(!mine){setEvents([]);setSpecialDays([]);setWishes([]);return}const [{data},{data:specialData},{data:wishData}]=await Promise.all([supabase.rpc("get_shared_calendar_events"),supabase.rpc("get_shared_calendar_special_days"),supabase.from("shared_calendar_wishes").select("id,title,category,region,place,note,status,owner_user_id,owner_email,participant_emails").order("updated_at",{ascending:false})]);setEvents((data||[]).map((e:any)=>({id:e.id,title:e.title,date:e.event_date,endDate:e.end_date||e.event_date,time:String(e.event_time).slice(0,5),endTime:String(e.end_time).slice(0,5),owner:e.owner_email,participants:e.participant_emails||[],location:e.location,note:e.note,timezone:e.timezone,allDay:Boolean(e.all_day),canEdit:e.can_edit})));setSpecialDays((specialData||[]).map((d:any)=>({id:d.id,title:d.title,date:d.special_date,kind:d.kind,icon:d.icon,color:d.color||"sage",startTime:d.start_time?String(d.start_time).slice(0,5):null,endTime:d.end_time?String(d.end_time).slice(0,5):null,timezone:d.timezone||"Asia/Shanghai",repeatYearly:d.repeat_yearly,showInCalendar:d.show_in_calendar,owner:d.owner_email,participants:d.participant_emails||[],canEdit:d.can_edit})));setWishes((wishData||[]).map((w:any)=>({id:w.id,title:w.title,category:w.category,region:w.region,place:w.place||"",note:w.note||"",status:w.status,ownerUserId:w.owner_user_id,owner:w.owner_email,participants:w.participant_emails||[]})));}
-  useEffect(()=>{supabase.auth.getSession().then(({data})=>{const u=data.session?.user||null;setUser(u);setAuthReady(true);load(u)});const {data}=supabase.auth.onAuthStateChange((event,s)=>{if(event==="PASSWORD_RECOVERY")setRecoveryMode(true);setUser(s?.user||null);load(s?.user||null)});return()=>data.subscription.unsubscribe()},[]);
+  async function load(current?:User|null,showMemberCheck=false){
+    const active=current===undefined?(await supabase.auth.getUser()).data.user:current;
+    if(!active){setMember(null);setEvents([]);setSpecialDays([]);setWishes([]);setMemberLoading(false);setMemberLoadError("");return}
+    if(showMemberCheck)setMemberLoading(true);
+    setMemberLoadError("");
+    const email=(active.email||"").toLowerCase();
+    const [{data:memberRows,error:memberError},{data:visibilityRows}]=await Promise.all([
+      supabase.from("shared_calendar_members").select("email,display_name,color,birthday").order("created_at"),
+      supabase.from("shared_calendar_visibility").select("viewer_email,owner_email")
+    ]);
+    if(memberError){setMember(null);setMemberLoadError("成员验证暂时失败，请检查网络后重试");setMemberLoading(false);return}
+    const list=(memberRows||[]) as Member[];
+    const permissions=(visibilityRows||[]) as Visibility[];
+    setMembers(list);setVisibility(permissions);
+    const mine=list.find(m=>m.email.toLowerCase()===email)||null;
+    setMember(mine);setBirthday(mine?.birthday||"");
+    const allowed=Array.from(new Set([email,...permissions.filter(row=>row.viewer_email===email).map(row=>row.owner_email)]));
+    setSelectedOwners(current=>{const kept=current.filter(owner=>allowed.includes(owner));return kept.length?kept:allowed});
+    if(!mine){setEvents([]);setSpecialDays([]);setWishes([]);setMemberLoading(false);return}
+    const [{data},{data:specialData},{data:wishData}]=await Promise.all([
+      supabase.rpc("get_shared_calendar_events"),
+      supabase.rpc("get_shared_calendar_special_days"),
+      supabase.from("shared_calendar_wishes").select("id,title,category,region,place,note,status,owner_user_id,owner_email,participant_emails").order("updated_at",{ascending:false})
+    ]);
+    setEvents((data||[]).map((e:any)=>({id:e.id,title:e.title,date:e.event_date,endDate:e.end_date||e.event_date,time:String(e.event_time).slice(0,5),endTime:String(e.end_time).slice(0,5),owner:e.owner_email,participants:e.participant_emails||[],location:e.location,note:e.note,timezone:e.timezone,allDay:Boolean(e.all_day),canEdit:e.can_edit})));
+    setSpecialDays((specialData||[]).map((d:any)=>({id:d.id,title:d.title,date:d.special_date,kind:d.kind,icon:d.icon,color:d.color||"sage",startTime:d.start_time?String(d.start_time).slice(0,5):null,endTime:d.end_time?String(d.end_time).slice(0,5):null,timezone:d.timezone||"Asia/Shanghai",repeatYearly:d.repeat_yearly,showInCalendar:d.show_in_calendar,owner:d.owner_email,participants:d.participant_emails||[],canEdit:d.can_edit})));
+    setWishes((wishData||[]).map((w:any)=>({id:w.id,title:w.title,category:w.category,region:w.region,place:w.place||"",note:w.note||"",status:w.status,ownerUserId:w.owner_user_id,owner:w.owner_email,participants:w.participant_emails||[]})));
+    setMemberLoading(false);
+  }
+  useEffect(()=>{
+    let alive=true;
+    let activeUserId="";
+    async function initialize(){
+      const {data}=await supabase.auth.getSession();
+      if(!alive)return;
+      const current=data.session?.user||null;
+      activeUserId=current?.id||"";
+      setUser(current);
+      await load(current,true);
+      if(alive)setAuthReady(true);
+    }
+    initialize();
+    const {data}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(!alive||event==="INITIAL_SESSION")return;
+      if(event==="PASSWORD_RECOVERY"){setRecoveryMode(true);setUser(session?.user||null);return}
+      if(event==="SIGNED_OUT"){activeUserId="";setUser(null);load(null);return}
+      if(event==="SIGNED_IN"){
+        const current=session?.user||null;
+        setUser(current);
+        if(!current||activeUserId===current.id)return;
+        activeUserId=current.id;
+        load(current,true);
+      }
+    });
+    return()=>{alive=false;data.subscription.unsubscribe()};
+  },[]);
   const dates=useMemo(()=>{const start=view==="month"?monday(new Date(cursor.getFullYear(),cursor.getMonth(),1)):monday(cursor);return Array.from({length:view==="month"?42:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d})},[cursor,view]);
   const label=view==="month"?`${cursor.getFullYear()} 年 ${cursor.getMonth()+1} 月`:`${dates[0].getMonth()+1} 月 ${dates[0].getDate()} 日 — ${dates[6].getMonth()+1} 月 ${dates[6].getDate()} 日`;
   async function signIn(event:FormEvent){event.preventDefault();if(!loginEmail.trim()||!password)return;setSigningIn(true);setAuthMessage("");const {error}=await supabase.auth.signInWithPassword({email:loginEmail.trim(),password});if(error)setAuthMessage("邮箱或密码不正确");setSigningIn(false)}
