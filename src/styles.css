@@ -196,3 +196,94 @@
   .datetime-row input[type="time"]{height:44px}
   .wish-sheet .primary.save{margin-top:14px}
 }
+
+
+/* Mobile calendar toolbar and special-date sheet refinements */
+.day-overflow-count{
+  top:6px;
+  right:7px;
+  bottom:auto;
+}
+.special-meet-time input[type="time"]{
+  display:block;
+  height:41px;
+  padding-top:0;
+  padding-bottom:0;
+  line-height:1;
+  text-align:left;
+}
+.special-meet-time input[type="time"]::-webkit-date-and-time-value{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  width:100%;
+  height:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  text-align:left;
+}
+.sheet .special-check{
+  display:flex!important;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  width:100%;
+}
+.sheet .special-check input{
+  display:block;
+  flex:0 0 18px;
+  width:18px!important;
+  height:18px!important;
+  min-width:18px!important;
+  margin:0;
+  padding:0;
+}
+@media(max-width:600px){
+  .special-color-picker>div{
+    grid-template-columns:repeat(5,1fr);
+    gap:8px;
+  }
+  .special-color-picker button{
+    width:40px;
+    height:40px;
+    aspect-ratio:auto;
+    justify-self:center;
+    border-width:2px;
+  }
+  .special-color-picker button.active{box-shadow:0 0 0 2px var(--deep)}
+  .special-meet-time input[type="time"]{height:44px}
+  .special-check{min-height:32px;margin-top:8px!important}
+}
+@media(max-width:480px){
+  .toolbar-right{
+    display:grid;
+    grid-template-columns:minmax(0,.85fr) minmax(0,1.25fr) auto 34px;
+    align-items:center;
+    gap:5px;
+    width:100%;
+    padding-bottom:3px;
+  }
+  .member-filter,.toolbar-right>select{min-width:0;width:100%}
+  .member-filter>button{
+    width:100%;
+    min-width:0;
+    padding:0 7px;
+    overflow:hidden;
+    font-size:9px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+  .toolbar-right>select{
+    max-width:none;
+    padding:0 6px;
+    font-size:10px;
+  }
+  .toolbar-right .segment button{min-width:32px;width:32px}
+  .calendar-add{width:34px;height:34px;flex-basis:34px}
+  .day-overflow-count{
+    top:3px;
+    right:3px;
+    bottom:auto;
+  }
+}
