@@ -430,3 +430,140 @@
   font-size:16px;
   white-space:nowrap;
 }
+
+
+/* Custom saved-combination selector */
+.lucky-saved-sets{
+  display:block;
+  margin-bottom:14px;
+}
+.lucky-saved-sets>label{
+  display:block;
+  margin:0 0 7px;
+}
+.lucky-saved-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  width:100%;
+}
+.lucky-set-select{
+  position:relative;
+  flex:0 1 350px;
+  min-width:0;
+}
+.lucky-set-select>button{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  height:46px;
+  padding:0 14px 0 15px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#fffaf0;
+  color:var(--ink);
+  cursor:pointer;
+  text-align:left;
+}
+.lucky-set-select>button.open{
+  border-color:var(--deep);
+  box-shadow:0 0 0 2px rgba(117,113,81,.12);
+}
+.lucky-set-select>button>span{
+  overflow:hidden;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.lucky-set-select>button small{
+  color:var(--muted);
+  font-size:10px;
+}
+.lucky-set-select>button>i{
+  width:9px;
+  height:9px;
+  margin:0 3px 4px 12px;
+  border-right:2px solid #766f60;
+  border-bottom:2px solid #766f60;
+  transform:rotate(45deg);
+  transition:transform .16s;
+}
+.lucky-set-select>button.open>i{
+  margin-bottom:-4px;
+  transform:rotate(225deg);
+}
+.lucky-set-menu{
+  position:absolute;
+  z-index:35;
+  top:calc(100% + 6px);
+  left:0;
+  width:100%;
+  overflow:hidden;
+  padding:5px;
+  border:1px solid #cfc1aa;
+  border-radius:11px;
+  background:#fffaf0;
+  box-shadow:0 14px 32px rgba(67,57,41,.2);
+}
+.lucky-set-menu>button{
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+  width:100%;
+  min-height:38px;
+  padding:6px 9px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--ink);
+  cursor:pointer;
+  text-align:left;
+}
+.lucky-set-menu>button:hover,
+.lucky-set-menu>button.selected{
+  background:#e9e1d2;
+}
+.lucky-set-menu b{
+  color:var(--deep);
+  font-size:12px;
+  text-align:center;
+}
+.lucky-set-menu span{
+  overflow:hidden;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.lucky-set-menu small{
+  color:var(--muted);
+  font-size:9px;
+}
+.lucky-delete-set{
+  flex:0 0 auto;
+  height:38px;
+  padding:0 12px;
+  border:1px solid #d7bdb6;
+  border-radius:9px;
+  background:#fffaf0;
+  color:#a45f59;
+  cursor:pointer;
+  font-size:10px;
+  font-weight:700;
+}
+.lucky-set-name-before{
+  display:block;
+  margin:0 0 12px!important;
+}
+.lucky-set-name-before input{
+  margin-top:7px!important;
+}
+@media(max-width:600px){
+  .lucky-saved-row{gap:9px}
+  .lucky-set-select{flex-basis:calc(100% - 94px)}
+  .lucky-delete-set{height:38px;padding:0 9px}
+}
