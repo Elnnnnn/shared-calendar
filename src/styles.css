@@ -567,3 +567,88 @@
   .lucky-set-select{flex-basis:calc(100% - 94px)}
   .lucky-delete-set{height:38px;padding:0 9px}
 }
+
+
+/* Full-width combination selector with delete actions inside its menu */
+.lucky-saved-row{display:block}
+.lucky-set-select{
+  width:100%;
+  max-width:none;
+  flex:1 1 auto;
+}
+.lucky-set-menu{
+  width:100%;
+  box-sizing:border-box;
+}
+.lucky-set-choice{
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+  width:100%;
+  min-height:40px;
+  padding:6px 9px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--ink);
+  cursor:pointer;
+  text-align:left;
+}
+.lucky-set-choice:hover,
+.lucky-set-choice.selected,
+.lucky-set-menu-row.selected{
+  background:#e9e1d2;
+}
+.lucky-set-choice b{
+  color:var(--deep);
+  font-size:12px;
+  text-align:center;
+}
+.lucky-set-choice span{
+  overflow:hidden;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.lucky-set-choice small{
+  color:var(--muted);
+  font-size:9px;
+}
+.lucky-set-menu-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  border-radius:8px;
+}
+.lucky-set-menu-row .lucky-set-choice:hover{
+  background:rgba(233,225,210,.75);
+}
+.lucky-set-delete-option{
+  height:30px;
+  margin-right:5px;
+  padding:0 9px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:#a45f59;
+  cursor:pointer;
+  font-size:9px;
+  font-weight:700;
+}
+.lucky-set-delete-option:hover{
+  background:#f1ddda;
+}
+.lucky-remember{
+  width:max-content;
+  max-width:100%;
+  margin:10px 0 14px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+@media(max-width:600px){
+  .lucky-set-select{flex-basis:auto}
+}
