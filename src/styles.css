@@ -652,3 +652,21 @@
 @media(max-width:600px){
   .lucky-set-select{flex-basis:auto}
 }
+
+
+/* Compact typography inside Lucky settings fields */
+.lucky-settings-sheet input:not([type="checkbox"]),
+.lucky-settings-sheet select,
+.lucky-settings-sheet textarea{
+  font-size:13px!important;
+}
+.lucky-settings-sheet select option{font-size:13px}
+.lucky-set-select>button>span{font-size:11px}
+.lucky-set-select>button small{font-size:9px}
+.lucky-set-menu .lucky-set-choice span{font-size:10px}
+.lucky-set-menu .lucky-set-choice small,
+.lucky-set-delete-option{font-size:8px}
+.lucky-wish-picker>label span{font-size:10px}
+.lucky-wish-picker>label small,
+.lucky-picker-actions,
+.lucky-picker-actions small{font-size:8px}
