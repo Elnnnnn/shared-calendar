@@ -3796,6 +3796,18 @@ footer span {
   font-size: 13px;
   font-weight: 800;
 }
+#root input[type="checkbox"]:focus {
+  outline: none;
+}
+#root input[type="checkbox"]:focus-visible {
+  outline: 2px solid #aaa184;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(119, 115, 86, 0.12);
+}
+#root input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
 @media (prefers-reduced-motion: reduce) {
   .expense-receipt { animation: none; transform: translateY(18px); }
 }
