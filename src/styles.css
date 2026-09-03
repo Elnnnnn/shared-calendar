@@ -3773,6 +3773,7 @@ footer span {
   background: var(--white);
   display: inline-grid;
   place-items: center;
+  position: relative;
   vertical-align: middle;
 }
 #root input[type="checkbox"]:checked {
@@ -3780,21 +3781,30 @@ footer span {
   background: var(--deep);
 }
 #root input[type="checkbox"]:checked::after {
-  content: "✓";
-  color: #fffdf8;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 8px;
+  border: solid #fffdf8;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -62%) rotate(45deg);
 }
 #root input[type="checkbox"]:indeterminate {
   border-color: var(--deep);
   background: var(--deep);
 }
 #root input[type="checkbox"]:indeterminate::after {
-  content: "−";
-  color: #fffdf8;
-  font-size: 13px;
-  font-weight: 800;
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 2px;
+  border-radius: 2px;
+  background: #fffdf8;
+  transform: translate(-50%, -50%);
 }
 #root input[type="checkbox"]:focus {
   outline: none;
