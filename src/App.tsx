@@ -1524,7 +1524,7 @@ export default function Home() {
     setExpenseDraft({
       item: "",
       amount: "",
-      splitWith: members.map((item) => item.email),
+      splitWith: [],
       note: "",
     });
     setExpenseOpen(true);
