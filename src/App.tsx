@@ -1,229 +1,4501 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createClient, type User } from "@supabase/supabase-js";
 
-const supabase=createClient("https://yytyntrgqkddfsliooke.supabase.co","sb_publishable_r82IW91PSRwRa_dye0g1Cw_qU0zLeDW");
-type Member={email:string;display_name:string;color:string;birthday:string|null};
-type Visibility={viewer_email:string;owner_email:string};
-type CalendarEvent={id:number;title:string;date:string;endDate:string;time:string;endTime:string;owner:string;participants:string[];location:string;note:string;timezone:string;allDay:boolean;birthday?:boolean;canEdit?:boolean;continuesFromPrevious?:boolean};
-type SpecialKind="meet"|"memory"|"travel"|"birthday";
-type SpecialColor="sage"|"rose"|"gold"|"clay"|"mist"|"iris"|"sea"|"apricot"|"berry"|"stone";
-type SpecialDay={id:number;title:string;date:string;kind:SpecialKind;icon:string;color:SpecialColor;startTime:string|null;endTime:string|null;timezone:string;repeatYearly:boolean;showInCalendar:boolean;owner:string;participants:string[];canEdit:boolean;memberBirthday?:boolean};
-type WishCategory="eat_drink"|"fun_shop"|"travel"|"watch";
-type WishStatus="wish"|"planning"|"done";
-type WishMediaType="tv"|"movie"|"variety"|"anime"|"documentary";
-type Wish={id:number;title:string;category:WishCategory;region:string;place:string;note:string;status:WishStatus;mediaType:WishMediaType|null;releaseDate:string|null;plannedWatchDate:string|null;ownerUserId:string;owner:string;participants:string[]};
-type LuckySet={id:number;name:string;options:string[];ownerUserId:string;owner:string};
-type ExpensePeriod={id:number;name:string;ownerUserId:string;owner:string;createdAt:string};
-type Expense={id:number;periodId:number;item:string;amount:number;payer:string;splitWith:string[];note:string;creatorUserId:string;creator:string;createdAt:string};
-const COLORS=["sage","clay","gold","rose","stone"] as const;
-const COLOR_NAMES:{[key:string]:string}={sage:"鼠尾草绿",clay:"陶土橘",gold:"麦穗黄",rose:"干燥玫瑰",stone:"岩石灰"};
-const ZONES=["Asia/Shanghai","Asia/Tokyo","Asia/Dubai","Europe/Berlin","Europe/London","America/Los_Angeles","America/New_York"];
-const ZONE_NAMES:{[key:string]:string}={"Asia/Shanghai":"上海","Asia/Tokyo":"东京","Asia/Dubai":"迪拜","Europe/Berlin":"德国","Europe/London":"伦敦","America/Los_Angeles":"加州","America/New_York":"纽约"};
-const EVENT_COLORS:{[key:string]:string}={sage:"#dce0cc",clay:"#ecd7c8",gold:"#eee2bd",rose:"#ead5d2",stone:"#dedbd1"};
-const EVENT_LINES:{[key:string]:string}={sage:"#7d835f",clay:"#b87959",gold:"#b2944e",rose:"#b37b78",stone:"#817c6c"};
-const SPECIAL_TYPES:{kind:SpecialKind;label:string;icon:string}[]=[{kind:"meet",label:"见面",icon:"✦"},{kind:"memory",label:"纪念",icon:"♡"},{kind:"travel",label:"旅行",icon:"✈"},{kind:"birthday",label:"生日",icon:"♢"}];
-const SPECIAL_COLORS:{color:SpecialColor;label:string;hex:string}[]=[{color:"sage",label:"鼠尾草绿",hex:"#aeb88c"},{color:"rose",label:"干燥玫瑰",hex:"#c89090"},{color:"gold",label:"麦穗黄",hex:"#d3b46a"},{color:"clay",label:"陶土橘",hex:"#c98d69"},{color:"mist",label:"雾霾蓝",hex:"#86a4b5"},{color:"iris",label:"鸢尾紫",hex:"#9d8aaa"},{color:"sea",label:"海盐青",hex:"#75a8a1"},{color:"apricot",label:"奶油杏",hex:"#d9b58d"},{color:"berry",label:"莓果红",hex:"#b96f78"},{color:"stone",label:"岩石灰",hex:"#969184"}];
-const WISH_CATEGORIES:{value:WishCategory;label:string;icon:string}[]=[{value:"eat_drink",label:"吃喝",icon:"☕"},{value:"fun_shop",label:"玩逛",icon:"✦"},{value:"travel",label:"旅行",icon:"✈"},{value:"watch",label:"想看",icon:"▣"}];
-const WISH_STATUSES:{value:WishStatus;label:string}[]=[{value:"wish",label:"想去"},{value:"planning",label:"计划中"},{value:"done",label:"已完成"}];
-const WATCH_STATUSES:{value:WishStatus;label:string}[]=[{value:"wish",label:"想看"},{value:"planning",label:"观影中"},{value:"done",label:"已看完"}];
-const WATCH_TYPES:{value:WishMediaType;label:string}[]=[{value:"tv",label:"电视剧"},{value:"movie",label:"电影"},{value:"variety",label:"综艺"},{value:"anime",label:"动漫"},{value:"documentary",label:"纪录片"}];
-const HOURS=Array.from({length:25},(_,hour)=>hour);
-const HOUR_HEIGHT=56;
-function dateKey(d:Date){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
-function nextDateKey(date:string){const [year,month,day]=date.split("-").map(Number);const value=new Date(Date.UTC(year,month-1,day+1));return `${value.getUTCFullYear()}-${String(value.getUTCMonth()+1).padStart(2,"0")}-${String(value.getUTCDate()).padStart(2,"0")}`}
-function dateRange(start:string,end:string){const values=[];for(let value=start;value<=end;value=nextDateKey(value))values.push(value);return values}
-function monday(d:Date){const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
-function timeTop(time:string){const [hour,minute]=time.split(":").map(Number);return (hour+minute/60)*HOUR_HEIGHT}
-function timeFromPosition(position:number){const halfHours=Math.max(0,Math.min(47,Math.floor(position/HOUR_HEIGHT*2)));return `${String(Math.floor(halfHours/2)).padStart(2,"0")}:${halfHours%2?"30":"00"}`}
-function nextHour(time:string){const [hour,minute]=time.split(":").map(Number);const total=Math.min(hour*60+minute+60,1439);return `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`}
-function minutes(time:string){const [hour,minute]=time.split(":").map(Number);return hour*60+minute}
-function durationMinutes(start:string,end:string){const value=minutes(end)-minutes(start);return value>0?value:value+1440}
-function durationHeight(start:string,end:string){return Math.max(40,durationMinutes(start,end)/60*HOUR_HEIGHT-4)}
-function zonedParts(value:Date,timezone:string){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:timezone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(value);return Object.fromEntries(parts.map(part=>[part.type,part.value]))}
-function zonedDate(date:string,time:string,timezone:string){const [year,month,day]=date.split("-").map(Number);const [hour,minute]=time.split(":").map(Number);const target=Date.UTC(year,month-1,day,hour,minute);let value=new Date(target);for(let attempt=0;attempt<3;attempt++){const shown=zonedParts(value,timezone);const represented=Date.UTC(Number(shown.year),Number(shown.month)-1,Number(shown.day),Number(shown.hour),Number(shown.minute));value=new Date(value.getTime()+target-represented)}return value}
-function localInZone(value:Date,timezone:string){const parts=zonedParts(value,timezone);return {date:`${parts.year}-${parts.month}-${parts.day}`,time:`${parts.hour}:${parts.minute}`}}
-function convertLocal(date:string,time:string,fromZone:string,toZone:string){return localInZone(zonedDate(date,time,fromZone),toZone)}
-function eventInZone(event:CalendarEvent,timezone:string){if(event.allDay)return event;const start=localInZone(zonedDate(event.date,event.time,event.timezone||"Asia/Shanghai"),timezone);const end=localInZone(zonedDate(event.endDate,event.endTime,event.timezone||"Asia/Shanghai"),timezone);return {...event,date:start.date,time:start.time,endDate:end.date,endTime:end.time}}
-function eventDayParts(event:CalendarEvent){const range=dateRange(event.date,event.endDate);const days=!event.allDay&&event.endTime==="00:00"&&range.length>1?range.slice(0,-1):range;return days.map((date,index)=>({...event,date,time:event.allDay?event.time:index===0?event.time:"00:00",endTime:event.allDay?event.endTime:index===days.length-1?event.endTime:"24:00",endDate:date,continuesFromPrevious:index>0}))}
-function occurrenceDate(day:SpecialDay,year:number){return day.repeatYearly?`${year}-${day.date.slice(5)}`:day.date}
-function daysUntil(day:SpecialDay){const today=new Date();today.setHours(0,0,0,0);let target=new Date(`${occurrenceDate(day,today.getFullYear())}T00:00:00`);if(day.repeatYearly&&target<today)target=new Date(`${occurrenceDate(day,today.getFullYear()+1)}T00:00:00`);return Math.round((target.getTime()-today.getTime())/86400000)}
+const supabase = createClient(
+  "https://yytyntrgqkddfsliooke.supabase.co",
+  "sb_publishable_r82IW91PSRwRa_dye0g1Cw_qU0zLeDW",
+);
+type Member = {
+  email: string;
+  display_name: string;
+  color: string;
+  birthday: string | null;
+};
+type Visibility = { viewer_email: string; owner_email: string };
+type CalendarEvent = {
+  id: number;
+  title: string;
+  date: string;
+  endDate: string;
+  time: string;
+  endTime: string;
+  owner: string;
+  participants: string[];
+  location: string;
+  note: string;
+  timezone: string;
+  allDay: boolean;
+  birthday?: boolean;
+  canEdit?: boolean;
+  continuesFromPrevious?: boolean;
+};
+type SpecialKind = "meet" | "memory" | "travel" | "birthday";
+type SpecialColor =
+  | "sage"
+  | "rose"
+  | "gold"
+  | "clay"
+  | "mist"
+  | "iris"
+  | "sea"
+  | "apricot"
+  | "berry"
+  | "stone";
+type SpecialDay = {
+  id: number;
+  title: string;
+  date: string;
+  kind: SpecialKind;
+  icon: string;
+  color: SpecialColor;
+  startTime: string | null;
+  endTime: string | null;
+  timezone: string;
+  repeatYearly: boolean;
+  showInCalendar: boolean;
+  owner: string;
+  participants: string[];
+  canEdit: boolean;
+  memberBirthday?: boolean;
+};
+type WishCategory = "eat_drink" | "fun_shop" | "travel" | "watch";
+type WishStatus = "wish" | "planning" | "done";
+type WishMediaType = "tv" | "movie" | "variety" | "anime" | "documentary";
+type Wish = {
+  id: number;
+  title: string;
+  category: WishCategory;
+  region: string;
+  place: string;
+  note: string;
+  status: WishStatus;
+  mediaType: WishMediaType | null;
+  releaseDate: string | null;
+  plannedWatchDate: string | null;
+  ownerUserId: string;
+  owner: string;
+  participants: string[];
+};
+type LuckySet = {
+  id: number;
+  name: string;
+  options: string[];
+  ownerUserId: string;
+  owner: string;
+};
+type ExpensePeriod = {
+  id: number;
+  name: string;
+  ownerUserId: string;
+  owner: string;
+  createdAt: string;
+};
+type Expense = {
+  id: number;
+  periodId: number;
+  item: string;
+  amount: number;
+  payer: string;
+  splitWith: string[];
+  note: string;
+  creatorUserId: string;
+  creator: string;
+  createdAt: string;
+};
+const COLORS = ["sage", "clay", "gold", "rose", "stone"] as const;
+const COLOR_NAMES: { [key: string]: string } = {
+  sage: "鼠尾草绿",
+  clay: "陶土橘",
+  gold: "麦穗黄",
+  rose: "干燥玫瑰",
+  stone: "岩石灰",
+};
+const ZONES = [
+  "Asia/Shanghai",
+  "Asia/Tokyo",
+  "Asia/Dubai",
+  "Europe/Berlin",
+  "Europe/London",
+  "America/Los_Angeles",
+  "America/New_York",
+];
+const ZONE_NAMES: { [key: string]: string } = {
+  "Asia/Shanghai": "上海",
+  "Asia/Tokyo": "东京",
+  "Asia/Dubai": "迪拜",
+  "Europe/Berlin": "德国",
+  "Europe/London": "伦敦",
+  "America/Los_Angeles": "加州",
+  "America/New_York": "纽约",
+};
+const EVENT_COLORS: { [key: string]: string } = {
+  sage: "#dce0cc",
+  clay: "#ecd7c8",
+  gold: "#eee2bd",
+  rose: "#ead5d2",
+  stone: "#dedbd1",
+};
+const EVENT_LINES: { [key: string]: string } = {
+  sage: "#7d835f",
+  clay: "#b87959",
+  gold: "#b2944e",
+  rose: "#b37b78",
+  stone: "#817c6c",
+};
+const SPECIAL_TYPES: { kind: SpecialKind; label: string; icon: string }[] = [
+  { kind: "meet", label: "见面", icon: "✦" },
+  { kind: "memory", label: "纪念", icon: "♡" },
+  { kind: "travel", label: "旅行", icon: "✈" },
+  { kind: "birthday", label: "生日", icon: "♢" },
+];
+const SPECIAL_COLORS: { color: SpecialColor; label: string; hex: string }[] = [
+  { color: "sage", label: "鼠尾草绿", hex: "#aeb88c" },
+  { color: "rose", label: "干燥玫瑰", hex: "#c89090" },
+  { color: "gold", label: "麦穗黄", hex: "#d3b46a" },
+  { color: "clay", label: "陶土橘", hex: "#c98d69" },
+  { color: "mist", label: "雾霾蓝", hex: "#86a4b5" },
+  { color: "iris", label: "鸢尾紫", hex: "#9d8aaa" },
+  { color: "sea", label: "海盐青", hex: "#75a8a1" },
+  { color: "apricot", label: "奶油杏", hex: "#d9b58d" },
+  { color: "berry", label: "莓果红", hex: "#b96f78" },
+  { color: "stone", label: "岩石灰", hex: "#969184" },
+];
+const WISH_CATEGORIES: { value: WishCategory; label: string; icon: string }[] =
+  [
+    { value: "eat_drink", label: "吃喝", icon: "☕" },
+    { value: "fun_shop", label: "玩逛", icon: "✦" },
+    { value: "travel", label: "旅行", icon: "✈" },
+    { value: "watch", label: "想看", icon: "▣" },
+  ];
+const WISH_STATUSES: { value: WishStatus; label: string }[] = [
+  { value: "wish", label: "想去" },
+  { value: "planning", label: "计划中" },
+  { value: "done", label: "已完成" },
+];
+const WATCH_STATUSES: { value: WishStatus; label: string }[] = [
+  { value: "wish", label: "想看" },
+  { value: "planning", label: "观影中" },
+  { value: "done", label: "已看完" },
+];
+const WATCH_TYPES: { value: WishMediaType; label: string }[] = [
+  { value: "tv", label: "电视剧" },
+  { value: "movie", label: "电影" },
+  { value: "variety", label: "综艺" },
+  { value: "anime", label: "动漫" },
+  { value: "documentary", label: "纪录片" },
+];
+const HOURS = Array.from({ length: 25 }, (_, hour) => hour);
+const HOUR_HEIGHT = 56;
+function dateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function nextDateKey(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  const value = new Date(Date.UTC(year, month - 1, day + 1));
+  return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, "0")}-${String(value.getUTCDate()).padStart(2, "0")}`;
+}
+function dateRange(start: string, end: string) {
+  const values = [];
+  for (let value = start; value <= end; value = nextDateKey(value))
+    values.push(value);
+  return values;
+}
+function monday(d: Date) {
+  const x = new Date(d);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+function timeTop(time: string) {
+  const [hour, minute] = time.split(":").map(Number);
+  return (hour + minute / 60) * HOUR_HEIGHT;
+}
+function timeFromPosition(position: number) {
+  const halfHours = Math.max(
+    0,
+    Math.min(47, Math.floor((position / HOUR_HEIGHT) * 2)),
+  );
+  return `${String(Math.floor(halfHours / 2)).padStart(2, "0")}:${halfHours % 2 ? "30" : "00"}`;
+}
+function nextHour(time: string) {
+  const [hour, minute] = time.split(":").map(Number);
+  const total = Math.min(hour * 60 + minute + 60, 1439);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+function minutes(time: string) {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
+function durationMinutes(start: string, end: string) {
+  const value = minutes(end) - minutes(start);
+  return value > 0 ? value : value + 1440;
+}
+function durationHeight(start: string, end: string) {
+  return Math.max(40, (durationMinutes(start, end) / 60) * HOUR_HEIGHT - 4);
+}
+function zonedParts(value: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(value);
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+function zonedDate(date: string, time: string, timezone: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const target = Date.UTC(year, month - 1, day, hour, minute);
+  let value = new Date(target);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const shown = zonedParts(value, timezone);
+    const represented = Date.UTC(
+      Number(shown.year),
+      Number(shown.month) - 1,
+      Number(shown.day),
+      Number(shown.hour),
+      Number(shown.minute),
+    );
+    value = new Date(value.getTime() + target - represented);
+  }
+  return value;
+}
+function localInZone(value: Date, timezone: string) {
+  const parts = zonedParts(value, timezone);
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`,
+  };
+}
+function convertLocal(
+  date: string,
+  time: string,
+  fromZone: string,
+  toZone: string,
+) {
+  return localInZone(zonedDate(date, time, fromZone), toZone);
+}
+function eventInZone(event: CalendarEvent, timezone: string) {
+  if (event.allDay) return event;
+  const start = localInZone(
+    zonedDate(event.date, event.time, event.timezone || "Asia/Shanghai"),
+    timezone,
+  );
+  const end = localInZone(
+    zonedDate(event.endDate, event.endTime, event.timezone || "Asia/Shanghai"),
+    timezone,
+  );
+  return {
+    ...event,
+    date: start.date,
+    time: start.time,
+    endDate: end.date,
+    endTime: end.time,
+  };
+}
+function eventDayParts(event: CalendarEvent) {
+  const range = dateRange(event.date, event.endDate);
+  const days =
+    !event.allDay && event.endTime === "00:00" && range.length > 1
+      ? range.slice(0, -1)
+      : range;
+  return days.map((date, index) => ({
+    ...event,
+    date,
+    time: event.allDay ? event.time : index === 0 ? event.time : "00:00",
+    endTime: event.allDay
+      ? event.endTime
+      : index === days.length - 1
+        ? event.endTime
+        : "24:00",
+    endDate: date,
+    continuesFromPrevious: index > 0,
+  }));
+}
+function occurrenceDate(day: SpecialDay, year: number) {
+  return day.repeatYearly ? `${year}-${day.date.slice(5)}` : day.date;
+}
+function daysUntil(day: SpecialDay) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let target = new Date(`${occurrenceDate(day, today.getFullYear())}T00:00:00`);
+  if (day.repeatYearly && target < today)
+    target = new Date(
+      `${occurrenceDate(day, today.getFullYear() + 1)}T00:00:00`,
+    );
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
 
-export default function Home(){
-  const [user,setUser]=useState<User|null>(null);const [member,setMember]=useState<Member|null>(null);const [members,setMembers]=useState<Member[]>([]);const [authReady,setAuthReady]=useState(false);const [memberLoading,setMemberLoading]=useState(true);const [memberLoadError,setMemberLoadError]=useState("");
-  const [loginEmail,setLoginEmail]=useState("");const [password,setPassword]=useState("");const [signingIn,setSigningIn]=useState(false);const [authMessage,setAuthMessage]=useState("");
-  const [authView,setAuthView]=useState<"login"|"forgot"|"sent">("login");const [recoveryMode,setRecoveryMode]=useState(()=>window.location.hash.includes("type=recovery"));const [settingsOpen,setSettingsOpen]=useState(false);const [adminOpen,setAdminOpen]=useState(false);const [profileOpen,setProfileOpen]=useState(false);const [profileView,setProfileView]=useState<"menu"|"color"|"birthday">("menu");const [birthday,setBirthday]=useState("");const [profileMessage,setProfileMessage]=useState("");const [visibility,setVisibility]=useState<Visibility[]>([]);const [selectedOwners,setSelectedOwners]=useState<string[]>([]);
-  const [currentPassword,setCurrentPassword]=useState("");const [newPassword,setNewPassword]=useState("");const [confirmPassword,setConfirmPassword]=useState("");const [passwordMessage,setPasswordMessage]=useState("");const [savingPassword,setSavingPassword]=useState(false);
-  const [section,setSection]=useState<"calendar"|"special"|"wishes"|"lucky"|"expenses">("calendar");const [view,setView]=useState<"month"|"week">("month");const [cursor,setCursor]=useState(new Date());const [zone,setZone]=useState(Intl.DateTimeFormat().resolvedOptions().timeZone||"Asia/Shanghai");const [monthAgendaDate,setMonthAgendaDate]=useState<string|null>(null);const [memberFilterOpen,setMemberFilterOpen]=useState(false);
-  const [events,setEvents]=useState<CalendarEvent[]>([]);const [open,setOpen]=useState(false);const [editing,setEditing]=useState<CalendarEvent|null>(null);const today=dateKey(new Date());const [draft,setDraft]=useState({title:"",date:today,endDate:today,time:"12:00",endTime:"13:00",timezone:"Asia/Shanghai",useTimezone:false,allDay:false,participants:[] as string[],location:"",note:""});
-  const [specialDays,setSpecialDays]=useState<SpecialDay[]>([]);const [specialFilter,setSpecialFilter]=useState<"all"|SpecialKind>("all");const [specialOpen,setSpecialOpen]=useState(false);const [editingSpecial,setEditingSpecial]=useState<SpecialDay|null>(null);const [specialDraft,setSpecialDraft]=useState({title:"",date:today,kind:"meet" as SpecialKind,color:"sage" as SpecialColor,startTime:"12:00",endTime:"13:00",timezone:"Asia/Shanghai",repeatYearly:false,showInCalendar:true,participants:[] as string[]});
-  const [wishes,setWishes]=useState<Wish[]>([]);const [wishFilter,setWishFilter]=useState<WishCategory>("eat_drink");const [wishRegion,setWishRegion]=useState("all");const [wishStatus,setWishStatus]=useState<"all"|WishStatus>("all");const [wishMediaType,setWishMediaType]=useState<"all"|WishMediaType>("all");const [wishOpen,setWishOpen]=useState(false);const [editingWish,setEditingWish]=useState<Wish|null>(null);const [wishDraft,setWishDraft]=useState({title:"",category:"eat_drink" as WishCategory,region:"",place:"",note:"",status:"wish" as WishStatus,mediaType:"tv" as WishMediaType,releaseDate:"",plannedWatchDate:""});
-  const [luckySettingsOpen,setLuckySettingsOpen]=useState(false);const [luckyMode,setLuckyMode]=useState<"manual"|"import">("manual");const [manualLuckyOptions,setManualLuckyOptions]=useState([""]);const [savedLuckySets,setSavedLuckySets]=useState<LuckySet[]>([]);const [editingLuckySetId,setEditingLuckySetId]=useState<number|null>(null);const [luckySetMenuOpen,setLuckySetMenuOpen]=useState(false);const [rememberLuckySet,setRememberLuckySet]=useState(false);const [luckySetName,setLuckySetName]=useState("");const luckySelectAllRef=useRef<HTMLInputElement>(null);const [luckyCategory,setLuckyCategory]=useState<WishCategory>("eat_drink");const [luckyFilter,setLuckyFilter]=useState("all");const [luckyImportMode,setLuckyImportMode]=useState<"all"|"manual">("all");const [selectedLuckyWishIds,setSelectedLuckyWishIds]=useState<number[]>([]);const [slotCells,setSlotCells]=useState(["","","","","今天抽什么？","","","",""]);const [slotConfigured,setSlotConfigured]=useState(false);const [slotWinner,setSlotWinner]=useState("");const [slotSpinning,setSlotSpinning]=useState(false);
-  const [expensePeriods,setExpensePeriods]=useState<ExpensePeriod[]>([]);const [expenses,setExpenses]=useState<Expense[]>([]);const [expenseView,setExpenseView]=useState<"periods"|"ledger"|"settlement">("periods");const [activeExpensePeriodId,setActiveExpensePeriodId]=useState<number|null>(null);const [expensePeriodOpen,setExpensePeriodOpen]=useState(false);const [expensePeriodName,setExpensePeriodName]=useState("");const [expenseOpen,setExpenseOpen]=useState(false);const [editingExpense,setEditingExpense]=useState<Expense|null>(null);const [expenseSaving,setExpenseSaving]=useState(false);const [expenseMessage,setExpenseMessage]=useState("");const [expenseDraft,setExpenseDraft]=useState({item:"",amount:"",splitWith:[] as string[],note:""});
-  async function load(current?:User|null,showMemberCheck=false){
-    const active=current===undefined?(await supabase.auth.getUser()).data.user:current;
-    if(!active){setMember(null);setEvents([]);setSpecialDays([]);setWishes([]);setSavedLuckySets([]);setExpensePeriods([]);setExpenses([]);setMemberLoading(false);setMemberLoadError("");return}
-    if(showMemberCheck)setMemberLoading(true);
+export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const [member, setMember] = useState<Member | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [authReady, setAuthReady] = useState(false);
+  const [memberLoading, setMemberLoading] = useState(true);
+  const [memberLoadError, setMemberLoadError] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const [authView, setAuthView] = useState<"login" | "forgot" | "sent">(
+    "login",
+  );
+  const [recoveryMode, setRecoveryMode] = useState(() =>
+    window.location.hash.includes("type=recovery"),
+  );
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileView, setProfileView] = useState<"menu" | "color" | "birthday">(
+    "menu",
+  );
+  const [birthday, setBirthday] = useState("");
+  const [profileMessage, setProfileMessage] = useState("");
+  const [visibility, setVisibility] = useState<Visibility[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [section, setSection] = useState<
+    "calendar" | "special" | "wishes" | "lucky" | "expenses"
+  >("calendar");
+  const [view, setView] = useState<"month" | "week">("month");
+  const [cursor, setCursor] = useState(new Date());
+  const [zone, setZone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
+  );
+  const [monthAgendaDate, setMonthAgendaDate] = useState<string | null>(null);
+  const [memberFilterOpen, setMemberFilterOpen] = useState(false);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<CalendarEvent | null>(null);
+  const today = dateKey(new Date());
+  const [draft, setDraft] = useState({
+    title: "",
+    date: today,
+    endDate: today,
+    time: "12:00",
+    endTime: "13:00",
+    timezone: "Asia/Shanghai",
+    useTimezone: false,
+    allDay: false,
+    participants: [] as string[],
+    location: "",
+    note: "",
+  });
+  const [specialDays, setSpecialDays] = useState<SpecialDay[]>([]);
+  const [specialFilter, setSpecialFilter] = useState<"all" | SpecialKind>(
+    "all",
+  );
+  const [specialOpen, setSpecialOpen] = useState(false);
+  const [editingSpecial, setEditingSpecial] = useState<SpecialDay | null>(null);
+  const [specialDraft, setSpecialDraft] = useState({
+    title: "",
+    date: today,
+    kind: "meet" as SpecialKind,
+    color: "sage" as SpecialColor,
+    startTime: "12:00",
+    endTime: "13:00",
+    timezone: "Asia/Shanghai",
+    repeatYearly: false,
+    showInCalendar: true,
+    participants: [] as string[],
+  });
+  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [wishFilter, setWishFilter] = useState<WishCategory>("eat_drink");
+  const [wishRegion, setWishRegion] = useState("all");
+  const [wishStatus, setWishStatus] = useState<"all" | WishStatus>("all");
+  const [wishMediaType, setWishMediaType] = useState<"all" | WishMediaType>(
+    "all",
+  );
+  const [wishOpen, setWishOpen] = useState(false);
+  const [editingWish, setEditingWish] = useState<Wish | null>(null);
+  const [wishDraft, setWishDraft] = useState({
+    title: "",
+    category: "eat_drink" as WishCategory,
+    region: "",
+    place: "",
+    note: "",
+    status: "wish" as WishStatus,
+    mediaType: "tv" as WishMediaType,
+    releaseDate: "",
+    plannedWatchDate: "",
+  });
+  const [luckySettingsOpen, setLuckySettingsOpen] = useState(false);
+  const [luckyMode, setLuckyMode] = useState<"manual" | "import">("manual");
+  const [manualLuckyOptions, setManualLuckyOptions] = useState([""]);
+  const [savedLuckySets, setSavedLuckySets] = useState<LuckySet[]>([]);
+  const [editingLuckySetId, setEditingLuckySetId] = useState<number | null>(
+    null,
+  );
+  const [luckySetMenuOpen, setLuckySetMenuOpen] = useState(false);
+  const [rememberLuckySet, setRememberLuckySet] = useState(false);
+  const [luckySetName, setLuckySetName] = useState("");
+  const luckySelectAllRef = useRef<HTMLInputElement>(null);
+  const [luckyCategory, setLuckyCategory] = useState<WishCategory>("eat_drink");
+  const [luckyFilter, setLuckyFilter] = useState("all");
+  const [luckyImportMode, setLuckyImportMode] = useState<"all" | "manual">(
+    "all",
+  );
+  const [selectedLuckyWishIds, setSelectedLuckyWishIds] = useState<number[]>(
+    [],
+  );
+  const [slotCells, setSlotCells] = useState([
+    "",
+    "",
+    "",
+    "",
+    "今天抽什么？",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const [slotConfigured, setSlotConfigured] = useState(false);
+  const [slotWinner, setSlotWinner] = useState("");
+  const [slotSpinning, setSlotSpinning] = useState(false);
+  const [expensePeriods, setExpensePeriods] = useState<ExpensePeriod[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenseView, setExpenseView] = useState<
+    "periods" | "ledger" | "settlement"
+  >("periods");
+  const [activeExpensePeriodId, setActiveExpensePeriodId] = useState<
+    number | null
+  >(null);
+  const [expensePeriodOpen, setExpensePeriodOpen] = useState(false);
+  const [expensePeriodName, setExpensePeriodName] = useState("");
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [expenseSaving, setExpenseSaving] = useState(false);
+  const [expenseMessage, setExpenseMessage] = useState("");
+  const [expensePrinting, setExpensePrinting] = useState(false);
+  const [expenseDraft, setExpenseDraft] = useState({
+    item: "",
+    amount: "",
+    splitWith: [] as string[],
+    note: "",
+  });
+  async function load(current?: User | null, showMemberCheck = false) {
+    const active =
+      current === undefined
+        ? (await supabase.auth.getUser()).data.user
+        : current;
+    if (!active) {
+      setMember(null);
+      setEvents([]);
+      setSpecialDays([]);
+      setWishes([]);
+      setSavedLuckySets([]);
+      setExpensePeriods([]);
+      setExpenses([]);
+      setMemberLoading(false);
+      setMemberLoadError("");
+      return;
+    }
+    if (showMemberCheck) setMemberLoading(true);
     setMemberLoadError("");
-    const email=(active.email||"").toLowerCase();
-    const [{data:memberRows,error:memberError},{data:visibilityRows}]=await Promise.all([
-      supabase.from("shared_calendar_members").select("email,display_name,color,birthday").order("created_at"),
-      supabase.from("shared_calendar_visibility").select("viewer_email,owner_email")
-    ]);
-    if(memberError){setMember(null);setMemberLoadError("成员验证暂时失败，请检查网络后重试");setMemberLoading(false);return}
-    const list=(memberRows||[]) as Member[];
-    const permissions=(visibilityRows||[]) as Visibility[];
-    setMembers(list);setVisibility(permissions);
-    const mine=list.find(m=>m.email.toLowerCase()===email)||null;
-    setMember(mine);setBirthday(mine?.birthday||"");
-    const allowed=Array.from(new Set([email,...permissions.filter(row=>row.viewer_email===email).map(row=>row.owner_email)]));
-    setSelectedOwners(current=>{const kept=current.filter(owner=>allowed.includes(owner));return kept.length?kept:allowed});
-    if(!mine){setEvents([]);setSpecialDays([]);setWishes([]);setSavedLuckySets([]);setExpensePeriods([]);setExpenses([]);setMemberLoading(false);return}
-    const [{data},{data:specialData},{data:wishData},{data:luckySetData},{data:expensePeriodData},{data:expenseData}]=await Promise.all([
+    const email = (active.email || "").toLowerCase();
+    const [{ data: memberRows, error: memberError }, { data: visibilityRows }] =
+      await Promise.all([
+        supabase
+          .from("shared_calendar_members")
+          .select("email,display_name,color,birthday")
+          .order("created_at"),
+        supabase
+          .from("shared_calendar_visibility")
+          .select("viewer_email,owner_email"),
+      ]);
+    if (memberError) {
+      setMember(null);
+      setMemberLoadError("成员验证暂时失败，请检查网络后重试");
+      setMemberLoading(false);
+      return;
+    }
+    const list = (memberRows || []) as Member[];
+    const permissions = (visibilityRows || []) as Visibility[];
+    setMembers(list);
+    setVisibility(permissions);
+    const mine = list.find((m) => m.email.toLowerCase() === email) || null;
+    setMember(mine);
+    setBirthday(mine?.birthday || "");
+    const allowed = Array.from(
+      new Set([
+        email,
+        ...permissions
+          .filter((row) => row.viewer_email === email)
+          .map((row) => row.owner_email),
+      ]),
+    );
+    setSelectedOwners((current) => {
+      const kept = current.filter((owner) => allowed.includes(owner));
+      return kept.length ? kept : allowed;
+    });
+    if (!mine) {
+      setEvents([]);
+      setSpecialDays([]);
+      setWishes([]);
+      setSavedLuckySets([]);
+      setExpensePeriods([]);
+      setExpenses([]);
+      setMemberLoading(false);
+      return;
+    }
+    const [
+      { data },
+      { data: specialData },
+      { data: wishData },
+      { data: luckySetData },
+      { data: expensePeriodData },
+      { data: expenseData },
+    ] = await Promise.all([
       supabase.rpc("get_shared_calendar_events"),
       supabase.rpc("get_shared_calendar_special_days"),
-      supabase.from("shared_calendar_wishes").select("id,title,category,region,place,note,status,media_type,release_date,planned_watch_date,owner_user_id,owner_email,participant_emails").order("updated_at",{ascending:false}),
-      supabase.from("shared_calendar_lucky_sets").select("id,name,options,owner_user_id,owner_email").order("updated_at",{ascending:false}),
-      supabase.from("shared_calendar_expense_periods").select("id,name,owner_user_id,owner_email,created_at").order("updated_at",{ascending:false}),
-      supabase.from("shared_calendar_expenses").select("id,period_id,item,amount,payer_email,split_with,note,creator_user_id,creator_email,created_at").order("created_at",{ascending:false})
+      supabase
+        .from("shared_calendar_wishes")
+        .select(
+          "id,title,category,region,place,note,status,media_type,release_date,planned_watch_date,owner_user_id,owner_email,participant_emails",
+        )
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("shared_calendar_lucky_sets")
+        .select("id,name,options,owner_user_id,owner_email")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("shared_calendar_expense_periods")
+        .select("id,name,owner_user_id,owner_email,created_at")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("shared_calendar_expenses")
+        .select(
+          "id,period_id,item,amount,payer_email,split_with,note,creator_user_id,creator_email,created_at",
+        )
+        .order("created_at", { ascending: false }),
     ]);
-    setEvents((data||[]).map((e:any)=>({id:e.id,title:e.title,date:e.event_date,endDate:e.end_date||e.event_date,time:String(e.event_time).slice(0,5),endTime:String(e.end_time).slice(0,5),owner:e.owner_email,participants:e.participant_emails||[],location:e.location,note:e.note,timezone:e.timezone,allDay:Boolean(e.all_day),canEdit:e.can_edit})));
-    setSpecialDays((specialData||[]).map((d:any)=>({id:d.id,title:d.title,date:d.special_date,kind:d.kind,icon:d.icon,color:d.color||"sage",startTime:d.start_time?String(d.start_time).slice(0,5):null,endTime:d.end_time?String(d.end_time).slice(0,5):null,timezone:d.timezone||"Asia/Shanghai",repeatYearly:d.repeat_yearly,showInCalendar:d.show_in_calendar,owner:d.owner_email,participants:d.participant_emails||[],canEdit:d.can_edit})));
-    setWishes((wishData||[]).map((w:any)=>({id:w.id,title:w.title,category:w.category,region:w.region,place:w.place||"",note:w.note||"",status:w.status,mediaType:w.media_type||null,releaseDate:w.release_date||null,plannedWatchDate:w.planned_watch_date||null,ownerUserId:w.owner_user_id,owner:w.owner_email,participants:w.participant_emails||[]})));
-    setSavedLuckySets((luckySetData||[]).map((set:any)=>({id:set.id,name:set.name,options:set.options||[],ownerUserId:set.owner_user_id,owner:set.owner_email})));
-    setExpensePeriods((expensePeriodData||[]).map((period:any)=>({id:period.id,name:period.name,ownerUserId:period.owner_user_id,owner:period.owner_email,createdAt:period.created_at})));
-    setExpenses((expenseData||[]).map((expense:any)=>({id:expense.id,periodId:expense.period_id,item:expense.item,amount:Number(expense.amount),payer:expense.payer_email,splitWith:expense.split_with||[],note:expense.note||"",creatorUserId:expense.creator_user_id,creator:expense.creator_email,createdAt:expense.created_at})));
+    setEvents(
+      (data || []).map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        date: e.event_date,
+        endDate: e.end_date || e.event_date,
+        time: String(e.event_time).slice(0, 5),
+        endTime: String(e.end_time).slice(0, 5),
+        owner: e.owner_email,
+        participants: e.participant_emails || [],
+        location: e.location,
+        note: e.note,
+        timezone: e.timezone,
+        allDay: Boolean(e.all_day),
+        canEdit: e.can_edit,
+      })),
+    );
+    setSpecialDays(
+      (specialData || []).map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        date: d.special_date,
+        kind: d.kind,
+        icon: d.icon,
+        color: d.color || "sage",
+        startTime: d.start_time ? String(d.start_time).slice(0, 5) : null,
+        endTime: d.end_time ? String(d.end_time).slice(0, 5) : null,
+        timezone: d.timezone || "Asia/Shanghai",
+        repeatYearly: d.repeat_yearly,
+        showInCalendar: d.show_in_calendar,
+        owner: d.owner_email,
+        participants: d.participant_emails || [],
+        canEdit: d.can_edit,
+      })),
+    );
+    setWishes(
+      (wishData || []).map((w: any) => ({
+        id: w.id,
+        title: w.title,
+        category: w.category,
+        region: w.region,
+        place: w.place || "",
+        note: w.note || "",
+        status: w.status,
+        mediaType: w.media_type || null,
+        releaseDate: w.release_date || null,
+        plannedWatchDate: w.planned_watch_date || null,
+        ownerUserId: w.owner_user_id,
+        owner: w.owner_email,
+        participants: w.participant_emails || [],
+      })),
+    );
+    setSavedLuckySets(
+      (luckySetData || []).map((set: any) => ({
+        id: set.id,
+        name: set.name,
+        options: set.options || [],
+        ownerUserId: set.owner_user_id,
+        owner: set.owner_email,
+      })),
+    );
+    setExpensePeriods(
+      (expensePeriodData || []).map((period: any) => ({
+        id: period.id,
+        name: period.name,
+        ownerUserId: period.owner_user_id,
+        owner: period.owner_email,
+        createdAt: period.created_at,
+      })),
+    );
+    setExpenses(
+      (expenseData || []).map((expense: any) => ({
+        id: expense.id,
+        periodId: expense.period_id,
+        item: expense.item,
+        amount: Number(expense.amount),
+        payer: expense.payer_email,
+        splitWith: expense.split_with || [],
+        note: expense.note || "",
+        creatorUserId: expense.creator_user_id,
+        creator: expense.creator_email,
+        createdAt: expense.created_at,
+      })),
+    );
     setMemberLoading(false);
   }
-  useEffect(()=>{
-    let alive=true;
-    let activeUserId="";
-    async function initialize(){
-      const {data}=await supabase.auth.getSession();
-      if(!alive)return;
-      const current=data.session?.user||null;
-      activeUserId=current?.id||"";
+  useEffect(() => {
+    let alive = true;
+    let activeUserId = "";
+    async function initialize() {
+      const { data } = await supabase.auth.getSession();
+      if (!alive) return;
+      const current = data.session?.user || null;
+      activeUserId = current?.id || "";
       setUser(current);
-      await load(current,true);
-      if(alive)setAuthReady(true);
+      await load(current, true);
+      if (alive) setAuthReady(true);
     }
     initialize();
-    const {data}=supabase.auth.onAuthStateChange((event,session)=>{
-      if(!alive||event==="INITIAL_SESSION")return;
-      if(event==="PASSWORD_RECOVERY"){setRecoveryMode(true);setUser(session?.user||null);return}
-      if(event==="SIGNED_OUT"){activeUserId="";setUser(null);load(null);return}
-      if(event==="SIGNED_IN"){
-        const current=session?.user||null;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!alive || event === "INITIAL_SESSION") return;
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryMode(true);
+        setUser(session?.user || null);
+        return;
+      }
+      if (event === "SIGNED_OUT") {
+        activeUserId = "";
+        setUser(null);
+        load(null);
+        return;
+      }
+      if (event === "SIGNED_IN") {
+        const current = session?.user || null;
         setUser(current);
-        if(!current||activeUserId===current.id)return;
-        activeUserId=current.id;
-        load(current,true);
+        if (!current || activeUserId === current.id) return;
+        activeUserId = current.id;
+        load(current, true);
       }
     });
-    return()=>{alive=false;data.subscription.unsubscribe()};
-  },[]);
-  useEffect(()=>{const control=luckySelectAllRef.current;if(!control)return;const candidates=luckyFilteredWishes();const selected=candidates.filter(wish=>selectedLuckyWishIds.includes(wish.id)).length;control.checked=candidates.length>0&&selected===candidates.length;control.indeterminate=selected>0&&selected<candidates.length},[wishes,luckyCategory,luckyFilter,luckyImportMode,selectedLuckyWishIds]);
-  const dates=useMemo(()=>{const start=view==="month"?monday(new Date(cursor.getFullYear(),cursor.getMonth(),1)):monday(cursor);return Array.from({length:view==="month"?42:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d})},[cursor,view]);
-  const label=view==="month"?`${cursor.getFullYear()} 年 ${cursor.getMonth()+1} 月`:`${dates[0].getMonth()+1} 月 ${dates[0].getDate()} 日 — ${dates[6].getMonth()+1} 月 ${dates[6].getDate()} 日`;
-  async function signIn(event:FormEvent){event.preventDefault();if(!loginEmail.trim()||!password)return;setSigningIn(true);setAuthMessage("");const {error}=await supabase.auth.signInWithPassword({email:loginEmail.trim(),password});if(error)setAuthMessage("邮箱或密码不正确");setSigningIn(false)}
-  async function sendRecovery(event:FormEvent){event.preventDefault();if(!loginEmail.trim())return;setSigningIn(true);setAuthMessage("");const redirectTo=`${window.location.origin}${window.location.pathname}`;const {error}=await supabase.auth.resetPasswordForEmail(loginEmail.trim(),{redirectTo});if(error)setAuthMessage(error.message.includes("rate limit")?"发送过于频繁，请稍后再试":"暂时无法发送重设邮件，请稍后再试");else setAuthView("sent");setSigningIn(false)}
-  function passwordValidation(){if(newPassword.length<8)return "新密码至少需要 8 位";if(newPassword!==confirmPassword)return "两次输入的新密码不一致";return ""}
-  async function updatePassword(fromRecovery=false){const validation=passwordValidation();if(validation){setPasswordMessage(validation);return}if(!fromRecovery&&!currentPassword){setPasswordMessage("请输入当前密码");return}setSavingPassword(true);setPasswordMessage("");const attributes=fromRecovery?{password:newPassword}:{password:newPassword,currentPassword};const {error}=await supabase.auth.updateUser(attributes);if(error)setPasswordMessage(fromRecovery?"重设链接可能已失效，请重新发送邮件":"当前密码不正确，或新密码不符合要求");else{setPasswordMessage("密码已更新");setCurrentPassword("");setNewPassword("");setConfirmPassword("");if(fromRecovery){setRecoveryMode(false);window.history.replaceState({},"",window.location.pathname)}}setSavingPassword(false)}
-  function startAdd(date?:string,time="12:00"){const startDate=date||dateKey(new Date());setEditing(null);setDraft({title:"",date:startDate,endDate:startDate,time,endTime:nextHour(time),timezone:"Asia/Shanghai",useTimezone:false,allDay:false,participants:[],location:"",note:""});setOpen(true)}
-  function startEdit(e:CalendarEvent){if(!e.canEdit)return;const timezone=e.timezone||"Asia/Shanghai";setEditing(e);setDraft({title:e.title,date:e.date,endDate:e.endDate,time:e.time,endTime:e.endTime,timezone,useTimezone:timezone!=="Asia/Shanghai",allDay:e.allDay,participants:e.participants||[],location:e.location||"",note:e.note||""});setOpen(true)}
-  const validRange=draft.endDate>draft.date||(draft.endDate===draft.date&&(draft.allDay||draft.endTime>draft.time));
-  const mutationLock=useRef(false);
-  function beginMutation(){if(mutationLock.current)return false;mutationLock.current=true;return true}
-  function finishMutation(){mutationLock.current=false}
-  function showMutationError(message:string){finishMutation();window.alert(message)}
-  async function save(){if(!user||!member||!draft.title.trim()||!validRange||!beginMutation())return;const previous=events;const optimistic:CalendarEvent={id:editing?.id??-Date.now(),title:draft.title.trim(),date:draft.date,endDate:draft.endDate,time:draft.time,endTime:draft.endTime,owner:editing?.owner||member.email,participants:draft.participants,location:draft.location,note:draft.note,timezone:draft.timezone,allDay:draft.allDay,canEdit:true};const values={title:optimistic.title,event_date:draft.date,end_date:draft.endDate,event_time:draft.time,end_time:draft.endTime,all_day:draft.allDay,participant_emails:draft.participants,location:draft.location,note:draft.note,timezone:draft.timezone,updated_at:new Date().toISOString()};setOpen(false);setEvents(current=>editing?current.map(item=>item.id===editing.id?optimistic:item):[...current,optimistic]);const {error}=editing?await supabase.from("shared_calendar_events").update(values).eq("id",editing.id):await supabase.from("shared_calendar_events").insert({...values,owner_user_id:user.id,owner_email:member.email});if(error){setEvents(previous);setOpen(true);showMutationError("保存失败，请检查网络后重试");return}finishMutation();void load(user)}
-  async function remove(){if(!editing||!user||!beginMutation())return;const previous=events;setOpen(false);setEvents(current=>current.filter(item=>item.id!==editing.id));const {error}=await supabase.from("shared_calendar_events").delete().eq("id",editing.id);if(error){setEvents(previous);setOpen(true);showMutationError("删除失败，请检查网络后重试");return}finishMutation();void load(user)}
-  function startAddSpecial(){setEditingSpecial(null);setSpecialDraft({title:"",date:today,kind:"meet",color:"sage",startTime:"12:00",endTime:"13:00",timezone:"Asia/Shanghai",repeatYearly:false,showInCalendar:true,participants:[]});setSpecialOpen(true)}
-  function startEditSpecial(day:SpecialDay){if(!day.canEdit)return;const permittedParticipants=day.participants.filter(email=>visibility.some(row=>row.viewer_email===email&&row.owner_email===member?.email));setEditingSpecial(day);setSpecialDraft({title:day.title,date:day.date,kind:day.kind,color:day.color,startTime:day.startTime||"12:00",endTime:day.endTime||"13:00",timezone:day.timezone,repeatYearly:day.repeatYearly,showInCalendar:day.showInCalendar,participants:permittedParticipants});setSpecialOpen(true)}
-  async function saveSpecial(){if(!user||!member||!specialDraft.title.trim()||!specialDraft.date||(specialDraft.kind==="meet"&&specialDraft.endTime<=specialDraft.startTime)||!beginMutation())return;const previous=specialDays;const type=SPECIAL_TYPES.find(item=>item.kind===specialDraft.kind)!;const permittedParticipants=specialDraft.participants.filter(email=>visibility.some(row=>row.viewer_email===email&&row.owner_email===member.email));const optimistic:SpecialDay={id:editingSpecial?.id??-Date.now(),title:specialDraft.title.trim(),date:specialDraft.date,kind:specialDraft.kind,icon:type.icon,color:specialDraft.color,startTime:specialDraft.kind==="meet"?specialDraft.startTime:null,endTime:specialDraft.kind==="meet"?specialDraft.endTime:null,timezone:specialDraft.timezone,repeatYearly:specialDraft.repeatYearly,showInCalendar:specialDraft.showInCalendar,owner:editingSpecial?.owner||member.email,participants:permittedParticipants,canEdit:true};const values={title:optimistic.title,special_date:specialDraft.date,kind:specialDraft.kind,icon:type.icon,color:specialDraft.color,start_time:optimistic.startTime,end_time:optimistic.endTime,timezone:specialDraft.timezone,repeat_yearly:specialDraft.repeatYearly,show_in_calendar:specialDraft.showInCalendar,participant_emails:permittedParticipants,updated_at:new Date().toISOString()};setSpecialOpen(false);setSpecialDays(current=>editingSpecial?current.map(item=>item.id===editingSpecial.id?optimistic:item):[...current,optimistic]);const {error}=editingSpecial?await supabase.from("shared_calendar_special_days").update(values).eq("id",editingSpecial.id):await supabase.from("shared_calendar_special_days").insert({...values,owner_user_id:user.id,owner_email:member.email});if(error){setSpecialDays(previous);setSpecialOpen(true);showMutationError("保存失败，请检查网络后重试");return}finishMutation();void load(user)}
-  async function removeSpecial(){if(!editingSpecial||!user||!beginMutation())return;const previous=specialDays;setSpecialOpen(false);setSpecialDays(current=>current.filter(item=>item.id!==editingSpecial.id));const {error}=await supabase.from("shared_calendar_special_days").delete().eq("id",editingSpecial.id);if(error){setSpecialDays(previous);setSpecialOpen(true);showMutationError("删除失败，请检查网络后重试");return}finishMutation();void load(user)}
-  async function changeColor(color:string){if(!member||members.some(m=>m.email!==member.email&&m.color===color))return;const {error}=await supabase.from("shared_calendar_members").update({color}).eq("email",member.email);if(!error)await load(user)}
-  async function saveBirthday(){if(!member)return;setProfileMessage("");const {error}=await supabase.from("shared_calendar_members").update({birthday:birthday||null}).eq("email",member.email);if(error)setProfileMessage("生日暂时无法保存");else{setProfileMessage("生日已保存，会自动显示在每一年");await load(user)}}
-  async function toggleVisibility(viewer:string,owner:string){if(user?.email?.toLowerCase()!=="elainezhang1110@gmail.com"||viewer===owner)return;const exists=visibility.some(row=>row.viewer_email===viewer&&row.owner_email===owner);const result=exists?await supabase.from("shared_calendar_visibility").delete().eq("viewer_email",viewer).eq("owner_email",owner):await supabase.from("shared_calendar_visibility").insert({viewer_email:viewer,owner_email:owner});if(!result.error)await load(user)}
-  function startAddWish(){setEditingWish(null);setWishDraft({title:"",category:wishFilter,region:"",place:"",note:"",status:"wish",mediaType:"tv",releaseDate:"",plannedWatchDate:""});setWishOpen(true)}
-  function startEditWish(wish:Wish){if(wish.ownerUserId!==user?.id)return;setEditingWish(wish);setWishDraft({title:wish.title,category:wish.category,region:wish.region,place:wish.place,note:wish.note,status:wish.status,mediaType:wish.mediaType||"tv",releaseDate:wish.releaseDate||"",plannedWatchDate:wish.plannedWatchDate||""});setWishOpen(true)}
-  async function saveWish(){const isWatch=wishDraft.category==="watch";if(!user||!member||!wishDraft.title.trim()||(!isWatch&&!wishDraft.region.trim())||!beginMutation())return;const previous=wishes;const optimistic:Wish={id:editingWish?.id??-Date.now(),title:wishDraft.title.trim(),category:wishDraft.category,region:isWatch?"":wishDraft.region.trim(),place:wishDraft.place.trim(),note:wishDraft.note.trim(),status:wishDraft.status,mediaType:isWatch?wishDraft.mediaType:null,releaseDate:isWatch&&wishDraft.releaseDate?wishDraft.releaseDate:null,plannedWatchDate:isWatch&&wishDraft.plannedWatchDate?wishDraft.plannedWatchDate:null,ownerUserId:editingWish?.ownerUserId||user.id,owner:editingWish?.owner||member.email,participants:editingWish?.participants||[member.email]};const values={title:optimistic.title,category:optimistic.category,region:optimistic.region,place:optimistic.place,note:optimistic.note,status:optimistic.status,media_type:optimistic.mediaType,release_date:optimistic.releaseDate,planned_watch_date:optimistic.plannedWatchDate,updated_at:new Date().toISOString()};setWishOpen(false);setWishes(current=>editingWish?current.map(item=>item.id===editingWish.id?optimistic:item):[optimistic,...current]);const result=editingWish?await supabase.from("shared_calendar_wishes").update(values).eq("id",editingWish.id):await supabase.from("shared_calendar_wishes").insert({...values,owner_user_id:user.id,owner_email:member.email,participant_emails:[member.email]});if(result.error){setWishes(previous);setWishOpen(true);showMutationError("保存失败，请检查网络后重试");return}finishMutation();void load(user)}
-  async function removeWish(){if(!editingWish||!user||!beginMutation())return;const previous=wishes;setWishOpen(false);setWishes(current=>current.filter(item=>item.id!==editingWish.id));const {error}=await supabase.from("shared_calendar_wishes").delete().eq("id",editingWish.id);if(error){setWishes(previous);setWishOpen(true);showMutationError("删除失败，请检查网络后重试");return}finishMutation();void load(user)}
-  async function toggleWish(wish:Wish){if(!user||!member||wish.ownerUserId===user.id||!beginMutation())return;const previous=wishes;const joined=wish.participants.includes(member.email);setWishes(current=>current.map(item=>item.id===wish.id?{...item,participants:joined?item.participants.filter(email=>email!==member.email):[...item.participants,member.email]}:item));const {error}=await supabase.rpc("toggle_shared_calendar_wish_participation",{p_wish_id:wish.id});if(error){setWishes(previous);showMutationError("操作失败，请检查网络后重试");return}finishMutation();void load(user)}
-  async function changeWishStatus(wish:Wish,status:WishStatus){if(!user||wish.ownerUserId!==user.id||wish.status===status||!beginMutation())return;const previous=wishes;setWishes(current=>current.map(item=>item.id===wish.id?{...item,status}:item));const {error}=await supabase.from("shared_calendar_wishes").update({status,updated_at:new Date().toISOString()}).eq("id",wish.id);if(error){setWishes(previous);showMutationError("状态保存失败，请检查网络后重试");return}finishMutation();void load(user)}
-  function luckyCategoryWishes(){return wishes.filter(wish=>wish.category===luckyCategory)}
-  function luckyFilteredWishes(){return luckyCategoryWishes().filter(wish=>luckyFilter==="all"||(luckyCategory==="watch"?wish.mediaType===luckyFilter:wish.region===luckyFilter))}
-  function luckyOptions(){if(luckyMode==="manual")return manualLuckyOptions.map(option=>option.trim()).filter(Boolean);const candidates=luckyFilteredWishes();return (luckyImportMode==="all"?candidates:candidates.filter(wish=>selectedLuckyWishIds.includes(wish.id))).map(wish=>wish.title)}
-  function addManualLuckyOption(){setManualLuckyOptions(current=>[...current,""])}
-  function updateManualLuckyOption(index:number,value:string){setManualLuckyOptions(current=>current.map((option,optionIndex)=>optionIndex===index?value:option))}
-  function removeManualLuckyOption(index:number){setManualLuckyOptions(current=>current.filter((_,optionIndex)=>optionIndex!==index))}
-  function changeLuckyCategory(category:WishCategory){setLuckyCategory(category);setLuckyFilter("all");setSelectedLuckyWishIds(wishes.filter(wish=>wish.category===category).map(wish=>wish.id))}
-  function changeLuckyImportMode(mode:"all"|"manual"){setLuckyImportMode(mode);if(mode==="manual")setSelectedLuckyWishIds(luckyFilteredWishes().map(wish=>wish.id))}
-  function toggleLuckyWish(id:number){setSelectedLuckyWishIds(current=>current.includes(id)?current.filter(item=>item!==id):[...current,id])}
-  function spinLucky(){const options=luckyOptions();if(slotSpinning||options.length===0)return;setSlotSpinning(true);setSlotWinner("");let turns=0;const timer=window.setInterval(()=>{setSlotCells(Array.from({length:9},()=>options[Math.floor(Math.random()*options.length)]));turns+=1;if(turns<18)return;window.clearInterval(timer);const winner=options[Math.floor(Math.random()*options.length)];setSlotCells([options[Math.floor(Math.random()*options.length)],options[Math.floor(Math.random()*options.length)],options[Math.floor(Math.random()*options.length)],winner,winner,winner,options[Math.floor(Math.random()*options.length)],options[Math.floor(Math.random()*options.length)],options[Math.floor(Math.random()*options.length)]]);setSlotWinner(winner);setSlotSpinning(false)},85)}
-  function previewLuckyOptions(options:string[]){setSlotCells(Array.from({length:9},()=>options[Math.floor(Math.random()*options.length)]));setSlotConfigured(true);setSlotWinner("")}
-  function useSavedLuckySet(set:LuckySet){setLuckyMode("manual");setManualLuckyOptions(set.options.length?set.options:[""]);setEditingLuckySetId(set.id);setLuckySetMenuOpen(false);setRememberLuckySet(false);setLuckySetName(set.name);previewLuckyOptions(set.options)}
-  function clearLuckySetEditor(){setEditingLuckySetId(null);setLuckySetMenuOpen(false);setManualLuckyOptions([""]);setLuckySetName("");setRememberLuckySet(false)}
-  async function deleteSavedLuckySet(id:number){if(!id||id<0)return;const target=savedLuckySets.find(set=>set.id===id);if(!target||!window.confirm(`删除“${target.name}”这个常用组合？`))return;const previous=savedLuckySets;const wasEditing=editingLuckySetId===id;setSavedLuckySets(current=>current.filter(set=>set.id!==id));if(wasEditing)clearLuckySetEditor();const {error}=await supabase.from("shared_calendar_lucky_sets").delete().eq("id",id);if(error){setSavedLuckySets(previous);if(wasEditing)useSavedLuckySet(target);window.alert("删除失败，请检查网络后重试")}}
-  async function applyLuckySettings(){const options=luckyOptions();if(!options.length)return;setLuckySettingsOpen(false);previewLuckyOptions(options);if(luckyMode!=="manual"||!user||!member)return;if(editingLuckySetId&&editingLuckySetId>0){const id=editingLuckySetId;const name=luckySetName.trim()||savedLuckySets.find(set=>set.id===id)?.name||"未命名组合";const previous=savedLuckySets;setSavedLuckySets(current=>current.map(set=>set.id===id?{...set,name,options}:set));const {error}=await supabase.from("shared_calendar_lucky_sets").update({name,options,updated_at:new Date().toISOString()}).eq("id",id);if(error){setSavedLuckySets(previous);window.alert("常用组合修改失败，请检查网络后重试")}return}if(!rememberLuckySet||!luckySetName.trim())return;const optimistic:LuckySet={id:-Date.now(),name:luckySetName.trim(),options,ownerUserId:user.id,owner:member.email};setSavedLuckySets(current=>[optimistic,...current]);setRememberLuckySet(false);setLuckySetName("");const {data,error}=await supabase.from("shared_calendar_lucky_sets").insert({name:optimistic.name,options,owner_user_id:user.id,owner_email:member.email}).select("id,name,options,owner_user_id,owner_email").single();if(error){setSavedLuckySets(current=>current.filter(set=>set.id!==optimistic.id));window.alert("常用组合保存失败，请检查网络后重试");return}setSavedLuckySets(current=>current.map(set=>set.id===optimistic.id?{id:data.id,name:data.name,options:data.options||[],ownerUserId:data.owner_user_id,owner:data.owner_email}:set))}
+    return () => {
+      alive = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+  useEffect(() => {
+    const control = luckySelectAllRef.current;
+    if (!control) return;
+    const candidates = luckyFilteredWishes();
+    const selected = candidates.filter((wish) =>
+      selectedLuckyWishIds.includes(wish.id),
+    ).length;
+    control.checked = candidates.length > 0 && selected === candidates.length;
+    control.indeterminate = selected > 0 && selected < candidates.length;
+  }, [
+    wishes,
+    luckyCategory,
+    luckyFilter,
+    luckyImportMode,
+    selectedLuckyWishIds,
+  ]);
+  const dates = useMemo(() => {
+    const start =
+      view === "month"
+        ? monday(new Date(cursor.getFullYear(), cursor.getMonth(), 1))
+        : monday(cursor);
+    return Array.from({ length: view === "month" ? 42 : 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  }, [cursor, view]);
+  const label =
+    view === "month"
+      ? `${cursor.getFullYear()} 年 ${cursor.getMonth() + 1} 月`
+      : `${dates[0].getMonth() + 1} 月 ${dates[0].getDate()} 日 — ${dates[6].getMonth() + 1} 月 ${dates[6].getDate()} 日`;
+  async function signIn(event: FormEvent) {
+    event.preventDefault();
+    if (!loginEmail.trim() || !password) return;
+    setSigningIn(true);
+    setAuthMessage("");
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginEmail.trim(),
+      password,
+    });
+    if (error) setAuthMessage("邮箱或密码不正确");
+    setSigningIn(false);
+  }
+  async function sendRecovery(event: FormEvent) {
+    event.preventDefault();
+    if (!loginEmail.trim()) return;
+    setSigningIn(true);
+    setAuthMessage("");
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      loginEmail.trim(),
+      { redirectTo },
+    );
+    if (error)
+      setAuthMessage(
+        error.message.includes("rate limit")
+          ? "发送过于频繁，请稍后再试"
+          : "暂时无法发送重设邮件，请稍后再试",
+      );
+    else setAuthView("sent");
+    setSigningIn(false);
+  }
+  function passwordValidation() {
+    if (newPassword.length < 8) return "新密码至少需要 8 位";
+    if (newPassword !== confirmPassword) return "两次输入的新密码不一致";
+    return "";
+  }
+  async function updatePassword(fromRecovery = false) {
+    const validation = passwordValidation();
+    if (validation) {
+      setPasswordMessage(validation);
+      return;
+    }
+    if (!fromRecovery && !currentPassword) {
+      setPasswordMessage("请输入当前密码");
+      return;
+    }
+    setSavingPassword(true);
+    setPasswordMessage("");
+    const attributes = fromRecovery
+      ? { password: newPassword }
+      : { password: newPassword, currentPassword };
+    const { error } = await supabase.auth.updateUser(attributes);
+    if (error)
+      setPasswordMessage(
+        fromRecovery
+          ? "重设链接可能已失效，请重新发送邮件"
+          : "当前密码不正确，或新密码不符合要求",
+      );
+    else {
+      setPasswordMessage("密码已更新");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      if (fromRecovery) {
+        setRecoveryMode(false);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+    setSavingPassword(false);
+  }
+  function startAdd(date?: string, time = "12:00") {
+    const startDate = date || dateKey(new Date());
+    setEditing(null);
+    setDraft({
+      title: "",
+      date: startDate,
+      endDate: startDate,
+      time,
+      endTime: nextHour(time),
+      timezone: "Asia/Shanghai",
+      useTimezone: false,
+      allDay: false,
+      participants: [],
+      location: "",
+      note: "",
+    });
+    setOpen(true);
+  }
+  function startEdit(e: CalendarEvent) {
+    if (!e.canEdit) return;
+    const timezone = e.timezone || "Asia/Shanghai";
+    setEditing(e);
+    setDraft({
+      title: e.title,
+      date: e.date,
+      endDate: e.endDate,
+      time: e.time,
+      endTime: e.endTime,
+      timezone,
+      useTimezone: timezone !== "Asia/Shanghai",
+      allDay: e.allDay,
+      participants: e.participants || [],
+      location: e.location || "",
+      note: e.note || "",
+    });
+    setOpen(true);
+  }
+  const validRange =
+    draft.endDate > draft.date ||
+    (draft.endDate === draft.date &&
+      (draft.allDay || draft.endTime > draft.time));
+  const mutationLock = useRef(false);
+  function beginMutation() {
+    if (mutationLock.current) return false;
+    mutationLock.current = true;
+    return true;
+  }
+  function finishMutation() {
+    mutationLock.current = false;
+  }
+  function showMutationError(message: string) {
+    finishMutation();
+    window.alert(message);
+  }
+  async function save() {
+    if (
+      !user ||
+      !member ||
+      !draft.title.trim() ||
+      !validRange ||
+      !beginMutation()
+    )
+      return;
+    const previous = events;
+    const optimistic: CalendarEvent = {
+      id: editing?.id ?? -Date.now(),
+      title: draft.title.trim(),
+      date: draft.date,
+      endDate: draft.endDate,
+      time: draft.time,
+      endTime: draft.endTime,
+      owner: editing?.owner || member.email,
+      participants: draft.participants,
+      location: draft.location,
+      note: draft.note,
+      timezone: draft.timezone,
+      allDay: draft.allDay,
+      canEdit: true,
+    };
+    const values = {
+      title: optimistic.title,
+      event_date: draft.date,
+      end_date: draft.endDate,
+      event_time: draft.time,
+      end_time: draft.endTime,
+      all_day: draft.allDay,
+      participant_emails: draft.participants,
+      location: draft.location,
+      note: draft.note,
+      timezone: draft.timezone,
+      updated_at: new Date().toISOString(),
+    };
+    setOpen(false);
+    setEvents((current) =>
+      editing
+        ? current.map((item) => (item.id === editing.id ? optimistic : item))
+        : [...current, optimistic],
+    );
+    const { error } = editing
+      ? await supabase
+          .from("shared_calendar_events")
+          .update(values)
+          .eq("id", editing.id)
+      : await supabase
+          .from("shared_calendar_events")
+          .insert({
+            ...values,
+            owner_user_id: user.id,
+            owner_email: member.email,
+          });
+    if (error) {
+      setEvents(previous);
+      setOpen(true);
+      showMutationError("保存失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  async function remove() {
+    if (!editing || !user || !beginMutation()) return;
+    const previous = events;
+    setOpen(false);
+    setEvents((current) => current.filter((item) => item.id !== editing.id));
+    const { error } = await supabase
+      .from("shared_calendar_events")
+      .delete()
+      .eq("id", editing.id);
+    if (error) {
+      setEvents(previous);
+      setOpen(true);
+      showMutationError("删除失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  function startAddSpecial() {
+    setEditingSpecial(null);
+    setSpecialDraft({
+      title: "",
+      date: today,
+      kind: "meet",
+      color: "sage",
+      startTime: "12:00",
+      endTime: "13:00",
+      timezone: "Asia/Shanghai",
+      repeatYearly: false,
+      showInCalendar: true,
+      participants: [],
+    });
+    setSpecialOpen(true);
+  }
+  function startEditSpecial(day: SpecialDay) {
+    if (!day.canEdit) return;
+    const permittedParticipants = day.participants.filter((email) =>
+      visibility.some(
+        (row) =>
+          row.viewer_email === email && row.owner_email === member?.email,
+      ),
+    );
+    setEditingSpecial(day);
+    setSpecialDraft({
+      title: day.title,
+      date: day.date,
+      kind: day.kind,
+      color: day.color,
+      startTime: day.startTime || "12:00",
+      endTime: day.endTime || "13:00",
+      timezone: day.timezone,
+      repeatYearly: day.repeatYearly,
+      showInCalendar: day.showInCalendar,
+      participants: permittedParticipants,
+    });
+    setSpecialOpen(true);
+  }
+  async function saveSpecial() {
+    if (
+      !user ||
+      !member ||
+      !specialDraft.title.trim() ||
+      !specialDraft.date ||
+      (specialDraft.kind === "meet" &&
+        specialDraft.endTime <= specialDraft.startTime) ||
+      !beginMutation()
+    )
+      return;
+    const previous = specialDays;
+    const type = SPECIAL_TYPES.find((item) => item.kind === specialDraft.kind)!;
+    const permittedParticipants = specialDraft.participants.filter((email) =>
+      visibility.some(
+        (row) => row.viewer_email === email && row.owner_email === member.email,
+      ),
+    );
+    const optimistic: SpecialDay = {
+      id: editingSpecial?.id ?? -Date.now(),
+      title: specialDraft.title.trim(),
+      date: specialDraft.date,
+      kind: specialDraft.kind,
+      icon: type.icon,
+      color: specialDraft.color,
+      startTime: specialDraft.kind === "meet" ? specialDraft.startTime : null,
+      endTime: specialDraft.kind === "meet" ? specialDraft.endTime : null,
+      timezone: specialDraft.timezone,
+      repeatYearly: specialDraft.repeatYearly,
+      showInCalendar: specialDraft.showInCalendar,
+      owner: editingSpecial?.owner || member.email,
+      participants: permittedParticipants,
+      canEdit: true,
+    };
+    const values = {
+      title: optimistic.title,
+      special_date: specialDraft.date,
+      kind: specialDraft.kind,
+      icon: type.icon,
+      color: specialDraft.color,
+      start_time: optimistic.startTime,
+      end_time: optimistic.endTime,
+      timezone: specialDraft.timezone,
+      repeat_yearly: specialDraft.repeatYearly,
+      show_in_calendar: specialDraft.showInCalendar,
+      participant_emails: permittedParticipants,
+      updated_at: new Date().toISOString(),
+    };
+    setSpecialOpen(false);
+    setSpecialDays((current) =>
+      editingSpecial
+        ? current.map((item) =>
+            item.id === editingSpecial.id ? optimistic : item,
+          )
+        : [...current, optimistic],
+    );
+    const { error } = editingSpecial
+      ? await supabase
+          .from("shared_calendar_special_days")
+          .update(values)
+          .eq("id", editingSpecial.id)
+      : await supabase
+          .from("shared_calendar_special_days")
+          .insert({
+            ...values,
+            owner_user_id: user.id,
+            owner_email: member.email,
+          });
+    if (error) {
+      setSpecialDays(previous);
+      setSpecialOpen(true);
+      showMutationError("保存失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  async function removeSpecial() {
+    if (!editingSpecial || !user || !beginMutation()) return;
+    const previous = specialDays;
+    setSpecialOpen(false);
+    setSpecialDays((current) =>
+      current.filter((item) => item.id !== editingSpecial.id),
+    );
+    const { error } = await supabase
+      .from("shared_calendar_special_days")
+      .delete()
+      .eq("id", editingSpecial.id);
+    if (error) {
+      setSpecialDays(previous);
+      setSpecialOpen(true);
+      showMutationError("删除失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  async function changeColor(color: string) {
+    if (
+      !member ||
+      members.some((m) => m.email !== member.email && m.color === color)
+    )
+      return;
+    const { error } = await supabase
+      .from("shared_calendar_members")
+      .update({ color })
+      .eq("email", member.email);
+    if (!error) await load(user);
+  }
+  async function saveBirthday() {
+    if (!member) return;
+    setProfileMessage("");
+    const { error } = await supabase
+      .from("shared_calendar_members")
+      .update({ birthday: birthday || null })
+      .eq("email", member.email);
+    if (error) setProfileMessage("生日暂时无法保存");
+    else {
+      setProfileMessage("生日已保存，会自动显示在每一年");
+      await load(user);
+    }
+  }
+  async function toggleVisibility(viewer: string, owner: string) {
+    if (
+      user?.email?.toLowerCase() !== "elainezhang1110@gmail.com" ||
+      viewer === owner
+    )
+      return;
+    const exists = visibility.some(
+      (row) => row.viewer_email === viewer && row.owner_email === owner,
+    );
+    const result = exists
+      ? await supabase
+          .from("shared_calendar_visibility")
+          .delete()
+          .eq("viewer_email", viewer)
+          .eq("owner_email", owner)
+      : await supabase
+          .from("shared_calendar_visibility")
+          .insert({ viewer_email: viewer, owner_email: owner });
+    if (!result.error) await load(user);
+  }
+  function startAddWish() {
+    setEditingWish(null);
+    setWishDraft({
+      title: "",
+      category: wishFilter,
+      region: "",
+      place: "",
+      note: "",
+      status: "wish",
+      mediaType: "tv",
+      releaseDate: "",
+      plannedWatchDate: "",
+    });
+    setWishOpen(true);
+  }
+  function startEditWish(wish: Wish) {
+    if (wish.ownerUserId !== user?.id) return;
+    setEditingWish(wish);
+    setWishDraft({
+      title: wish.title,
+      category: wish.category,
+      region: wish.region,
+      place: wish.place,
+      note: wish.note,
+      status: wish.status,
+      mediaType: wish.mediaType || "tv",
+      releaseDate: wish.releaseDate || "",
+      plannedWatchDate: wish.plannedWatchDate || "",
+    });
+    setWishOpen(true);
+  }
+  async function saveWish() {
+    const isWatch = wishDraft.category === "watch";
+    if (
+      !user ||
+      !member ||
+      !wishDraft.title.trim() ||
+      (!isWatch && !wishDraft.region.trim()) ||
+      !beginMutation()
+    )
+      return;
+    const previous = wishes;
+    const optimistic: Wish = {
+      id: editingWish?.id ?? -Date.now(),
+      title: wishDraft.title.trim(),
+      category: wishDraft.category,
+      region: isWatch ? "" : wishDraft.region.trim(),
+      place: wishDraft.place.trim(),
+      note: wishDraft.note.trim(),
+      status: wishDraft.status,
+      mediaType: isWatch ? wishDraft.mediaType : null,
+      releaseDate:
+        isWatch && wishDraft.releaseDate ? wishDraft.releaseDate : null,
+      plannedWatchDate:
+        isWatch && wishDraft.plannedWatchDate
+          ? wishDraft.plannedWatchDate
+          : null,
+      ownerUserId: editingWish?.ownerUserId || user.id,
+      owner: editingWish?.owner || member.email,
+      participants: editingWish?.participants || [member.email],
+    };
+    const values = {
+      title: optimistic.title,
+      category: optimistic.category,
+      region: optimistic.region,
+      place: optimistic.place,
+      note: optimistic.note,
+      status: optimistic.status,
+      media_type: optimistic.mediaType,
+      release_date: optimistic.releaseDate,
+      planned_watch_date: optimistic.plannedWatchDate,
+      updated_at: new Date().toISOString(),
+    };
+    setWishOpen(false);
+    setWishes((current) =>
+      editingWish
+        ? current.map((item) =>
+            item.id === editingWish.id ? optimistic : item,
+          )
+        : [optimistic, ...current],
+    );
+    const result = editingWish
+      ? await supabase
+          .from("shared_calendar_wishes")
+          .update(values)
+          .eq("id", editingWish.id)
+      : await supabase
+          .from("shared_calendar_wishes")
+          .insert({
+            ...values,
+            owner_user_id: user.id,
+            owner_email: member.email,
+            participant_emails: [member.email],
+          });
+    if (result.error) {
+      setWishes(previous);
+      setWishOpen(true);
+      showMutationError("保存失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  async function removeWish() {
+    if (!editingWish || !user || !beginMutation()) return;
+    const previous = wishes;
+    setWishOpen(false);
+    setWishes((current) =>
+      current.filter((item) => item.id !== editingWish.id),
+    );
+    const { error } = await supabase
+      .from("shared_calendar_wishes")
+      .delete()
+      .eq("id", editingWish.id);
+    if (error) {
+      setWishes(previous);
+      setWishOpen(true);
+      showMutationError("删除失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  async function toggleWish(wish: Wish) {
+    if (!user || !member || wish.ownerUserId === user.id || !beginMutation())
+      return;
+    const previous = wishes;
+    const joined = wish.participants.includes(member.email);
+    setWishes((current) =>
+      current.map((item) =>
+        item.id === wish.id
+          ? {
+              ...item,
+              participants: joined
+                ? item.participants.filter((email) => email !== member.email)
+                : [...item.participants, member.email],
+            }
+          : item,
+      ),
+    );
+    const { error } = await supabase.rpc(
+      "toggle_shared_calendar_wish_participation",
+      { p_wish_id: wish.id },
+    );
+    if (error) {
+      setWishes(previous);
+      showMutationError("操作失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  async function changeWishStatus(wish: Wish, status: WishStatus) {
+    if (
+      !user ||
+      wish.ownerUserId !== user.id ||
+      wish.status === status ||
+      !beginMutation()
+    )
+      return;
+    const previous = wishes;
+    setWishes((current) =>
+      current.map((item) => (item.id === wish.id ? { ...item, status } : item)),
+    );
+    const { error } = await supabase
+      .from("shared_calendar_wishes")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", wish.id);
+    if (error) {
+      setWishes(previous);
+      showMutationError("状态保存失败，请检查网络后重试");
+      return;
+    }
+    finishMutation();
+    void load(user);
+  }
+  function luckyCategoryWishes() {
+    return wishes.filter((wish) => wish.category === luckyCategory);
+  }
+  function luckyFilteredWishes() {
+    return luckyCategoryWishes().filter(
+      (wish) =>
+        luckyFilter === "all" ||
+        (luckyCategory === "watch"
+          ? wish.mediaType === luckyFilter
+          : wish.region === luckyFilter),
+    );
+  }
+  function luckyOptions() {
+    if (luckyMode === "manual")
+      return manualLuckyOptions.map((option) => option.trim()).filter(Boolean);
+    const candidates = luckyFilteredWishes();
+    return (
+      luckyImportMode === "all"
+        ? candidates
+        : candidates.filter((wish) => selectedLuckyWishIds.includes(wish.id))
+    ).map((wish) => wish.title);
+  }
+  function addManualLuckyOption() {
+    setManualLuckyOptions((current) => [...current, ""]);
+  }
+  function updateManualLuckyOption(index: number, value: string) {
+    setManualLuckyOptions((current) =>
+      current.map((option, optionIndex) =>
+        optionIndex === index ? value : option,
+      ),
+    );
+  }
+  function removeManualLuckyOption(index: number) {
+    setManualLuckyOptions((current) =>
+      current.filter((_, optionIndex) => optionIndex !== index),
+    );
+  }
+  function changeLuckyCategory(category: WishCategory) {
+    setLuckyCategory(category);
+    setLuckyFilter("all");
+    setSelectedLuckyWishIds(
+      wishes
+        .filter((wish) => wish.category === category)
+        .map((wish) => wish.id),
+    );
+  }
+  function changeLuckyImportMode(mode: "all" | "manual") {
+    setLuckyImportMode(mode);
+    if (mode === "manual")
+      setSelectedLuckyWishIds(luckyFilteredWishes().map((wish) => wish.id));
+  }
+  function toggleLuckyWish(id: number) {
+    setSelectedLuckyWishIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  }
+  function spinLucky() {
+    const options = luckyOptions();
+    if (slotSpinning || options.length === 0) return;
+    setSlotSpinning(true);
+    setSlotWinner("");
+    let turns = 0;
+    const timer = window.setInterval(() => {
+      setSlotCells(
+        Array.from(
+          { length: 9 },
+          () => options[Math.floor(Math.random() * options.length)],
+        ),
+      );
+      turns += 1;
+      if (turns < 18) return;
+      window.clearInterval(timer);
+      const winner = options[Math.floor(Math.random() * options.length)];
+      setSlotCells([
+        options[Math.floor(Math.random() * options.length)],
+        options[Math.floor(Math.random() * options.length)],
+        options[Math.floor(Math.random() * options.length)],
+        winner,
+        winner,
+        winner,
+        options[Math.floor(Math.random() * options.length)],
+        options[Math.floor(Math.random() * options.length)],
+        options[Math.floor(Math.random() * options.length)],
+      ]);
+      setSlotWinner(winner);
+      setSlotSpinning(false);
+    }, 85);
+  }
+  function previewLuckyOptions(options: string[]) {
+    setSlotCells(
+      Array.from(
+        { length: 9 },
+        () => options[Math.floor(Math.random() * options.length)],
+      ),
+    );
+    setSlotConfigured(true);
+    setSlotWinner("");
+  }
+  function useSavedLuckySet(set: LuckySet) {
+    setLuckyMode("manual");
+    setManualLuckyOptions(set.options.length ? set.options : [""]);
+    setEditingLuckySetId(set.id);
+    setLuckySetMenuOpen(false);
+    setRememberLuckySet(false);
+    setLuckySetName(set.name);
+    previewLuckyOptions(set.options);
+  }
+  function clearLuckySetEditor() {
+    setEditingLuckySetId(null);
+    setLuckySetMenuOpen(false);
+    setManualLuckyOptions([""]);
+    setLuckySetName("");
+    setRememberLuckySet(false);
+  }
+  async function deleteSavedLuckySet(id: number) {
+    if (!id || id < 0) return;
+    const target = savedLuckySets.find((set) => set.id === id);
+    if (!target || !window.confirm(`删除“${target.name}”这个常用组合？`))
+      return;
+    const previous = savedLuckySets;
+    const wasEditing = editingLuckySetId === id;
+    setSavedLuckySets((current) => current.filter((set) => set.id !== id));
+    if (wasEditing) clearLuckySetEditor();
+    const { error } = await supabase
+      .from("shared_calendar_lucky_sets")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      setSavedLuckySets(previous);
+      if (wasEditing) useSavedLuckySet(target);
+      window.alert("删除失败，请检查网络后重试");
+    }
+  }
+  async function applyLuckySettings() {
+    const options = luckyOptions();
+    if (!options.length) return;
+    setLuckySettingsOpen(false);
+    previewLuckyOptions(options);
+    if (luckyMode !== "manual" || !user || !member) return;
+    if (editingLuckySetId && editingLuckySetId > 0) {
+      const id = editingLuckySetId;
+      const name =
+        luckySetName.trim() ||
+        savedLuckySets.find((set) => set.id === id)?.name ||
+        "未命名组合";
+      const previous = savedLuckySets;
+      setSavedLuckySets((current) =>
+        current.map((set) => (set.id === id ? { ...set, name, options } : set)),
+      );
+      const { error } = await supabase
+        .from("shared_calendar_lucky_sets")
+        .update({ name, options, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) {
+        setSavedLuckySets(previous);
+        window.alert("常用组合修改失败，请检查网络后重试");
+      }
+      return;
+    }
+    if (!rememberLuckySet || !luckySetName.trim()) return;
+    const optimistic: LuckySet = {
+      id: -Date.now(),
+      name: luckySetName.trim(),
+      options,
+      ownerUserId: user.id,
+      owner: member.email,
+    };
+    setSavedLuckySets((current) => [optimistic, ...current]);
+    setRememberLuckySet(false);
+    setLuckySetName("");
+    const { data, error } = await supabase
+      .from("shared_calendar_lucky_sets")
+      .insert({
+        name: optimistic.name,
+        options,
+        owner_user_id: user.id,
+        owner_email: member.email,
+      })
+      .select("id,name,options,owner_user_id,owner_email")
+      .single();
+    if (error) {
+      setSavedLuckySets((current) =>
+        current.filter((set) => set.id !== optimistic.id),
+      );
+      window.alert("常用组合保存失败，请检查网络后重试");
+      return;
+    }
+    setSavedLuckySets((current) =>
+      current.map((set) =>
+        set.id === optimistic.id
+          ? {
+              id: data.id,
+              name: data.name,
+              options: data.options || [],
+              ownerUserId: data.owner_user_id,
+              owner: data.owner_email,
+            }
+          : set,
+      ),
+    );
+  }
 
-  const expenseMember=(email:string)=>members.find(item=>item.email.toLowerCase()===email.toLowerCase());
-  const expenseName=(email:string)=>expenseMember(email)?.display_name||email.split("@")[0];
-  const expenseColor=(email:string)=>expenseMember(email)?.color||"stone";
-  const formatExpenseMoney=(value:number)=>new Intl.NumberFormat("zh-CN",{style:"currency",currency:"CNY",minimumFractionDigits:2}).format(value);
-  function openExpensePeriod(period:ExpensePeriod){setActiveExpensePeriodId(period.id);setExpenseView("ledger");setExpenseMessage("")}
-  function openNewExpense(){setEditingExpense(null);setExpenseDraft({item:"",amount:"",splitWith:members.map(item=>item.email),note:""});setExpenseOpen(true)}
-  function openExpenseEditor(expense:Expense){if(expense.creatorUserId!==user?.id)return;setEditingExpense(expense);setExpenseDraft({item:expense.item,amount:String(expense.amount),splitWith:expense.splitWith,note:expense.note});setExpenseOpen(true)}
-  function toggleExpenseParticipant(email:string){setExpenseDraft(current=>({...current,splitWith:current.splitWith.includes(email)?current.splitWith.filter(item=>item!==email):[...current.splitWith,email]}))}
-  async function createExpensePeriod(){const name=expensePeriodName.trim();if(!name||!user||!member)return;setExpenseSaving(true);const {data,error}=await supabase.from("shared_calendar_expense_periods").insert({name,owner_user_id:user.id,owner_email:member.email}).select("id,name,owner_user_id,owner_email,created_at").single();setExpenseSaving(false);if(error){window.alert("周期保存失败，请检查网络后重试");return}const period:ExpensePeriod={id:data.id,name:data.name,ownerUserId:data.owner_user_id,owner:data.owner_email,createdAt:data.created_at};setExpensePeriods(current=>[period,...current]);setExpensePeriodName("");setExpensePeriodOpen(false);openExpensePeriod(period)}
-  async function saveExpense(){const item=expenseDraft.item.trim();const amount=Number(expenseDraft.amount);if(!item||!Number.isFinite(amount)||amount<=0||!expenseDraft.splitWith.length||!user||!member||!activeExpensePeriodId)return;setExpenseSaving(true);if(editingExpense){const previous=expenses;const next:Expense={...editingExpense,item,amount,splitWith:expenseDraft.splitWith,note:expenseDraft.note.trim()};setExpenses(current=>current.map(expense=>expense.id===next.id?next:expense));setExpenseOpen(false);const {error}=await supabase.from("shared_calendar_expenses").update({item,amount,split_with:expenseDraft.splitWith,note:expenseDraft.note.trim(),updated_at:new Date().toISOString()}).eq("id",editingExpense.id);setExpenseSaving(false);if(error){setExpenses(previous);window.alert("账单修改失败，请检查网络后重试")}return}const {data,error}=await supabase.from("shared_calendar_expenses").insert({period_id:activeExpensePeriodId,item,amount,payer_email:member.email,split_with:expenseDraft.splitWith,note:expenseDraft.note.trim(),creator_user_id:user.id,creator_email:member.email}).select("id,period_id,item,amount,payer_email,split_with,note,creator_user_id,creator_email,created_at").single();setExpenseSaving(false);if(error){window.alert("账单保存失败，请检查网络后重试");return}setExpenses(current=>[{id:data.id,periodId:data.period_id,item:data.item,amount:Number(data.amount),payer:data.payer_email,splitWith:data.split_with||[],note:data.note||"",creatorUserId:data.creator_user_id,creator:data.creator_email,createdAt:data.created_at},...current]);setExpenseOpen(false)}
-  async function deleteExpense(){if(!editingExpense||editingExpense.creatorUserId!==user?.id||!window.confirm("删除这笔记录？"))return;const previous=expenses;setExpenses(current=>current.filter(expense=>expense.id!==editingExpense.id));setExpenseOpen(false);const {error}=await supabase.from("shared_calendar_expenses").delete().eq("id",editingExpense.id);if(error){setExpenses(previous);window.alert("删除失败，请检查网络后重试")}}
-  function calculateExpenseSettlement(items:Expense[]){const involved=Array.from(new Set(items.flatMap(item=>[item.payer,...item.splitWith])));const paid=new Map<string,number>();const owed=new Map<string,number>();involved.forEach(email=>{paid.set(email,0);owed.set(email,0)});items.forEach(item=>{const cents=Math.round(item.amount*100);paid.set(item.payer,(paid.get(item.payer)||0)+cents);const base=Math.floor(cents/item.splitWith.length);let remainder=cents-base*item.splitWith.length;item.splitWith.forEach(email=>{const share=base+(remainder>0?1:0);if(remainder>0)remainder-=1;owed.set(email,(owed.get(email)||0)+share)})});const balances=involved.map(email=>({email,paid:paid.get(email)||0,owed:owed.get(email)||0,balance:(paid.get(email)||0)-(owed.get(email)||0)}));const creditors=balances.filter(item=>item.balance>0).map(item=>({...item,remaining:item.balance}));const debtors=balances.filter(item=>item.balance<0).map(item=>({...item,remaining:-item.balance}));const transfers:{from:string;to:string;amount:number}[]=[];let debtorIndex=0,creditorIndex=0;while(debtorIndex<debtors.length&&creditorIndex<creditors.length){const amount=Math.min(debtors[debtorIndex].remaining,creditors[creditorIndex].remaining);if(amount>0)transfers.push({from:debtors[debtorIndex].email,to:creditors[creditorIndex].email,amount:amount/100});debtors[debtorIndex].remaining-=amount;creditors[creditorIndex].remaining-=amount;if(debtors[debtorIndex].remaining===0)debtorIndex+=1;if(creditors[creditorIndex].remaining===0)creditorIndex+=1}return{total:items.reduce((sum,item)=>sum+item.amount,0),balances,transfers}}
+  const expenseMember = (email: string) =>
+    members.find((item) => item.email.toLowerCase() === email.toLowerCase());
+  const expenseName = (email: string) =>
+    expenseMember(email)?.display_name || email.split("@")[0];
+  const expenseColor = (email: string) =>
+    expenseMember(email)?.color || "stone";
+  const formatExpenseMoney = (value: number) =>
+    new Intl.NumberFormat("zh-CN", {
+      style: "currency",
+      currency: "CNY",
+      minimumFractionDigits: 2,
+    }).format(value);
+  function openExpensePeriod(period: ExpensePeriod) {
+    setActiveExpensePeriodId(period.id);
+    setExpenseView("ledger");
+    setExpenseMessage("");
+  }
+  function openNewExpense() {
+    setEditingExpense(null);
+    setExpenseDraft({
+      item: "",
+      amount: "",
+      splitWith: members.map((item) => item.email),
+      note: "",
+    });
+    setExpenseOpen(true);
+  }
+  function openExpenseEditor(expense: Expense) {
+    if (expense.creatorUserId !== user?.id) return;
+    setEditingExpense(expense);
+    setExpenseDraft({
+      item: expense.item,
+      amount: String(expense.amount),
+      splitWith: expense.splitWith,
+      note: expense.note,
+    });
+    setExpenseOpen(true);
+  }
+  function toggleExpenseParticipant(email: string) {
+    setExpenseDraft((current) => ({
+      ...current,
+      splitWith: current.splitWith.includes(email)
+        ? current.splitWith.filter((item) => item !== email)
+        : [...current.splitWith, email],
+    }));
+  }
+  async function createExpensePeriod() {
+    const name = expensePeriodName.trim();
+    if (!name || !user || !member) return;
+    setExpenseSaving(true);
+    const { data, error } = await supabase
+      .from("shared_calendar_expense_periods")
+      .insert({ name, owner_user_id: user.id, owner_email: member.email })
+      .select("id,name,owner_user_id,owner_email,created_at")
+      .single();
+    setExpenseSaving(false);
+    if (error) {
+      window.alert("周期保存失败，请检查网络后重试");
+      return;
+    }
+    const period: ExpensePeriod = {
+      id: data.id,
+      name: data.name,
+      ownerUserId: data.owner_user_id,
+      owner: data.owner_email,
+      createdAt: data.created_at,
+    };
+    setExpensePeriods((current) => [period, ...current]);
+    setExpensePeriodName("");
+    setExpensePeriodOpen(false);
+    openExpensePeriod(period);
+  }
+  async function saveExpense() {
+    const item = expenseDraft.item.trim();
+    const amount = Number(expenseDraft.amount);
+    if (
+      !item ||
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      !expenseDraft.splitWith.length ||
+      !user ||
+      !member ||
+      !activeExpensePeriodId
+    )
+      return;
+    setExpenseSaving(true);
+    if (editingExpense) {
+      const previous = expenses;
+      const next: Expense = {
+        ...editingExpense,
+        item,
+        amount,
+        splitWith: expenseDraft.splitWith,
+        note: expenseDraft.note.trim(),
+      };
+      setExpenses((current) =>
+        current.map((expense) => (expense.id === next.id ? next : expense)),
+      );
+      setExpenseOpen(false);
+      const { error } = await supabase
+        .from("shared_calendar_expenses")
+        .update({
+          item,
+          amount,
+          split_with: expenseDraft.splitWith,
+          note: expenseDraft.note.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingExpense.id);
+      setExpenseSaving(false);
+      if (error) {
+        setExpenses(previous);
+        window.alert("账单修改失败，请检查网络后重试");
+      }
+      return;
+    }
+    const { data, error } = await supabase
+      .from("shared_calendar_expenses")
+      .insert({
+        period_id: activeExpensePeriodId,
+        item,
+        amount,
+        payer_email: member.email,
+        split_with: expenseDraft.splitWith,
+        note: expenseDraft.note.trim(),
+        creator_user_id: user.id,
+        creator_email: member.email,
+      })
+      .select(
+        "id,period_id,item,amount,payer_email,split_with,note,creator_user_id,creator_email,created_at",
+      )
+      .single();
+    setExpenseSaving(false);
+    if (error) {
+      window.alert("账单保存失败，请检查网络后重试");
+      return;
+    }
+    setExpenses((current) => [
+      {
+        id: data.id,
+        periodId: data.period_id,
+        item: data.item,
+        amount: Number(data.amount),
+        payer: data.payer_email,
+        splitWith: data.split_with || [],
+        note: data.note || "",
+        creatorUserId: data.creator_user_id,
+        creator: data.creator_email,
+        createdAt: data.created_at,
+      },
+      ...current,
+    ]);
+    setExpenseOpen(false);
+  }
+  async function deleteExpense() {
+    if (
+      !editingExpense ||
+      editingExpense.creatorUserId !== user?.id ||
+      !window.confirm("删除这笔记录？")
+    )
+      return;
+    const previous = expenses;
+    setExpenses((current) =>
+      current.filter((expense) => expense.id !== editingExpense.id),
+    );
+    setExpenseOpen(false);
+    const { error } = await supabase
+      .from("shared_calendar_expenses")
+      .delete()
+      .eq("id", editingExpense.id);
+    if (error) {
+      setExpenses(previous);
+      window.alert("删除失败，请检查网络后重试");
+    }
+  }
+  async function deleteExpensePeriod(period: ExpensePeriod) {
+    if (
+      !window.confirm(`删除账单“${period.name}”？其中的消费记录也会一起删除。`)
+    )
+      return;
+    const previousPeriods = expensePeriods;
+    const previousExpenses = expenses;
+    setExpensePeriods((current) =>
+      current.filter((item) => item.id !== period.id),
+    );
+    setExpenses((current) =>
+      current.filter((item) => item.periodId !== period.id),
+    );
+    const { error } = await supabase
+      .from("shared_calendar_expense_periods")
+      .delete()
+      .eq("id", period.id);
+    if (error) {
+      setExpensePeriods(previousPeriods);
+      setExpenses(previousExpenses);
+      window.alert("账单删除失败，请检查网络后重试");
+    }
+  }
+  function openExpenseSettlement() {
+    setExpenseView("settlement");
+    setExpensePrinting(true);
+    window.setTimeout(() => setExpensePrinting(false), 1450);
+  }
+  function calculateExpenseSettlement(items: Expense[]) {
+    const involved = Array.from(
+      new Set(items.flatMap((item) => [item.payer, ...item.splitWith])),
+    );
+    const paid = new Map<string, number>();
+    const owed = new Map<string, number>();
+    involved.forEach((email) => {
+      paid.set(email, 0);
+      owed.set(email, 0);
+    });
+    items.forEach((item) => {
+      const cents = Math.round(item.amount * 100);
+      paid.set(item.payer, (paid.get(item.payer) || 0) + cents);
+      const base = Math.floor(cents / item.splitWith.length);
+      let remainder = cents - base * item.splitWith.length;
+      item.splitWith.forEach((email) => {
+        const share = base + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder -= 1;
+        owed.set(email, (owed.get(email) || 0) + share);
+      });
+    });
+    const balances = involved.map((email) => ({
+      email,
+      paid: paid.get(email) || 0,
+      owed: owed.get(email) || 0,
+      balance: (paid.get(email) || 0) - (owed.get(email) || 0),
+    }));
+    const creditors = balances
+      .filter((item) => item.balance > 0)
+      .map((item) => ({ ...item, remaining: item.balance }));
+    const debtors = balances
+      .filter((item) => item.balance < 0)
+      .map((item) => ({ ...item, remaining: -item.balance }));
+    const transfers: { from: string; to: string; amount: number }[] = [];
+    let debtorIndex = 0,
+      creditorIndex = 0;
+    while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+      const amount = Math.min(
+        debtors[debtorIndex].remaining,
+        creditors[creditorIndex].remaining,
+      );
+      if (amount > 0)
+        transfers.push({
+          from: debtors[debtorIndex].email,
+          to: creditors[creditorIndex].email,
+          amount: amount / 100,
+        });
+      debtors[debtorIndex].remaining -= amount;
+      creditors[creditorIndex].remaining -= amount;
+      if (debtors[debtorIndex].remaining === 0) debtorIndex += 1;
+      if (creditors[creditorIndex].remaining === 0) creditorIndex += 1;
+    }
+    return {
+      total: items.reduce((sum, item) => sum + item.amount, 0),
+      balances,
+      transfers,
+    };
+  }
 
-
-  if(!authReady)return <main className="login-shell"><div className="login-card"><p className="eyebrow">SHARED CALENDAR</p><h1>正在检查登录状态…</h1></div></main>;
-  if(recoveryMode)return <main className="login-shell"><section className="login-card"><div className="login-mark">↻</div><p className="eyebrow">RESET PASSWORD</p><h1>设置新密码</h1><p className="login-copy">重设链接验证成功，请为你的 Shared Calendar 账户设置新密码。</p><label>新密码<input type="password" autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="至少 8 位"/></label><label>确认新密码<input type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="再次输入新密码"/></label><button className="primary login-action" onClick={()=>updatePassword(true)} disabled={savingPassword}>{savingPassword?"正在保存…":"保存新密码"}</button>{passwordMessage&&<p className={`auth-message ${passwordMessage==="密码已更新"?"success":""}`}>{passwordMessage}</p>}</section></main>;
-  if(!user&&authView==="forgot")return <main className="login-shell"><section className="login-card"><div className="login-mark">↻</div><p className="eyebrow">RESET PASSWORD</p><h1>找回密码</h1><p className="login-copy">输入你的受邀邮箱，我们会发送一封重设密码邮件。</p><form onSubmit={sendRecovery}><label>邮箱地址<input type="email" autoComplete="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} placeholder="name@example.com" autoFocus/></label><button className="primary login-action" type="submit" disabled={signingIn}>{signingIn?"正在发送…":"发送重设邮件"}</button></form><button className="text-action" onClick={()=>{setAuthView("login");setAuthMessage("")}}>返回登录</button>{authMessage&&<p className="auth-message">{authMessage}</p>}</section></main>;
-  if(!user&&authView==="sent")return <main className="login-shell"><section className="login-card sent-card"><div className="login-mark success-mark">✓</div><p className="eyebrow">EMAIL SENT</p><h1>请检查邮箱</h1><p className="login-copy">如果该邮箱可以使用，你会收到一封来自 Supabase 的重设密码邮件。点击邮件中的链接即可设置新密码。</p><p className="sent-email">{loginEmail}</p><button className="text-action" onClick={()=>{setAuthView("login");setAuthMessage("")}}>返回登录</button></section></main>;
-  if(!user)return <main className="login-shell"><section className="login-card"><div className="login-mark">S</div><p className="eyebrow">PRIVATE</p><h1>Shared Calendar</h1><p className="login-copy">仅限获邀成员使用邮箱和密码登录。</p><form onSubmit={signIn}><label>邮箱地址<input type="email" autoComplete="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} placeholder="name@example.com"/></label><label>密码<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="输入密码"/></label><button className="primary login-action" type="submit" disabled={signingIn}>{signingIn?"正在登录…":"登录"}</button></form><button className="text-action forgot-action" onClick={()=>{setAuthView("forgot");setAuthMessage("")}}>忘记密码？</button>{authMessage&&<p className="auth-message">{authMessage}</p>}</section></main>;
-  if(memberLoading)return <main className="login-shell"><section className="login-card member-loading-card"><div className="loading-spinner"/><p className="eyebrow">MEMBER CHECK</p><h1>正在进入日历…</h1><p className="login-copy">正在验证成员身份并同步共享内容，请稍候。</p></section></main>;
-  if(memberLoadError)return <main className="login-shell"><section className="login-card sent-card"><div className="login-mark">!</div><p className="eyebrow">CONNECTION ERROR</p><h1>成员验证未完成</h1><p className="login-copy">{memberLoadError}</p><button className="primary login-action" onClick={()=>load(user)}>重新验证</button><button className="text-action" onClick={()=>supabase.auth.signOut()}>退出登录</button></section></main>;
-  if(!member)return <main className="login-shell"><section className="login-card"><div className="login-mark">!</div><p className="eyebrow">ACCESS PENDING</p><h1>邮箱尚未获邀</h1><p className="login-copy">{user.email} 已通过邮箱验证，但尚未加入 Shared Calendar 的获邀名单。</p><button className="primary login-action" onClick={()=>supabase.auth.signOut()}>退出并更换邮箱</button></section></main>;
-  const colors=Object.fromEntries(members.map(m=>[m.email,m.color]));
-  function eventStyle(event:CalendarEvent){const people=event.birthday?[event.owner]:[event.owner,...event.participants];const participantColors=people.map(email=>EVENT_COLORS[colors[email]||"stone"]);const size=100/participantColors.length;const stops=participantColors.flatMap((color,index)=>[`${color} ${index*size}%`,`${color} ${(index+1)*size}%`]).join(",");return {background:`linear-gradient(to bottom, ${stops})`,borderLeftColor:EVENT_LINES[colors[event.owner]||"stone"]}}
-  function matchesFilter(event:CalendarEvent){return selectedOwners.includes(event.owner)||event.participants.some(email=>selectedOwners.includes(email))}
-  function toggleOwner(email:string){setSelectedOwners(current=>current.includes(email)?current.length===1?current:current.filter(owner=>owner!==email):[...current,email])}
-  function toggleParticipant(email:string){setDraft({...draft,participants:draft.participants.includes(email)?draft.participants.filter(item=>item!==email):[...draft.participants,email]})}
-  function toggleSpecialParticipant(email:string){setSpecialDraft({...specialDraft,participants:specialDraft.participants.includes(email)?specialDraft.participants.filter(item=>item!==email):[...specialDraft.participants,email]})}
-  function changeDraftTimezone(timezone:string){if(draft.allDay){setDraft({...draft,timezone});return}const start=convertLocal(draft.date,draft.time,draft.timezone,timezone);const end=convertLocal(draft.endDate,draft.endTime,draft.timezone,timezone);setDraft({...draft,date:start.date,time:start.time,endDate:end.date,endTime:end.time,timezone})}
-  function toggleDraftTimezone(enabled:boolean){if(enabled){setDraft({...draft,useTimezone:true});return}if(draft.timezone==="Asia/Shanghai"){setDraft({...draft,useTimezone:false});return}if(draft.allDay){setDraft({...draft,useTimezone:false,timezone:"Asia/Shanghai"});return}const start=convertLocal(draft.date,draft.time,draft.timezone,"Asia/Shanghai");const end=convertLocal(draft.endDate,draft.endTime,draft.timezone,"Asia/Shanghai");setDraft({...draft,useTimezone:false,timezone:"Asia/Shanghai",date:start.date,time:start.time,endDate:end.date,endTime:end.time})}
-  const isAdmin=user.email?.toLowerCase()==="elainezhang1110@gmail.com";const allowedOwners=members.filter(item=>item.email===member.email||visibility.some(row=>row.viewer_email===member.email&&row.owner_email===item.email));const eligibleSpecialParticipants=members.filter(item=>item.email!==member.email&&visibility.some(row=>row.viewer_email===item.email&&row.owner_email===member.email));
-  const birthdaySpecialDays=members.flatMap((item,index)=>item.birthday?[{id:-(10000+index),title:`${item.display_name} 的生日`,date:item.birthday,kind:"birthday" as SpecialKind,icon:"♢",color:(SPECIAL_COLORS.some(color=>color.color===item.color)?item.color:"stone") as SpecialColor,startTime:null,endTime:null,timezone:"Asia/Shanghai",repeatYearly:true,showInCalendar:true,owner:item.email,participants:[],canEdit:false,memberBirthday:true}]:[]);const specialPageDays=[...specialDays,...birthdaySpecialDays];
-  const birthdayEvents=dates.flatMap((date,dateIndex)=>members.flatMap((item,memberIndex)=>item.birthday&&item.birthday.slice(5)===dateKey(date).slice(5)?[{id:-(dateIndex*100+memberIndex+1),title:`${item.display_name} 的生日`,date:dateKey(date),endDate:dateKey(date),time:"09:00",endTime:"10:00",owner:item.email,participants:[],location:"",note:"与纪念日共用成员生日资料，每年自动重复",timezone:zone,allDay:true,birthday:true} as CalendarEvent]:[]));
-  const specialEvents=dates.flatMap((date,dateIndex)=>specialDays.filter(day=>day.showInCalendar&&matchesFilter({owner:day.owner,participants:day.participants} as CalendarEvent)&&occurrenceDate(day,date.getFullYear())===dateKey(date)).map((day,index)=>eventInZone({id:-(900000+dateIndex*100+index),title:`${day.icon} ${day.title}`,date:dateKey(date),endDate:dateKey(date),time:day.kind==="meet"&&day.startTime?day.startTime:"09:00",endTime:day.kind==="meet"&&day.endTime?day.endTime:"10:00",owner:day.owner,participants:day.participants,location:"",note:"纪念日",timezone:day.timezone,allDay:day.kind!=="meet",birthday:day.kind==="birthday",canEdit:false} as CalendarEvent,zone)));
-  const shownEvents=[...events.map(event=>eventInZone(event,zone)),...birthdayEvents,...specialEvents];const displayEvents=shownEvents.flatMap(eventDayParts);
-  const wishRegions=Array.from(new Set(wishes.filter(wish=>wish.category===wishFilter&&wish.region).map(wish=>wish.region))).sort((a,b)=>a.localeCompare(b,"zh-CN"));
-  const activeWishStatuses=wishFilter==="watch"?WATCH_STATUSES:WISH_STATUSES;
-  const visibleWishes=wishes.filter(wish=>wish.category===wishFilter&&(wishFilter==="watch"?(wishMediaType==="all"||wish.mediaType===wishMediaType):(wishRegion==="all"||wish.region===wishRegion))&&(wishStatus==="all"||wish.status===wishStatus));
-  const luckyImportFilters=luckyCategory==="watch"?WATCH_TYPES.map(item=>({value:item.value,label:item.label})):Array.from(new Set(luckyCategoryWishes().map(wish=>wish.region).filter(Boolean))).map(region=>({value:region,label:region}));
-  const luckyCandidates=luckyFilteredWishes();
-  const activeExpensePeriod=expensePeriods.find(period=>period.id===activeExpensePeriodId)||null;
-  const activePeriodExpenses=activeExpensePeriodId?expenses.filter(expense=>expense.periodId===activeExpensePeriodId):[];
-  const activeExpenseSettlement=calculateExpenseSettlement(activePeriodExpenses);
-  const expensePage=<section className="expense-page"><div className="expense-page-head"><div><p className="eyebrow">SHARED EXPENSES</p><h2>一起记账</h2></div>{expenseView==="periods"?<button className="primary expense-new-period" onClick={()=>{setExpensePeriodName("");setExpensePeriodOpen(true)}}>＋ 新周期</button>:<button className="expense-back" onClick={()=>setExpenseView("periods")}>‹ 所有周期</button>}</div>{expenseView==="periods"?<div className="expense-period-list">{expensePeriods.length?expensePeriods.map(period=>{const periodItems=expenses.filter(expense=>expense.periodId===period.id);const total=periodItems.reduce((sum,expense)=>sum+expense.amount,0);return <button className="expense-period-row" key={period.id} onClick={()=>openExpensePeriod(period)}><span className="expense-period-icon">¥</span><span className="expense-period-copy"><b>{period.name}</b><small>{periodItems.length} 笔记录 · {periodItems.length?Array.from(new Set(periodItems.flatMap(expense=>expense.splitWith))).map(expenseName).join("、"):"暂无参与成员"}</small></span><span className="expense-period-total"><strong>{formatExpenseMoney(total)}</strong><small>{periodItems.length?"可以结算":"等待记录"}</small></span><i>›</i></button>}):<div className="expense-empty"><span>¥</span><h3>还没有记账周期</h3><p>新建一个周期，四个人就可以开始记录付款。</p><button className="primary" onClick={()=>setExpensePeriodOpen(true)}>新建第一个周期</button></div>}</div>:expenseView==="ledger"&&activeExpensePeriod?<><div className="expense-ledger-head"><div><h3>{activeExpensePeriod.name}</h3><p>不需要设置时间，每一笔记录都会立即同步。</p></div><div><button className="secondary" onClick={()=>{setExpenseMessage("已经保存");window.setTimeout(()=>setExpenseMessage(""),1400)}}>{expenseMessage||"保存"}</button><button className="primary" disabled={!activePeriodExpenses.length} onClick={()=>setExpenseView("settlement")}>结算</button></div></div><div className="expense-summary"><div><span>总支出</span><strong>{formatExpenseMoney(activeExpenseSettlement.total)}</strong></div><div><span>消费记录</span><strong>{activePeriodExpenses.length} 笔</strong></div><div><span>参与成员</span><strong>{new Set(activePeriodExpenses.flatMap(expense=>expense.splitWith)).size||members.length} 人</strong></div></div><div className="expense-records">{activePeriodExpenses.length?activePeriodExpenses.map(expense=><button key={expense.id} className={`expense-record ${expense.creatorUserId===user?.id?"editable":"readonly"}`} onClick={()=>openExpenseEditor(expense)}><span><b>{expense.item}</b><small>{expenseName(expense.payer)} 付款 · {expense.splitWith.map(expenseName).join("、")}</small>{expense.note&&<em>{expense.note}</em>}</span><span className="expense-record-people">{expense.splitWith.map(email=><i key={email} className={`dot ${expenseColor(email)}`}>{expenseName(email).slice(0,1)}</i>)}</span><strong>{formatExpenseMoney(expense.amount)}</strong>{expense.creatorUserId===user?.id&&<small className="expense-edit-hint">编辑 ›</small>}</button>):<div className="expense-empty compact"><p>这个周期还没有消费记录。</p></div>}</div><button className="expense-add-record" onClick={openNewExpense}>＋ 添加一笔消费</button></>:activeExpensePeriod?<><div className="expense-settlement-head"><div><p className="eyebrow">SETTLEMENT</p><h3>{activeExpensePeriod.name} · 结算单</h3><p>每笔费用只在被勾选的成员之间分摊。</p></div><button className="secondary" onClick={()=>setExpenseView("ledger")}>返回账本</button></div><div className="expense-settlement-total"><span>本周期共同支出</span><strong>{formatExpenseMoney(activeExpenseSettlement.total)}</strong><small>{activePeriodExpenses.length} 笔消费</small></div><h4 className="expense-subtitle">每个人应该付多少</h4><div className="expense-balances">{activeExpenseSettlement.balances.map(balance=><div key={balance.email}><span><i className={`dot ${expenseColor(balance.email)}`}/>{expenseName(balance.email)}</span><strong>{formatExpenseMoney(balance.owed/100)}</strong><small>已经支付 {formatExpenseMoney(balance.paid/100)}</small></div>)}</div><h4 className="expense-subtitle">谁应该给谁转多少钱</h4><div className="expense-transfers">{activeExpenseSettlement.transfers.length?activeExpenseSettlement.transfers.map((transfer,index)=><div key={index}><span><i className={`dot ${expenseColor(transfer.from)}`}/>{expenseName(transfer.from)}</span><b>→</b><span><i className={`dot ${expenseColor(transfer.to)}`}/>{expenseName(transfer.to)}</span><strong>{formatExpenseMoney(transfer.amount)}</strong></div>):<p className="expense-all-set">已经结清，不需要再转账。</p>}</div><button className="primary expense-finish" onClick={()=>setExpenseView("periods")}>保存结算单</button></>:null}{expensePeriodOpen&&<div className="overlay" onMouseDown={event=>{if(event.target===event.currentTarget)setExpensePeriodOpen(false)}}><section className="sheet expense-sheet small"><div className="sheet-head"><div><p className="eyebrow">NEW PERIOD</p><h2>新建记账周期</h2></div><button onClick={()=>setExpensePeriodOpen(false)}>×</button></div><label>周期名称<input value={expensePeriodName} onChange={event=>setExpensePeriodName(event.target.value)} placeholder="例如：东京旅行"/></label><button className="primary save" disabled={!expensePeriodName.trim()||expenseSaving} onClick={createExpensePeriod}>{expenseSaving?"正在保存…":"保存周期"}</button></section></div>}{expenseOpen&&activeExpensePeriod&&<div className="overlay" onMouseDown={event=>{if(event.target===event.currentTarget)setExpenseOpen(false)}}><section className="sheet expense-sheet"><div className="sheet-head"><div><p className="eyebrow">EXPENSE</p><h2>{editingExpense?"编辑消费":"添加一笔消费"}</h2></div><button onClick={()=>setExpenseOpen(false)}>×</button></div><label>付了什么<input value={expenseDraft.item} onChange={event=>setExpenseDraft(current=>({...current,item:event.target.value}))} placeholder="例如：酒店、晚餐、打车"/></label><div className="expense-form-row"><label>付款人<input value={member?.display_name||""} disabled/></label><label>金额<input type="number" min="0.01" step="0.01" inputMode="decimal" value={expenseDraft.amount} onChange={event=>setExpenseDraft(current=>({...current,amount:event.target.value}))} placeholder="0.00"/></label></div><fieldset className="expense-split-picker"><legend>这笔账和谁一起分</legend>{members.map(item=><label key={item.email}><input type="checkbox" checked={expenseDraft.splitWith.includes(item.email)} onChange={()=>toggleExpenseParticipant(item.email)}/><i className={`dot ${item.color}`}/>{item.display_name}</label>)}</fieldset><label>备注 <span>可选</span><textarea value={expenseDraft.note} onChange={event=>setExpenseDraft(current=>({...current,note:event.target.value}))} placeholder="补充说明"/></label><div className="expense-form-actions">{editingExpense&&<button className="delete" onClick={deleteExpense}>删除</button>}<button className="primary save" disabled={!expenseDraft.item.trim()||!Number(expenseDraft.amount)||!expenseDraft.splitWith.length||expenseSaving} onClick={saveExpense}>{expenseSaving?"正在保存…":editingExpense?"保存":"保存这笔"}</button></div></section></div>}</section>;
-  const luckyPage=<section className="lucky-page"><div className="lucky-page-head"><div><p className="eyebrow">LUCKY PICK</p><h2>好运抽选机</h2></div><button className="lucky-settings-button" onClick={()=>setLuckySettingsOpen(true)}>⚙ <span>设置选项</span></button></div><div className="lucky-stage"><div className="lucky-machine"><div className="lucky-bulbs">{Array.from({length:9},(_,index)=><i key={index}/>)}</div><strong className="lucky-brand">LUCKY</strong><small className="lucky-subtitle">今天就交给好运决定</small><div className="lucky-reel-window"><div className={`lucky-reel-grid ${slotSpinning?"spinning":""} ${slotConfigured?"configured":"unconfigured"}`}>{slotCells.map((value,index)=><span key={index} className={index>=3&&index<6?"winner-row":""}>{value}</span>)}</div></div><div className="lucky-result" aria-live="polite"><small>{slotSpinning?"正在抽选":slotWinner?"这次选中":slotConfigured?"拉下右侧拉杆":"先设置这次的选项"}</small><strong>{slotSpinning?"好运滚动中…":slotWinner||"准备好了吗？"}</strong><span>{slotConfigured?<>来自：{luckyMode==="manual"?`随心填写 · ${luckyOptions().length} 项`:`愿望导入 · ${WISH_CATEGORIES.find(item=>item.value===luckyCategory)?.label}`}</>:"打开设置，决定今天要抽什么"}</span></div><div className={`lucky-lever ${slotSpinning?"pulled":""}`}><i/><button aria-label="拉下拉杆" disabled={slotSpinning||!slotConfigured||luckyOptions().length===0} onClick={spinLucky}/><b/></div></div></div>{luckySettingsOpen&&<div className="overlay lucky-settings-overlay" onMouseDown={event=>{if(event.target===event.currentTarget)setLuckySettingsOpen(false)}}><section className="sheet lucky-settings-sheet"><div className="sheet-head"><div><p className="eyebrow">PICK SETTINGS</p><h2>这次抽什么？</h2></div><button onClick={()=>setLuckySettingsOpen(false)}>×</button></div><div className="lucky-source-tabs"><button className={luckyMode==="manual"?"active":""} onClick={()=>setLuckyMode("manual")}>随心填写</button><button className={luckyMode==="import"?"active":""} onClick={()=>setLuckyMode("import")}>愿望导入</button></div>{luckyMode==="manual"?<div className="lucky-manual-form"><div className="lucky-saved-sets"><label>我的常用组合</label><div className="lucky-saved-row"><div className="lucky-set-select"><button type="button" className={luckySetMenuOpen?"open":""} aria-haspopup="listbox" aria-expanded={luckySetMenuOpen} onClick={()=>setLuckySetMenuOpen(open=>!open)}><span>{editingLuckySetId?<>{savedLuckySets.find(set=>set.id===editingLuckySetId)?.name||"选择"} <small>· {savedLuckySets.find(set=>set.id===editingLuckySetId)?.options.length||0} 项</small></>:"选择"}</span><i/></button>{luckySetMenuOpen&&<div className="lucky-set-menu" role="listbox"><button type="button" className={`lucky-set-choice ${!editingLuckySetId?"selected":""}`} onClick={clearLuckySetEditor}><b>{!editingLuckySetId?"✓":""}</b><span>新建</span></button>{savedLuckySets.map(set=><div className={`lucky-set-menu-row ${editingLuckySetId===set.id?"selected":""}`} key={set.id}><button type="button" className="lucky-set-choice" onClick={()=>useSavedLuckySet(set)}><b>{editingLuckySetId===set.id?"✓":""}</b><span>{set.name}</span><small>{set.options.length} 项</small></button><button type="button" className="lucky-set-delete-option" aria-label={`删除组合 ${set.name}`} onClick={()=>deleteSavedLuckySet(set.id)}>删除</button></div>)}</div>}</div></div></div>{editingLuckySetId?<label className="lucky-set-name lucky-set-name-before">组合名称<input value={luckySetName} onChange={event=>setLuckySetName(event.target.value)} placeholder="例如：周五吃什么"/></label>:<label className="lucky-remember"><input type="checkbox" checked={rememberLuckySet} onChange={event=>setRememberLuckySet(event.target.checked)}/><span>保存为常用组合，下次继续使用</span></label>}{!editingLuckySetId&&rememberLuckySet&&<label className="lucky-set-name lucky-set-name-before">组合名称<input value={luckySetName} onChange={event=>setLuckySetName(event.target.value)} placeholder="例如：周五吃什么"/></label>}<label>自己写下选项</label>{manualLuckyOptions.map((option,index)=><div className="lucky-option-row" key={index}><input value={option} onChange={event=>updateManualLuckyOption(index,event.target.value)} placeholder={`选项 ${index+1}`}/><button aria-label="删除这一项" disabled={manualLuckyOptions.length<=1} onClick={()=>removeManualLuckyOption(index)}>×</button></div>)}<button className="lucky-add-row" onClick={addManualLuckyOption}>＋ 再加一项</button></div>:<div className="lucky-import-form"><label>导入愿望 Tab<select value={luckyCategory} onChange={event=>changeLuckyCategory(event.target.value as WishCategory)}>{WISH_CATEGORIES.map(category=><option key={category.value} value={category.value}>{category.label} · {wishes.filter(wish=>wish.category===category.value).length} 项</option>)}</select></label><div className="lucky-optional-title"><b>进一步筛选</b><span>可选</span></div><div className="lucky-import-row"><select value={luckyFilter} onChange={event=>{setLuckyFilter(event.target.value);setSelectedLuckyWishIds(luckyCategoryWishes().map(wish=>wish.id))}}><option value="all">{luckyCategory==="watch"?"不限类型":"不限地点"}</option>{luckyImportFilters.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select><select value={luckyImportMode} onChange={event=>changeLuckyImportMode(event.target.value as "all"|"manual")}><option value="all">导入全部符合项</option><option value="manual">手动选择</option></select></div>{luckyImportMode==="manual"&&<div className="lucky-wish-picker"><div className="lucky-picker-actions"><label className="lucky-select-all"><input ref={luckySelectAllRef} type="checkbox" onChange={event=>setSelectedLuckyWishIds(event.target.checked?luckyCandidates.map(wish=>wish.id):[])}/><span>全选</span></label><small>已选 {luckyCandidates.filter(wish=>selectedLuckyWishIds.includes(wish.id)).length}/{luckyCandidates.length}</small></div>{luckyCandidates.map(wish=><label key={wish.id}><input type="checkbox" checked={selectedLuckyWishIds.includes(wish.id)} onChange={()=>toggleLuckyWish(wish.id)}/><span>{wish.title}</span><small>{luckyCategory==="watch"?WATCH_TYPES.find(item=>item.value===wish.mediaType)?.label:wish.region}</small></label>)}</div>}</div>}<button className="primary save lucky-save" disabled={luckyOptions().length===0||(luckyMode==="manual"&&(rememberLuckySet||Boolean(editingLuckySetId))&&!luckySetName.trim())} onClick={applyLuckySettings}>{editingLuckySetId?"保存修改并使用":"保存选项"}</button></section></div>}</section>;
-  const wishPage=<section className="wish-page"><div className="wish-heading"><div><p className="eyebrow">WISH LIST</p><h2>愿望清单</h2></div></div><div className="wish-controls"><div className="wish-tabs">{WISH_CATEGORIES.map(category=><button key={category.value} className={wishFilter===category.value?"active":""} onClick={()=>{setWishFilter(category.value);setWishRegion("all");setWishMediaType("all");setWishStatus("all")}}>{category.icon} {category.label}</button>)}</div><div className="wish-control-actions"><div className="wish-selects">{wishFilter==="watch"?<select aria-label="筛选类型" value={wishMediaType} onChange={event=>setWishMediaType(event.target.value as "all"|WishMediaType)}><option value="all">类型</option>{WATCH_TYPES.map(type=><option key={type.value} value={type.value}>{type.label}</option>)}</select>:<select aria-label="筛选地点" value={wishRegion} onChange={event=>setWishRegion(event.target.value)}><option value="all">地点</option>{wishRegions.map(region=><option key={region} value={region}>{region}</option>)}</select>}<select aria-label="筛选状态" value={wishStatus} onChange={event=>setWishStatus(event.target.value as "all"|WishStatus)}><option value="all">状态</option>{activeWishStatuses.map(status=><option key={status.value} value={status.value}>{status.label}</option>)}</select></div><button className="primary wish-add" onClick={startAddWish}>＋ 添加</button></div></div><div className="wish-list">{visibleWishes.map(wish=>{const category=WISH_CATEGORIES.find(item=>item.value===wish.category)!;const statuses=wish.category==="watch"?WATCH_STATUSES:WISH_STATUSES;const status=statuses.find(item=>item.value===wish.status)!;const media=WATCH_TYPES.find(item=>item.value===wish.mediaType);const owner=members.find(item=>item.email===wish.owner);const isOwner=wish.ownerUserId===user.id;const joined=wish.participants.includes(member.email);return <article key={wish.id} className={`wish-row ${isOwner?"editable":""}`} role={isOwner?"button":undefined} onClick={()=>isOwner&&startEditWish(wish)} onKeyDown={event=>{if(isOwner&&(event.key==="Enter"||event.key===" "))startEditWish(wish)}} tabIndex={isOwner?0:undefined}><span className="wish-icon">{category.icon}</span><div className="wish-copy"><h3>{wish.title}</h3><p>{isOwner?"你创建":`${owner?.display_name||wish.owner} 添加`}{wish.category==="watch"?` · ${[media?.label,wish.place,wish.releaseDate?`上映 ${wish.releaseDate}`:"",wish.plannedWatchDate?`计划 ${wish.plannedWatchDate}`:""].filter(Boolean).join(" · ")}`:` · ${wish.region}${wish.place?` · ${wish.place}`:""}`}</p>{wish.note&&<small>{wish.note}</small>}<div className="wish-meta"><span className="wish-people">{wish.participants.map(email=>{const person=members.find(item=>item.email===email);return person?<i key={email} className={`wish-face ${person.color}`}>{person.display_name.slice(0,1).toUpperCase()}</i>:null})}</span><span>{wish.participants.length} 人{wish.category==="watch"?"想看":"想去"}</span>{isOwner&&<span>点击整行编辑</span>}</div></div><div className="wish-actions" onClick={event=>event.stopPropagation()}>{isOwner?<select className="wish-status-select" aria-label="修改愿望状态" value={wish.status} onChange={event=>changeWishStatus(wish,event.target.value as WishStatus)}>{statuses.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select>:<span className={`wish-status-label status-${wish.status}`}>{status.label}</span>}<button className={`wish-heart ${joined?"joined":""}`} aria-label={isOwner?"创建者默认参加":joined?"取消我也想去":"我也想去"} aria-pressed={joined} disabled={isOwner} onClick={()=>toggleWish(wish)}>{joined?"♥":"♡"}</button></div></article>})}{visibleWishes.length===0&&<div className="wish-empty"><span>♡</span><h3>还没有愿望</h3><p>{wishFilter==="watch"?"添加一部想看的电影、电视剧或综艺。":"添加一家想吃的店、一次想玩的体验，或下一段旅行。"}</p></div>}</div>{wishOpen&&<div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setWishOpen(false)}}><section className="sheet wish-sheet"><div className="sheet-head"><div><p className="eyebrow">{editingWish?"EDIT WISH":"NEW WISH"}</p><h2>{editingWish?"编辑愿望":"添加愿望"}</h2></div><button onClick={()=>setWishOpen(false)}>×</button></div><label>愿望名称<input value={wishDraft.title} onChange={e=>setWishDraft({...wishDraft,title:e.target.value})} placeholder="例如：一起去看海"/></label><label>分类<select value={wishDraft.category} onChange={e=>{const category=e.target.value as WishCategory;setWishDraft({...wishDraft,category,region:category==="watch"?"":wishDraft.region,status:"wish",mediaType:"tv",releaseDate:category==="watch"?wishDraft.releaseDate:"",plannedWatchDate:category==="watch"?wishDraft.plannedWatchDate:""})}}>{WISH_CATEGORIES.map(item=><option key={item.value} value={item.value}>{item.icon} {item.label}</option>)}</select></label>{wishDraft.category==="watch"?<><label>类型<select value={wishDraft.mediaType} onChange={e=>setWishDraft({...wishDraft,mediaType:e.target.value as WishMediaType})}>{WATCH_TYPES.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select></label><label>播放平台 <span>可选</span><input value={wishDraft.place} onChange={e=>setWishDraft({...wishDraft,place:e.target.value})} placeholder="例如：Netflix、腾讯视频"/></label><div className="wish-date-grid"><label>上映时间 <span>可选</span><input type="date" value={wishDraft.releaseDate} onChange={e=>setWishDraft({...wishDraft,releaseDate:e.target.value})}/></label><label>计划观看时间 <span>可选</span><input type="date" value={wishDraft.plannedWatchDate} onChange={e=>setWishDraft({...wishDraft,plannedWatchDate:e.target.value})}/></label></div></>:<><label>城市或地区<input value={wishDraft.region} onChange={e=>setWishDraft({...wishDraft,region:e.target.value})} placeholder="例如：上海、东京"/></label><label>具体地点 <span>可选</span><input value={wishDraft.place} onChange={e=>setWishDraft({...wishDraft,place:e.target.value})} placeholder="店名、景点或地址"/></label></>}<label>备注 <span>可选</span><textarea value={wishDraft.note} onChange={e=>setWishDraft({...wishDraft,note:e.target.value})} placeholder="想做什么、推荐理由……"/></label><label>状态<select value={wishDraft.status} onChange={e=>setWishDraft({...wishDraft,status:e.target.value as WishStatus})}>{(wishDraft.category==="watch"?WATCH_STATUSES:WISH_STATUSES).map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select></label><button className="primary save" disabled={!wishDraft.title.trim()||(wishDraft.category!=="watch"&&!wishDraft.region.trim())} onClick={saveWish}>保存{wishDraft.category==="watch"?"想看":"愿望"}</button>{editingWish&&<button className="delete" onClick={removeWish}>删除愿望</button>}</section></div>}</section>;
-  return <main className="app-shell" onClick={()=>{if(profileOpen)setProfileOpen(false);if(memberFilterOpen)setMemberFilterOpen(false)}}><header className="topbar"><div><p className="eyebrow">PRIVATE</p><h1>Shared Calendar</h1></div><div className="top-actions"><div className="profile-wrap" onClick={event=>event.stopPropagation()}><button className={`profile-avatar ${member.color}`} aria-label="打开个人设置" aria-expanded={profileOpen} onClick={()=>{setProfileOpen(!profileOpen);setProfileView("menu");setProfileMessage("")}}>{member.display_name.slice(0,1).toUpperCase()}</button>{profileOpen&&<section className="profile-popover"><header><span className={`profile-avatar small ${member.color}`}>{member.display_name.slice(0,1).toUpperCase()}</span><div><strong>{member.display_name}</strong><small>{user.email}</small></div></header>{profileView==="menu"?<div className="profile-menu"><button onClick={()=>setProfileView("color")}><span>●</span><b>我的颜色</b><small>{COLOR_NAMES[member.color]}　›</small></button><button onClick={()=>{setProfileOpen(false);setSettingsOpen(true);setPasswordMessage("")}}><span>⌁</span><b>账户与安全</b><small>修改密码　›</small></button><button onClick={()=>setProfileView("birthday")}><span>♢</span><b>生日设置</b><small>{member.birthday?member.birthday.slice(5).replace("-","/"):"未设置"}　›</small></button>{isAdmin&&<button onClick={()=>{setProfileOpen(false);setAdminOpen(true)}}><span>◇</span><b>管理员设置</b><small>日历权限　›</small></button>}</div>:profileView==="color"?<div className="profile-detail"><button className="profile-back" onClick={()=>setProfileView("menu")}>‹ 返回</button><h3>选择个人颜色</h3><div className="profile-colors">{COLORS.map(color=><button key={color} aria-label={COLOR_NAMES[color]} className={`profile-color ${color} ${member.color===color?"selected":""}`} disabled={members.some(m=>m.email!==member.email&&m.color===color)} onClick={()=>changeColor(color)}/>)}</div><p>更换后，以前和以后添加的行程都会同步使用新颜色。</p></div>:<div className="profile-detail"><button className="profile-back" onClick={()=>setProfileView("menu")}>‹ 返回</button><h3>生日设置</h3><label>生日<input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}/></label><button className="primary birthday-save" onClick={saveBirthday}>保存生日</button><p>{profileMessage||"保存后会自动出现在每一年对应日期。"}</p></div>}</section>}</div></div></header>
-  <nav className="section-tabs" aria-label="页面切换"><button className={section==="calendar"?"active":""} onClick={()=>setSection("calendar")}>日历</button><button className={section==="special"?"active":""} onClick={()=>setSection("special")}>纪念日</button><button className={section==="wishes"?"active":""} onClick={()=>setSection("wishes")}>愿望清单</button><button className={section==="lucky"?"active":""} onClick={()=>setSection("lucky")}>好运抽选机</button><button className={section==="expenses"?"active":""} onClick={()=>setSection("expenses")}>记账</button></nav>
-  {section==="wishes"&&wishPage}
-  {section==="lucky"&&luckyPage}
-  {section==="expenses"&&expensePage}
-  {section==="calendar"&&<><section className="toolbar"><div className="move"><button onClick={()=>setCursor(new Date(cursor.getFullYear(),cursor.getMonth()+(view==="month"?-1:0),cursor.getDate()+(view==="week"?-7:0)))}>‹</button><button onClick={()=>setCursor(new Date(cursor.getFullYear(),cursor.getMonth()+(view==="month"?1:0),cursor.getDate()+(view==="week"?7:0)))}>›</button></div><strong>{label}</strong><div className="toolbar-right"><div className="member-filter" onClick={event=>event.stopPropagation()}><button type="button" aria-expanded={memberFilterOpen} onClick={()=>setMemberFilterOpen(current=>!current)}>{selectedOwners.length===allowedOwners.length?"所有可见成员":`已选 ${selectedOwners.length} 人`}<span aria-hidden="true">⌄</span></button>{memberFilterOpen&&<div className="member-filter-menu">{allowedOwners.map(item=><label key={item.email}><input type="checkbox" checked={selectedOwners.includes(item.email)} onChange={()=>toggleOwner(item.email)}/><i className={`dot ${item.color}`}/>{item.display_name}</label>)}</div>}</div><select value={zone} onChange={e=>setZone(e.target.value)}>{ZONES.map(z=><option key={z}>{z}</option>)}</select><div className="segment"><button className={view==="week"?"active":""} onClick={()=>setView("week")}>周</button><button className={view==="month"?"active":""} onClick={()=>setView("month")}>月</button></div><button className="calendar-add" aria-label="添加新行程" title="添加新行程" onClick={()=>startAdd()}>＋</button></div></section>
-  {view==="month"?<section className="calendar month"><div className="weekdays">{["一","二","三","四","五","六","日"].map(x=><span key={x}>周{x}</span>)}</div><div className="grid">{dates.map(d=>{const key=dateKey(d);const dayEvents=displayEvents.filter(e=>e.date===key&&matchesFilter(e));return <button className={`day ${key===dateKey(new Date())?"today":""} ${d.getMonth()!==cursor.getMonth()?"muted":""}`} key={key} aria-label={`${key} 查看当天全部行程`} onClick={()=>setMonthAgendaDate(key)}><span className="day-number">{d.getDate()}</span><span className="event-list">{dayEvents.slice(0,2).map(e=><span key={`${e.id}-${e.date}`} className={`event ${e.birthday?"birthday-event":""}`} style={eventStyle(e)} onClick={x=>{x.stopPropagation();if(!e.birthday&&e.id>0)startEdit(events.find(item=>item.id===e.id)! )}}>{!e.allDay&&!e.continuesFromPrevious&&<b>{e.time}</b>}{e.title}</span>)}</span>{dayEvents.length>2&&<span className="day-overflow-count" aria-label={`还有 ${dayEvents.length-2} 项行程`}>＋{dayEvents.length-2}</span>}</button>})}</div></section>:<section className="calendar week"><div className="week-scroll"><div className="week-head"><span className="time-corner">时间</span>{dates.map((d,index)=><span className={dateKey(d)===dateKey(new Date())?"current-day":""} key={dateKey(d)}>周{["一","二","三","四","五","六","日"][index]}<b>{d.getMonth()+1}/{d.getDate()}</b></span>)}</div><div className="week-all-day"><span>全天</span>{dates.map(d=>{const key=dateKey(d);const allDayEvents=displayEvents.filter(e=>e.allDay&&e.date===key&&matchesFilter(e));return <div key={key}>{allDayEvents.map(e=><button key={`${e.id}-${e.date}`} className={`all-day-event ${e.birthday?"birthday-event":""}`} style={eventStyle(e)} onClick={()=>{if(!e.birthday&&e.id>0)startEdit(events.find(item=>item.id===e.id)! )}}>{e.title}</button>)}</div>})}</div><div className="week-body"><div className="time-axis">{HOURS.map(hour=><span key={hour} style={{top:hour*HOUR_HEIGHT}}>{String(hour).padStart(2,"0")}:00</span>)}</div>{dates.map(d=>{const key=dateKey(d);const dayEvents=displayEvents.filter(e=>!e.allDay&&e.date===key&&matchesFilter(e));return <div className={`week-column ${key===dateKey(new Date())?"today-column":""}`} key={key} role="button" tabIndex={0} aria-label={`${key} 添加行程`} onClick={event=>startAdd(key,timeFromPosition(event.nativeEvent.offsetY))} onKeyDown={event=>{if(event.key==="Enter")startAdd(key)}}>{dayEvents.map(e=><button key={`${e.id}-${e.date}-${e.time}`} className="week-event" style={{...eventStyle(e),top:timeTop(e.time),height:durationHeight(e.time,e.endTime)}} onClick={event=>{event.stopPropagation();startEdit(events.find(item=>item.id===e.id)! )}}><b>{e.time}–{e.endTime}</b><span>{e.title}</span></button>)}</div>})}</div></div></section>}</>}{section==="special"&&<section className="special-page"><div className="special-heading"><div><p className="eyebrow">SPECIAL DATES</p><h2>纪念日</h2></div><div className="special-heading-actions"><div className="special-filters"><button className={specialFilter==="all"?"active":""} onClick={()=>setSpecialFilter("all")}>全部</button>{SPECIAL_TYPES.map(type=><button key={type.kind} className={specialFilter===type.kind?"active":""} onClick={()=>setSpecialFilter(type.kind)}>{type.icon} {type.label}</button>)}</div><button className="primary" onClick={startAddSpecial}>＋ 添加</button></div></div><div className="special-grid">{specialPageDays.filter(day=>specialFilter==="all"||day.kind===specialFilter).sort((a,b)=>daysUntil(a)-daysUntil(b)).map(day=>{const people=[day.owner,...day.participants].map(email=>members.find(item=>item.email===email)?.display_name).filter(Boolean);const remaining=daysUntil(day);const type=SPECIAL_TYPES.find(item=>item.kind===day.kind)!;const color=SPECIAL_COLORS.find(item=>item.color===day.color)!;return <button key={`${day.memberBirthday?"birthday":"special"}-${day.id}`} className="special-card" style={{borderTopColor:color.hex}} onClick={()=>!day.memberBirthday&&startEditSpecial(day)} disabled={!day.canEdit}><span className="special-icon" style={{backgroundColor:`${color.hex}45`}}>{type.icon}</span><span className="special-kind">{type.label}</span><strong>{day.title}</strong><span className="special-date">{day.repeatYearly?day.date.slice(5).replace("-"," 月 ")+" 日":day.date.replaceAll("-"," / ")}</span><b>{remaining===0?"就是今天":remaining>0?`还有 ${remaining} 天`:`已经过去 ${Math.abs(remaining)} 天`}</b><small>{day.memberBirthday?`Owner · ${people[0]}`:people.join("、")}{day.showInCalendar?" · 显示在日历":""}</small></button>})}{specialPageDays.filter(day=>specialFilter==="all"||day.kind===specialFilter).length===0&&<div className="special-empty"><span>♡</span><h3>暂无这一类纪念日</h3><p>可以添加见面、纪念、旅行或生日。</p><button className="primary" onClick={startAddSpecial}>添加纪念日</button></div>}</div></section>}
-  <footer>{members.map(m=><span key={m.email}><i className={`dot ${m.color}`}/> {m.display_name}</span>)}<span className="zone-note">{user.email} · <button className="logout" onClick={()=>supabase.auth.signOut()}>退出</button></span></footer>
-  {adminOpen&&isAdmin&&<div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setAdminOpen(false)}}><section className="admin-sheet"><div className="sheet-head"><div><p className="eyebrow">ADMIN</p><h2>日历查看权限</h2></div><button onClick={()=>setAdminOpen(false)}>×</button></div><p>每一行代表该成员可以查看谁的日历。自己的日历始终可见。</p><div className="permission-table"><table><thead><tr><th>成员</th>{members.map(owner=><th key={owner.email}>{owner.display_name}</th>)}</tr></thead><tbody>{members.map(viewer=><tr key={viewer.email}><th>{viewer.display_name}</th>{members.map(owner=>{const checked=viewer.email===owner.email||visibility.some(row=>row.viewer_email===viewer.email&&row.owner_email===owner.email);return <td key={owner.email}><input type="checkbox" checked={checked} disabled={viewer.email===owner.email} aria-label={`${viewer.display_name} 查看 ${owner.display_name}`} onChange={()=>toggleVisibility(viewer.email,owner.email)}/></td>})}</tr>)}</tbody></table></div></section></div>}
-  {settingsOpen&&<div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setSettingsOpen(false)}}><section className="security-sheet"><aside className="security-profile"><span className={`security-avatar ${member.color}`}>{member.display_name.slice(0,1).toUpperCase()}</span><strong>{member.display_name}</strong><small>{user.email}</small><span>账户与安全</span></aside><div className="security-content"><div className="sheet-head"><div><p className="eyebrow">ACCOUNT &amp; SECURITY</p><h2>重设密码</h2></div><button onClick={()=>setSettingsOpen(false)}>×</button></div><p className="security-copy">修改密码前需要验证当前密码。你的成员资料、颜色和行程不会改变。</p><label>当前密码<input type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} placeholder="输入当前密码"/></label><hr/><label>新密码<input type="password" autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="至少 8 位"/></label><label>确认新密码<input type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="再次输入新密码"/></label><p className="password-tip">建议同时包含字母和数字，不要与邮箱密码相同。</p>{passwordMessage&&<p className={`password-message ${passwordMessage==="密码已更新"?"success":""}`}>{passwordMessage}</p>}<button className="primary save" onClick={()=>updatePassword(false)} disabled={savingPassword}>{savingPassword?"正在保存…":"保存新密码"}</button></div></section></div>}
-  {specialOpen&&<div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setSpecialOpen(false)}}><section className="sheet special-sheet"><div className="sheet-head"><div><p className="eyebrow">{editingSpecial?"EDIT SPECIAL DATE":"NEW SPECIAL DATE"}</p><h2>{editingSpecial?"编辑纪念日":"添加纪念日"}</h2></div><button onClick={()=>setSpecialOpen(false)}>×</button></div><label>名称<input value={specialDraft.title} onChange={e=>setSpecialDraft({...specialDraft,title:e.target.value})} placeholder="例如：四个人下一次见面"/></label><fieldset className="special-type-picker"><legend>类型</legend><div>{SPECIAL_TYPES.map(type=><button key={type.kind} className={specialDraft.kind===type.kind?"active":""} onClick={()=>setSpecialDraft({...specialDraft,kind:type.kind})}><span>{type.icon}</span>{type.label}</button>)}</div></fieldset><label>日期<input type="date" value={specialDraft.date} onChange={e=>setSpecialDraft({...specialDraft,date:e.target.value})}/></label>{specialDraft.kind==="meet"&&<div className="special-meet-time"><label>开始时间<input type="time" value={specialDraft.startTime} onChange={e=>setSpecialDraft({...specialDraft,startTime:e.target.value})}/></label><label>结束时间<input type="time" value={specialDraft.endTime} onChange={e=>setSpecialDraft({...specialDraft,endTime:e.target.value})}/></label><label>时区<select value={specialDraft.timezone} onChange={e=>setSpecialDraft({...specialDraft,timezone:e.target.value})}>{ZONES.map(timezone=><option key={timezone} value={timezone}>{ZONE_NAMES[timezone]} · {timezone}</option>)}</select></label></div>}<fieldset className="special-color-picker"><legend>颜色 <span>{SPECIAL_COLORS.find(item=>item.color===specialDraft.color)?.label}</span></legend><div>{SPECIAL_COLORS.map(item=><button key={item.color} className={specialDraft.color===item.color?"active":""} style={{backgroundColor:item.hex}} aria-label={item.label} onClick={()=>setSpecialDraft({...specialDraft,color:item.color})}/>)}</div></fieldset><label className="special-check"><input type="checkbox" checked={specialDraft.repeatYearly} onChange={e=>setSpecialDraft({...specialDraft,repeatYearly:e.target.checked})}/> 每年重复</label><label className="special-check"><input type="checkbox" checked={specialDraft.showInCalendar} onChange={e=>setSpecialDraft({...specialDraft,showInCalendar:e.target.checked})}/> 同时显示在日历中</label><fieldset className="participant-picker"><legend>一起的人 <span>仅显示可以查看你日历的成员</span></legend>{eligibleSpecialParticipants.map(item=><label key={item.email} className={specialDraft.participants.includes(item.email)?"selected":""}><input type="checkbox" checked={specialDraft.participants.includes(item.email)} onChange={()=>toggleSpecialParticipant(item.email)}/><i className={`dot ${item.color}`}/><span>{item.display_name}</span></label>)}{eligibleSpecialParticipants.length===0&&<p>目前没有可选择的成员</p>}</fieldset>{specialDraft.kind==="meet"&&specialDraft.endTime<=specialDraft.startTime&&<p className="time-error">结束时间必须晚于开始时间</p>}<button className="primary save" disabled={!specialDraft.title.trim()||!specialDraft.date||(specialDraft.kind==="meet"&&specialDraft.endTime<=specialDraft.startTime)} onClick={saveSpecial}>保存纪念日</button>{editingSpecial&&<button className="delete" onClick={removeSpecial}>删除纪念日</button>}</section></div>}
-  {monthAgendaDate&&<div className="overlay" onMouseDown={event=>{if(event.target===event.currentTarget)setMonthAgendaDate(null)}}><section className="sheet month-agenda"><div className="sheet-head"><div><p className="eyebrow">DAY AGENDA</p><h2>{Number(monthAgendaDate.slice(5,7))} 月 {Number(monthAgendaDate.slice(8,10))} 日</h2></div><button onClick={()=>setMonthAgendaDate(null)}>×</button></div><div className="agenda-list">{displayEvents.filter(event=>event.date===monthAgendaDate&&matchesFilter(event)).map(event=><button key={`${event.id}-${event.date}-${event.time}`} className="agenda-event" style={eventStyle(event)} disabled={Boolean(event.birthday)||event.id<=0} onClick={()=>{const original=events.find(item=>item.id===event.id);if(original){setMonthAgendaDate(null);startEdit(original)}}}><time>{event.allDay?"全天":event.time}</time><span><b>{event.title}</b>{event.location&&<small>{event.location}</small>}</span></button>)}</div><button className="primary agenda-add" onClick={()=>{const date=monthAgendaDate;setMonthAgendaDate(null);startAdd(date)}}>＋ 添加当天行程</button></section></div>}{open&&<div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}><div className="sheet"><div className="sheet-head"><div><p className="eyebrow">{editing?"EDIT EVENT":"NEW EVENT"}</p><h2>{editing?"编辑行程":"添加新行程"}</h2></div><button onClick={()=>setOpen(false)}>×</button></div><label>行程名称<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} placeholder="例如：一起吃晚饭"/></label><div className="event-options"><label className="option-toggle"><input type="checkbox" checked={draft.allDay} onChange={e=>setDraft({...draft,allDay:e.target.checked})}/><span>全天</span></label><label className="option-toggle"><input type="checkbox" checked={draft.useTimezone} onChange={e=>toggleDraftTimezone(e.target.checked)}/><span>时区</span></label></div>{draft.useTimezone&&<label className="timezone-picker">时区<select value={draft.timezone} onChange={e=>changeDraftTimezone(e.target.value)}>{ZONES.map(timezone=><option key={timezone} value={timezone}>{ZONE_NAMES[timezone]} · {timezone}</option>)}</select></label>}<div className="datetime-row"><strong>开始</strong><label>日期<input type="date" value={draft.date} onChange={e=>{const date=e.target.value;setDraft({...draft,date,endDate:draft.endDate<date?date:draft.endDate})}}/></label>{!draft.allDay&&<label>时间<input type="time" value={draft.time} onChange={e=>{const time=e.target.value;setDraft({...draft,time,endTime:draft.endTime===time?nextHour(time):draft.endTime})}}/></label>}</div><div className="datetime-row"><strong>结束</strong><label>日期<input type="date" min={draft.date} value={draft.endDate} onChange={e=>setDraft({...draft,endDate:e.target.value})}/></label>{!draft.allDay&&<label>时间<input type="time" value={draft.endTime} onChange={e=>setDraft({...draft,endTime:e.target.value})}/></label>}</div>{draft.useTimezone&&!draft.allDay&&<p className="timezone-help">切换时区会保持同一个真实时刻，并自动换算开始、结束日期与时间。</p>}<fieldset className="participant-picker"><legend>一起的成员 <span>可选</span></legend>{members.filter(item=>item.email!==member.email).map(item=><label key={item.email} className={draft.participants.includes(item.email)?"selected":""}><input type="checkbox" checked={draft.participants.includes(item.email)} onChange={()=>toggleParticipant(item.email)}/><i className={`dot ${item.color}`}/><span>{item.display_name}</span></label>)}{members.length===1&&<p>目前还没有其他成员</p>}</fieldset><label>地点<input value={draft.location} onChange={e=>setDraft({...draft,location:e.target.value})} placeholder="输入地址"/></label><label>备注<textarea value={draft.note} onChange={e=>setDraft({...draft,note:e.target.value})} placeholder="补充信息"/></label><p className="owner-line"><i className={`dot ${member.color}`}/> 由 {member.display_name} 添加</p>{!validRange&&<p className="time-error">结束日期与时间必须晚于开始日期与时间</p>}<button className="primary save" onClick={save} disabled={!draft.title.trim()||!validRange}>保存到 Shared Calendar</button>{editing&&<button className="delete" onClick={remove}>删除行程</button>}</div></div>}</main>
+  if (!authReady)
+    return (
+      <main className="login-shell">
+        <div className="login-card">
+          <p className="eyebrow">SHARED CALENDAR</p>
+          <h1>正在检查登录状态…</h1>
+        </div>
+      </main>
+    );
+  if (recoveryMode)
+    return (
+      <main className="login-shell">
+        <section className="login-card">
+          <div className="login-mark">↻</div>
+          <p className="eyebrow">RESET PASSWORD</p>
+          <h1>设置新密码</h1>
+          <p className="login-copy">
+            重设链接验证成功，请为你的 Shared Calendar 账户设置新密码。
+          </p>
+          <label>
+            新密码
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="至少 8 位"
+            />
+          </label>
+          <label>
+            确认新密码
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="再次输入新密码"
+            />
+          </label>
+          <button
+            className="primary login-action"
+            onClick={() => updatePassword(true)}
+            disabled={savingPassword}
+          >
+            {savingPassword ? "正在保存…" : "保存新密码"}
+          </button>
+          {passwordMessage && (
+            <p
+              className={`auth-message ${passwordMessage === "密码已更新" ? "success" : ""}`}
+            >
+              {passwordMessage}
+            </p>
+          )}
+        </section>
+      </main>
+    );
+  if (!user && authView === "forgot")
+    return (
+      <main className="login-shell">
+        <section className="login-card">
+          <div className="login-mark">↻</div>
+          <p className="eyebrow">RESET PASSWORD</p>
+          <h1>找回密码</h1>
+          <p className="login-copy">
+            输入你的受邀邮箱，我们会发送一封重设密码邮件。
+          </p>
+          <form onSubmit={sendRecovery}>
+            <label>
+              邮箱地址
+              <input
+                type="email"
+                autoComplete="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="name@example.com"
+                autoFocus
+              />
+            </label>
+            <button
+              className="primary login-action"
+              type="submit"
+              disabled={signingIn}
+            >
+              {signingIn ? "正在发送…" : "发送重设邮件"}
+            </button>
+          </form>
+          <button
+            className="text-action"
+            onClick={() => {
+              setAuthView("login");
+              setAuthMessage("");
+            }}
+          >
+            返回登录
+          </button>
+          {authMessage && <p className="auth-message">{authMessage}</p>}
+        </section>
+      </main>
+    );
+  if (!user && authView === "sent")
+    return (
+      <main className="login-shell">
+        <section className="login-card sent-card">
+          <div className="login-mark success-mark">✓</div>
+          <p className="eyebrow">EMAIL SENT</p>
+          <h1>请检查邮箱</h1>
+          <p className="login-copy">
+            如果该邮箱可以使用，你会收到一封来自 Supabase
+            的重设密码邮件。点击邮件中的链接即可设置新密码。
+          </p>
+          <p className="sent-email">{loginEmail}</p>
+          <button
+            className="text-action"
+            onClick={() => {
+              setAuthView("login");
+              setAuthMessage("");
+            }}
+          >
+            返回登录
+          </button>
+        </section>
+      </main>
+    );
+  if (!user)
+    return (
+      <main className="login-shell">
+        <section className="login-card">
+          <div className="login-mark">S</div>
+          <p className="eyebrow">PRIVATE</p>
+          <h1>Shared Calendar</h1>
+          <p className="login-copy">仅限获邀成员使用邮箱和密码登录。</p>
+          <form onSubmit={signIn}>
+            <label>
+              邮箱地址
+              <input
+                type="email"
+                autoComplete="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="name@example.com"
+              />
+            </label>
+            <label>
+              密码
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="输入密码"
+              />
+            </label>
+            <button
+              className="primary login-action"
+              type="submit"
+              disabled={signingIn}
+            >
+              {signingIn ? "正在登录…" : "登录"}
+            </button>
+          </form>
+          <button
+            className="text-action forgot-action"
+            onClick={() => {
+              setAuthView("forgot");
+              setAuthMessage("");
+            }}
+          >
+            忘记密码？
+          </button>
+          {authMessage && <p className="auth-message">{authMessage}</p>}
+        </section>
+      </main>
+    );
+  if (memberLoading)
+    return (
+      <main className="login-shell">
+        <section className="login-card member-loading-card">
+          <div className="loading-spinner" />
+          <p className="eyebrow">MEMBER CHECK</p>
+          <h1>正在进入日历…</h1>
+          <p className="login-copy">正在验证成员身份并同步共享内容，请稍候。</p>
+        </section>
+      </main>
+    );
+  if (memberLoadError)
+    return (
+      <main className="login-shell">
+        <section className="login-card sent-card">
+          <div className="login-mark">!</div>
+          <p className="eyebrow">CONNECTION ERROR</p>
+          <h1>成员验证未完成</h1>
+          <p className="login-copy">{memberLoadError}</p>
+          <button className="primary login-action" onClick={() => load(user)}>
+            重新验证
+          </button>
+          <button
+            className="text-action"
+            onClick={() => supabase.auth.signOut()}
+          >
+            退出登录
+          </button>
+        </section>
+      </main>
+    );
+  if (!member)
+    return (
+      <main className="login-shell">
+        <section className="login-card">
+          <div className="login-mark">!</div>
+          <p className="eyebrow">ACCESS PENDING</p>
+          <h1>邮箱尚未获邀</h1>
+          <p className="login-copy">
+            {user.email} 已通过邮箱验证，但尚未加入 Shared Calendar 的获邀名单。
+          </p>
+          <button
+            className="primary login-action"
+            onClick={() => supabase.auth.signOut()}
+          >
+            退出并更换邮箱
+          </button>
+        </section>
+      </main>
+    );
+  const colors = Object.fromEntries(members.map((m) => [m.email, m.color]));
+  function eventStyle(event: CalendarEvent) {
+    const people = event.birthday
+      ? [event.owner]
+      : [event.owner, ...event.participants];
+    const participantColors = people.map(
+      (email) => EVENT_COLORS[colors[email] || "stone"],
+    );
+    const size = 100 / participantColors.length;
+    const stops = participantColors
+      .flatMap((color, index) => [
+        `${color} ${index * size}%`,
+        `${color} ${(index + 1) * size}%`,
+      ])
+      .join(",");
+    return {
+      background: `linear-gradient(to bottom, ${stops})`,
+      borderLeftColor: EVENT_LINES[colors[event.owner] || "stone"],
+    };
+  }
+  function matchesFilter(event: CalendarEvent) {
+    return (
+      selectedOwners.includes(event.owner) ||
+      event.participants.some((email) => selectedOwners.includes(email))
+    );
+  }
+  function toggleOwner(email: string) {
+    setSelectedOwners((current) =>
+      current.includes(email)
+        ? current.length === 1
+          ? current
+          : current.filter((owner) => owner !== email)
+        : [...current, email],
+    );
+  }
+  function toggleParticipant(email: string) {
+    setDraft({
+      ...draft,
+      participants: draft.participants.includes(email)
+        ? draft.participants.filter((item) => item !== email)
+        : [...draft.participants, email],
+    });
+  }
+  function toggleSpecialParticipant(email: string) {
+    setSpecialDraft({
+      ...specialDraft,
+      participants: specialDraft.participants.includes(email)
+        ? specialDraft.participants.filter((item) => item !== email)
+        : [...specialDraft.participants, email],
+    });
+  }
+  function changeDraftTimezone(timezone: string) {
+    if (draft.allDay) {
+      setDraft({ ...draft, timezone });
+      return;
+    }
+    const start = convertLocal(
+      draft.date,
+      draft.time,
+      draft.timezone,
+      timezone,
+    );
+    const end = convertLocal(
+      draft.endDate,
+      draft.endTime,
+      draft.timezone,
+      timezone,
+    );
+    setDraft({
+      ...draft,
+      date: start.date,
+      time: start.time,
+      endDate: end.date,
+      endTime: end.time,
+      timezone,
+    });
+  }
+  function toggleDraftTimezone(enabled: boolean) {
+    if (enabled) {
+      setDraft({ ...draft, useTimezone: true });
+      return;
+    }
+    if (draft.timezone === "Asia/Shanghai") {
+      setDraft({ ...draft, useTimezone: false });
+      return;
+    }
+    if (draft.allDay) {
+      setDraft({ ...draft, useTimezone: false, timezone: "Asia/Shanghai" });
+      return;
+    }
+    const start = convertLocal(
+      draft.date,
+      draft.time,
+      draft.timezone,
+      "Asia/Shanghai",
+    );
+    const end = convertLocal(
+      draft.endDate,
+      draft.endTime,
+      draft.timezone,
+      "Asia/Shanghai",
+    );
+    setDraft({
+      ...draft,
+      useTimezone: false,
+      timezone: "Asia/Shanghai",
+      date: start.date,
+      time: start.time,
+      endDate: end.date,
+      endTime: end.time,
+    });
+  }
+  const isAdmin = user.email?.toLowerCase() === "elainezhang1110@gmail.com";
+  const allowedOwners = members.filter(
+    (item) =>
+      item.email === member.email ||
+      visibility.some(
+        (row) =>
+          row.viewer_email === member.email && row.owner_email === item.email,
+      ),
+  );
+  const eligibleSpecialParticipants = members.filter(
+    (item) =>
+      item.email !== member.email &&
+      visibility.some(
+        (row) =>
+          row.viewer_email === item.email && row.owner_email === member.email,
+      ),
+  );
+  const birthdaySpecialDays = members.flatMap((item, index) =>
+    item.birthday
+      ? [
+          {
+            id: -(10000 + index),
+            title: `${item.display_name} 的生日`,
+            date: item.birthday,
+            kind: "birthday" as SpecialKind,
+            icon: "♢",
+            color: (SPECIAL_COLORS.some((color) => color.color === item.color)
+              ? item.color
+              : "stone") as SpecialColor,
+            startTime: null,
+            endTime: null,
+            timezone: "Asia/Shanghai",
+            repeatYearly: true,
+            showInCalendar: true,
+            owner: item.email,
+            participants: [],
+            canEdit: false,
+            memberBirthday: true,
+          },
+        ]
+      : [],
+  );
+  const specialPageDays = [...specialDays, ...birthdaySpecialDays];
+  const birthdayEvents = dates.flatMap((date, dateIndex) =>
+    members.flatMap((item, memberIndex) =>
+      item.birthday && item.birthday.slice(5) === dateKey(date).slice(5)
+        ? [
+            {
+              id: -(dateIndex * 100 + memberIndex + 1),
+              title: `${item.display_name} 的生日`,
+              date: dateKey(date),
+              endDate: dateKey(date),
+              time: "09:00",
+              endTime: "10:00",
+              owner: item.email,
+              participants: [],
+              location: "",
+              note: "与纪念日共用成员生日资料，每年自动重复",
+              timezone: zone,
+              allDay: true,
+              birthday: true,
+            } as CalendarEvent,
+          ]
+        : [],
+    ),
+  );
+  const specialEvents = dates.flatMap((date, dateIndex) =>
+    specialDays
+      .filter(
+        (day) =>
+          day.showInCalendar &&
+          matchesFilter({
+            owner: day.owner,
+            participants: day.participants,
+          } as CalendarEvent) &&
+          occurrenceDate(day, date.getFullYear()) === dateKey(date),
+      )
+      .map((day, index) =>
+        eventInZone(
+          {
+            id: -(900000 + dateIndex * 100 + index),
+            title: `${day.icon} ${day.title}`,
+            date: dateKey(date),
+            endDate: dateKey(date),
+            time:
+              day.kind === "meet" && day.startTime ? day.startTime : "09:00",
+            endTime: day.kind === "meet" && day.endTime ? day.endTime : "10:00",
+            owner: day.owner,
+            participants: day.participants,
+            location: "",
+            note: "纪念日",
+            timezone: day.timezone,
+            allDay: day.kind !== "meet",
+            birthday: day.kind === "birthday",
+            canEdit: false,
+          } as CalendarEvent,
+          zone,
+        ),
+      ),
+  );
+  const shownEvents = [
+    ...events.map((event) => eventInZone(event, zone)),
+    ...birthdayEvents,
+    ...specialEvents,
+  ];
+  const displayEvents = shownEvents.flatMap(eventDayParts);
+  const wishRegions = Array.from(
+    new Set(
+      wishes
+        .filter((wish) => wish.category === wishFilter && wish.region)
+        .map((wish) => wish.region),
+    ),
+  ).sort((a, b) => a.localeCompare(b, "zh-CN"));
+  const activeWishStatuses =
+    wishFilter === "watch" ? WATCH_STATUSES : WISH_STATUSES;
+  const visibleWishes = wishes.filter(
+    (wish) =>
+      wish.category === wishFilter &&
+      (wishFilter === "watch"
+        ? wishMediaType === "all" || wish.mediaType === wishMediaType
+        : wishRegion === "all" || wish.region === wishRegion) &&
+      (wishStatus === "all" || wish.status === wishStatus),
+  );
+  const luckyImportFilters =
+    luckyCategory === "watch"
+      ? WATCH_TYPES.map((item) => ({ value: item.value, label: item.label }))
+      : Array.from(
+          new Set(
+            luckyCategoryWishes()
+              .map((wish) => wish.region)
+              .filter(Boolean),
+          ),
+        ).map((region) => ({ value: region, label: region }));
+  const luckyCandidates = luckyFilteredWishes();
+  const activeExpensePeriod =
+    expensePeriods.find((period) => period.id === activeExpensePeriodId) ||
+    null;
+  const activePeriodExpenses = activeExpensePeriodId
+    ? expenses.filter((expense) => expense.periodId === activeExpensePeriodId)
+    : [];
+  const activeExpenseSettlement =
+    calculateExpenseSettlement(activePeriodExpenses);
+  const expensePage = (
+    <section className="expense-page">
+      <div className="expense-page-head">
+        <div>
+          <p className="eyebrow">SHARED EXPENSES</p>
+          <h2>一起记账</h2>
+        </div>
+        {expenseView === "periods" ? (
+          <button
+            className="primary expense-new-period"
+            onClick={() => {
+              setExpensePeriodName("");
+              setExpensePeriodOpen(true);
+            }}
+          >
+            ＋ 新账单
+          </button>
+        ) : (
+          <button
+            className="expense-back"
+            onClick={() => setExpenseView("periods")}
+          >
+            ‹ 所有账单
+          </button>
+        )}
+      </div>
+      {expenseView === "periods" ? (
+        <div className="expense-period-list">
+          {expensePeriods.length ? (
+            expensePeriods.map((period) => {
+              const periodItems = expenses.filter(
+                (expense) => expense.periodId === period.id,
+              );
+              const total = periodItems.reduce(
+                (sum, expense) => sum + expense.amount,
+                0,
+              );
+              return (
+                <div className="expense-period-wrap" key={period.id}>
+                <button
+                  className="expense-period-row"
+                  onClick={() => openExpensePeriod(period)}
+                >
+                  <span className="expense-period-icon">¥</span>
+                  <span className="expense-period-copy">
+                    <b>{period.name}</b>
+                    <small>
+                      {periodItems.length} 笔记录 ·{" "}
+                      {periodItems.length
+                        ? Array.from(
+                            new Set(
+                              periodItems.flatMap(
+                                (expense) => expense.splitWith,
+                              ),
+                            ),
+                          )
+                            .map(expenseName)
+                            .join("、")
+                        : "暂无参与成员"}
+                    </small>
+                  </span>
+                  <span className="expense-period-total">
+                    <strong>{formatExpenseMoney(total)}</strong>
+                    <small>
+                      {periodItems.length ? "可以结算" : "等待记录"}
+                    </small>
+                  </span>
+                  <i>›</i>
+                </button>
+                <button className="expense-period-delete" aria-label={`删除账单 ${period.name}`} onClick={() => deleteExpensePeriod(period)}>×</button>
+                </div>
+              );
+            })
+          ) : (
+            <div className="expense-empty">
+              <span>¥</span>
+              <h3>还没有账单</h3>
+              <p>新建一个账单，四个人就可以开始记录付款。</p>
+              <button
+                className="primary"
+                onClick={() => setExpensePeriodOpen(true)}
+              >
+                新建第一个账单
+              </button>
+            </div>
+          )}
+        </div>
+      ) : expenseView === "ledger" && activeExpensePeriod ? (
+        <>
+          <div className="expense-ledger-head">
+            <div>
+              <h3>{activeExpensePeriod.name}</h3>
+              <p>&nbsp;</p>
+            </div>
+            <div>
+              <button
+                className="secondary"
+                onClick={() => {
+                  setExpenseMessage("已经保存");
+                  window.setTimeout(() => setExpenseMessage(""), 1400);
+                }}
+              >
+                {expenseMessage || "保存"}
+              </button>
+              <button
+                className="primary"
+                disabled={!activePeriodExpenses.length}
+                onClick={openExpenseSettlement}
+              >
+                结算
+              </button>
+            </div>
+          </div>
+          <div className="expense-summary">
+            <div>
+              <span>总支出</span>
+              <strong>
+                {formatExpenseMoney(activeExpenseSettlement.total)}
+              </strong>
+            </div>
+            <div>
+              <span>消费记录</span>
+              <strong>{activePeriodExpenses.length} 笔</strong>
+            </div>
+            <div>
+              <span>参与成员</span>
+              <strong>
+                {new Set(
+                  activePeriodExpenses.flatMap((expense) => expense.splitWith),
+                ).size || members.length}{" "}
+                人
+              </strong>
+            </div>
+          </div>
+          <div className="expense-records">
+            {activePeriodExpenses.length ? (
+              activePeriodExpenses.map((expense) => (
+                <button
+                  key={expense.id}
+                  className={`expense-record ${expense.creatorUserId === user?.id ? "editable" : "readonly"}`}
+                  onClick={() => openExpenseEditor(expense)}
+                >
+                  <span>
+                    <b>{expense.item}</b>
+                    <small>
+                      {expenseName(expense.payer)} 付款 ·{" "}
+                      {expense.splitWith.map(expenseName).join("、")}
+                    </small>
+                    {expense.note && <em>{expense.note}</em>}
+                  </span>
+                  <span className="expense-record-people">
+                    {expense.splitWith.map((email) => (
+                      <i key={email} className={`dot ${expenseColor(email)}`}>
+                        {expenseName(email).slice(0, 1)}
+                      </i>
+                    ))}
+                  </span>
+                  <strong>{formatExpenseMoney(expense.amount)}</strong>
+                  {expense.creatorUserId === user?.id && (
+                    <small className="expense-edit-hint">编辑 ›</small>
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="expense-empty compact">
+                <p>这个周期还没有消费记录。</p>
+              </div>
+            )}
+          </div>
+          <button className="expense-add-record" onClick={openNewExpense}>
+            ＋ 添加一笔消费
+          </button>
+        </>
+      ) : activeExpensePeriod ? (
+        <>{expensePrinting ? <div className="expense-printing" aria-live="polite"><div className="expense-printer"><div className="expense-receipt"><span/><span/><span/><strong>{formatExpenseMoney(activeExpenseSettlement.total)}</strong></div></div><p>正在打印结算单…</p></div> : <div className="expense-settlement-content">
+          <div className="expense-settlement-head">
+            <div>
+              <p className="eyebrow">SETTLEMENT</p>
+              <h3>{activeExpensePeriod.name} · 结算单</h3>
+              <p>每笔费用只在被勾选的成员之间分摊。</p>
+            </div>
+            <button
+              className="secondary"
+              onClick={() => setExpenseView("ledger")}
+            >
+              返回账本
+            </button>
+          </div>
+          <div className="expense-settlement-total">
+            <span>本账单共同支出</span>
+            <strong>{formatExpenseMoney(activeExpenseSettlement.total)}</strong>
+            <small>{activePeriodExpenses.length} 笔消费</small>
+          </div>
+          <h4 className="expense-subtitle">每个人应该付多少</h4>
+          <div className="expense-balances">
+            {activeExpenseSettlement.balances.map((balance) => (
+              <div key={balance.email}>
+                <span>
+                  <i className={`dot ${expenseColor(balance.email)}`} />
+                  {expenseName(balance.email)}
+                </span>
+                <strong>{formatExpenseMoney(balance.owed / 100)}</strong>
+                <small>已经支付 {formatExpenseMoney(balance.paid / 100)}</small>
+              </div>
+            ))}
+          </div>
+          <h4 className="expense-subtitle">谁应该给谁转多少钱</h4>
+          <div className="expense-transfers">
+            {activeExpenseSettlement.transfers.length ? (
+              activeExpenseSettlement.transfers.map((transfer, index) => (
+                <div key={index}>
+                  <span>
+                    <i className={`dot ${expenseColor(transfer.from)}`} />
+                    {expenseName(transfer.from)}
+                  </span>
+                  <b>→</b>
+                  <span>
+                    <i className={`dot ${expenseColor(transfer.to)}`} />
+                    {expenseName(transfer.to)}
+                  </span>
+                  <strong>{formatExpenseMoney(transfer.amount)}</strong>
+                </div>
+              ))
+            ) : (
+              <p className="expense-all-set">已经结清，不需要再转账。</p>
+            )}
+          </div>
+          <button
+            className="primary expense-finish"
+            onClick={() => setExpenseView("periods")}
+          >
+            保存结算单
+          </button>
+        </div>}
+        </>
+      ) : null}
+      {expensePeriodOpen && (
+        <div
+          className="overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget)
+              setExpensePeriodOpen(false);
+          }}
+        >
+          <section className="sheet expense-sheet small">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">NEW BILL</p>
+                <h2>新建账单</h2>
+              </div>
+              <button onClick={() => setExpensePeriodOpen(false)}>×</button>
+            </div>
+            <label>
+              账单名称
+              <input
+                value={expensePeriodName}
+                onChange={(event) => setExpensePeriodName(event.target.value)}
+                placeholder="例如：东京旅行"
+              />
+            </label>
+            <button
+              className="primary save"
+              disabled={!expensePeriodName.trim() || expenseSaving}
+              onClick={createExpensePeriod}
+            >
+              {expenseSaving ? "正在保存…" : "保存"}
+            </button>
+          </section>
+        </div>
+      )}
+      {expenseOpen && activeExpensePeriod && (
+        <div
+          className="overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setExpenseOpen(false);
+          }}
+        >
+          <section className="sheet expense-sheet">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">EXPENSE</p>
+                <h2>{editingExpense ? "编辑消费" : "添加一笔消费"}</h2>
+              </div>
+              <button onClick={() => setExpenseOpen(false)}>×</button>
+            </div>
+            <label>
+              付了什么
+              <input
+                value={expenseDraft.item}
+                onChange={(event) =>
+                  setExpenseDraft((current) => ({
+                    ...current,
+                    item: event.target.value,
+                  }))
+                }
+                placeholder="例如：酒店、晚餐、打车"
+              />
+            </label>
+            <div className="expense-form-row">
+              <label>
+                付款人
+                <input value={member?.display_name || ""} disabled />
+              </label>
+              <label>
+                金额
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={expenseDraft.amount}
+                  onChange={(event) =>
+                    setExpenseDraft((current) => ({
+                      ...current,
+                      amount: event.target.value,
+                    }))
+                  }
+                  placeholder="0.00"
+                />
+              </label>
+            </div>
+            <fieldset className="expense-split-picker">
+              <legend>这笔账和谁一起分</legend>
+              {members.map((item) => (
+                <label key={item.email}>
+                  <input
+                    type="checkbox"
+                    checked={expenseDraft.splitWith.includes(item.email)}
+                    onChange={() => toggleExpenseParticipant(item.email)}
+                  />
+                  <i className={`dot ${item.color}`} />
+                  {item.display_name}
+                </label>
+              ))}
+            </fieldset>
+            <label>
+              备注 <span>可选</span>
+              <textarea
+                value={expenseDraft.note}
+                onChange={(event) =>
+                  setExpenseDraft((current) => ({
+                    ...current,
+                    note: event.target.value,
+                  }))
+                }
+                placeholder="补充说明"
+              />
+            </label>
+            <div className="expense-form-actions">
+              {editingExpense && (
+                <button className="delete" onClick={deleteExpense}>
+                  删除
+                </button>
+              )}
+              <button
+                className="primary save"
+                disabled={
+                  !expenseDraft.item.trim() ||
+                  !Number(expenseDraft.amount) ||
+                  !expenseDraft.splitWith.length ||
+                  expenseSaving
+                }
+                onClick={saveExpense}
+              >
+                {expenseSaving
+                  ? "正在保存…"
+                  : editingExpense
+                    ? "保存"
+                    : "保存这笔"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+    </section>
+  );
+  const luckyPage = (
+    <section className="lucky-page">
+      <div className="lucky-page-head">
+        <div>
+          <p className="eyebrow">LUCKY PICK</p>
+          <h2>好运抽选机</h2>
+        </div>
+        <button
+          className="lucky-settings-button"
+          onClick={() => setLuckySettingsOpen(true)}
+        >
+          ⚙ <span>设置选项</span>
+        </button>
+      </div>
+      <div className="lucky-stage">
+        <div className="lucky-machine">
+          <div className="lucky-bulbs">
+            {Array.from({ length: 9 }, (_, index) => (
+              <i key={index} />
+            ))}
+          </div>
+          <strong className="lucky-brand">LUCKY</strong>
+          <small className="lucky-subtitle">今天就交给好运决定</small>
+          <div className="lucky-reel-window">
+            <div
+              className={`lucky-reel-grid ${slotSpinning ? "spinning" : ""} ${slotConfigured ? "configured" : "unconfigured"}`}
+            >
+              {slotCells.map((value, index) => (
+                <span
+                  key={index}
+                  className={index >= 3 && index < 6 ? "winner-row" : ""}
+                >
+                  {value}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="lucky-result" aria-live="polite">
+            <small>
+              {slotSpinning
+                ? "正在抽选"
+                : slotWinner
+                  ? "这次选中"
+                  : slotConfigured
+                    ? "拉下右侧拉杆"
+                    : "先设置这次的选项"}
+            </small>
+            <strong>
+              {slotSpinning ? "好运滚动中…" : slotWinner || "准备好了吗？"}
+            </strong>
+            <span>
+              {slotConfigured ? (
+                <>
+                  来自：
+                  {luckyMode === "manual"
+                    ? `随心填写 · ${luckyOptions().length} 项`
+                    : `愿望导入 · ${WISH_CATEGORIES.find((item) => item.value === luckyCategory)?.label}`}
+                </>
+              ) : (
+                "打开设置，决定今天要抽什么"
+              )}
+            </span>
+          </div>
+          <div className={`lucky-lever ${slotSpinning ? "pulled" : ""}`}>
+            <i />
+            <button
+              aria-label="拉下拉杆"
+              disabled={
+                slotSpinning || !slotConfigured || luckyOptions().length === 0
+              }
+              onClick={spinLucky}
+            />
+            <b />
+          </div>
+        </div>
+      </div>
+      {luckySettingsOpen && (
+        <div
+          className="overlay lucky-settings-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget)
+              setLuckySettingsOpen(false);
+          }}
+        >
+          <section className="sheet lucky-settings-sheet">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">PICK SETTINGS</p>
+                <h2>这次抽什么？</h2>
+              </div>
+              <button onClick={() => setLuckySettingsOpen(false)}>×</button>
+            </div>
+            <div className="lucky-source-tabs">
+              <button
+                className={luckyMode === "manual" ? "active" : ""}
+                onClick={() => setLuckyMode("manual")}
+              >
+                随心填写
+              </button>
+              <button
+                className={luckyMode === "import" ? "active" : ""}
+                onClick={() => setLuckyMode("import")}
+              >
+                愿望导入
+              </button>
+            </div>
+            {luckyMode === "manual" ? (
+              <div className="lucky-manual-form">
+                <div className="lucky-saved-sets">
+                  <label>我的常用组合</label>
+                  <div className="lucky-saved-row">
+                    <div className="lucky-set-select">
+                      <button
+                        type="button"
+                        className={luckySetMenuOpen ? "open" : ""}
+                        aria-haspopup="listbox"
+                        aria-expanded={luckySetMenuOpen}
+                        onClick={() => setLuckySetMenuOpen((open) => !open)}
+                      >
+                        <span>
+                          {editingLuckySetId ? (
+                            <>
+                              {savedLuckySets.find(
+                                (set) => set.id === editingLuckySetId,
+                              )?.name || "选择"}{" "}
+                              <small>
+                                ·{" "}
+                                {savedLuckySets.find(
+                                  (set) => set.id === editingLuckySetId,
+                                )?.options.length || 0}{" "}
+                                项
+                              </small>
+                            </>
+                          ) : (
+                            "选择"
+                          )}
+                        </span>
+                        <i />
+                      </button>
+                      {luckySetMenuOpen && (
+                        <div className="lucky-set-menu" role="listbox">
+                          <button
+                            type="button"
+                            className={`lucky-set-choice ${!editingLuckySetId ? "selected" : ""}`}
+                            onClick={clearLuckySetEditor}
+                          >
+                            <b>{!editingLuckySetId ? "✓" : ""}</b>
+                            <span>新建</span>
+                          </button>
+                          {savedLuckySets.map((set) => (
+                            <div
+                              className={`lucky-set-menu-row ${editingLuckySetId === set.id ? "selected" : ""}`}
+                              key={set.id}
+                            >
+                              <button
+                                type="button"
+                                className="lucky-set-choice"
+                                onClick={() => useSavedLuckySet(set)}
+                              >
+                                <b>{editingLuckySetId === set.id ? "✓" : ""}</b>
+                                <span>{set.name}</span>
+                                <small>{set.options.length} 项</small>
+                              </button>
+                              <button
+                                type="button"
+                                className="lucky-set-delete-option"
+                                aria-label={`删除组合 ${set.name}`}
+                                onClick={() => deleteSavedLuckySet(set.id)}
+                              >
+                                删除
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {editingLuckySetId ? (
+                  <label className="lucky-set-name lucky-set-name-before">
+                    组合名称
+                    <input
+                      value={luckySetName}
+                      onChange={(event) => setLuckySetName(event.target.value)}
+                      placeholder="例如：周五吃什么"
+                    />
+                  </label>
+                ) : (
+                  <label className="lucky-remember">
+                    <input
+                      type="checkbox"
+                      checked={rememberLuckySet}
+                      onChange={(event) =>
+                        setRememberLuckySet(event.target.checked)
+                      }
+                    />
+                    <span>保存为常用组合，下次继续使用</span>
+                  </label>
+                )}
+                {!editingLuckySetId && rememberLuckySet && (
+                  <label className="lucky-set-name lucky-set-name-before">
+                    组合名称
+                    <input
+                      value={luckySetName}
+                      onChange={(event) => setLuckySetName(event.target.value)}
+                      placeholder="例如：周五吃什么"
+                    />
+                  </label>
+                )}
+                <label>自己写下选项</label>
+                {manualLuckyOptions.map((option, index) => (
+                  <div className="lucky-option-row" key={index}>
+                    <input
+                      value={option}
+                      onChange={(event) =>
+                        updateManualLuckyOption(index, event.target.value)
+                      }
+                      placeholder={`选项 ${index + 1}`}
+                    />
+                    <button
+                      aria-label="删除这一项"
+                      disabled={manualLuckyOptions.length <= 1}
+                      onClick={() => removeManualLuckyOption(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="lucky-add-row"
+                  onClick={addManualLuckyOption}
+                >
+                  ＋ 再加一项
+                </button>
+              </div>
+            ) : (
+              <div className="lucky-import-form">
+                <label>
+                  导入愿望 Tab
+                  <select
+                    value={luckyCategory}
+                    onChange={(event) =>
+                      changeLuckyCategory(event.target.value as WishCategory)
+                    }
+                  >
+                    {WISH_CATEGORIES.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label} ·{" "}
+                        {
+                          wishes.filter(
+                            (wish) => wish.category === category.value,
+                          ).length
+                        }{" "}
+                        项
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="lucky-optional-title">
+                  <b>进一步筛选</b>
+                  <span>可选</span>
+                </div>
+                <div className="lucky-import-row">
+                  <select
+                    value={luckyFilter}
+                    onChange={(event) => {
+                      setLuckyFilter(event.target.value);
+                      setSelectedLuckyWishIds(
+                        luckyCategoryWishes().map((wish) => wish.id),
+                      );
+                    }}
+                  >
+                    <option value="all">
+                      {luckyCategory === "watch" ? "不限类型" : "不限地点"}
+                    </option>
+                    {luckyImportFilters.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={luckyImportMode}
+                    onChange={(event) =>
+                      changeLuckyImportMode(
+                        event.target.value as "all" | "manual",
+                      )
+                    }
+                  >
+                    <option value="all">导入全部符合项</option>
+                    <option value="manual">手动选择</option>
+                  </select>
+                </div>
+                {luckyImportMode === "manual" && (
+                  <div className="lucky-wish-picker">
+                    <div className="lucky-picker-actions">
+                      <label className="lucky-select-all">
+                        <input
+                          ref={luckySelectAllRef}
+                          type="checkbox"
+                          onChange={(event) =>
+                            setSelectedLuckyWishIds(
+                              event.target.checked
+                                ? luckyCandidates.map((wish) => wish.id)
+                                : [],
+                            )
+                          }
+                        />
+                        <span>全选</span>
+                      </label>
+                      <small>
+                        已选{" "}
+                        {
+                          luckyCandidates.filter((wish) =>
+                            selectedLuckyWishIds.includes(wish.id),
+                          ).length
+                        }
+                        /{luckyCandidates.length}
+                      </small>
+                    </div>
+                    {luckyCandidates.map((wish) => (
+                      <label key={wish.id}>
+                        <input
+                          type="checkbox"
+                          checked={selectedLuckyWishIds.includes(wish.id)}
+                          onChange={() => toggleLuckyWish(wish.id)}
+                        />
+                        <span>{wish.title}</span>
+                        <small>
+                          {luckyCategory === "watch"
+                            ? WATCH_TYPES.find(
+                                (item) => item.value === wish.mediaType,
+                              )?.label
+                            : wish.region}
+                        </small>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              className="primary save lucky-save"
+              disabled={
+                luckyOptions().length === 0 ||
+                (luckyMode === "manual" &&
+                  (rememberLuckySet || Boolean(editingLuckySetId)) &&
+                  !luckySetName.trim())
+              }
+              onClick={applyLuckySettings}
+            >
+              {editingLuckySetId ? "保存修改并使用" : "保存选项"}
+            </button>
+          </section>
+        </div>
+      )}
+    </section>
+  );
+  const wishPage = (
+    <section className="wish-page">
+      <div className="wish-heading">
+        <div>
+          <p className="eyebrow">WISH LIST</p>
+          <h2>愿望清单</h2>
+        </div>
+      </div>
+      <div className="wish-controls">
+        <div className="wish-tabs">
+          {WISH_CATEGORIES.map((category) => (
+            <button
+              key={category.value}
+              className={wishFilter === category.value ? "active" : ""}
+              onClick={() => {
+                setWishFilter(category.value);
+                setWishRegion("all");
+                setWishMediaType("all");
+                setWishStatus("all");
+              }}
+            >
+              {category.icon} {category.label}
+            </button>
+          ))}
+        </div>
+        <div className="wish-control-actions">
+          <div className="wish-selects">
+            {wishFilter === "watch" ? (
+              <select
+                aria-label="筛选类型"
+                value={wishMediaType}
+                onChange={(event) =>
+                  setWishMediaType(event.target.value as "all" | WishMediaType)
+                }
+              >
+                <option value="all">类型</option>
+                {WATCH_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <select
+                aria-label="筛选地点"
+                value={wishRegion}
+                onChange={(event) => setWishRegion(event.target.value)}
+              >
+                <option value="all">地点</option>
+                {wishRegions.map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
+                ))}
+              </select>
+            )}
+            <select
+              aria-label="筛选状态"
+              value={wishStatus}
+              onChange={(event) =>
+                setWishStatus(event.target.value as "all" | WishStatus)
+              }
+            >
+              <option value="all">状态</option>
+              {activeWishStatuses.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button className="primary wish-add" onClick={startAddWish}>
+            ＋ 添加
+          </button>
+        </div>
+      </div>
+      <div className="wish-list">
+        {visibleWishes.map((wish) => {
+          const category = WISH_CATEGORIES.find(
+            (item) => item.value === wish.category,
+          )!;
+          const statuses =
+            wish.category === "watch" ? WATCH_STATUSES : WISH_STATUSES;
+          const status = statuses.find((item) => item.value === wish.status)!;
+          const media = WATCH_TYPES.find(
+            (item) => item.value === wish.mediaType,
+          );
+          const owner = members.find((item) => item.email === wish.owner);
+          const isOwner = wish.ownerUserId === user.id;
+          const joined = wish.participants.includes(member.email);
+          return (
+            <article
+              key={wish.id}
+              className={`wish-row ${isOwner ? "editable" : ""}`}
+              role={isOwner ? "button" : undefined}
+              onClick={() => isOwner && startEditWish(wish)}
+              onKeyDown={(event) => {
+                if (isOwner && (event.key === "Enter" || event.key === " "))
+                  startEditWish(wish);
+              }}
+              tabIndex={isOwner ? 0 : undefined}
+            >
+              <span className="wish-icon">{category.icon}</span>
+              <div className="wish-copy">
+                <h3>{wish.title}</h3>
+                <p>
+                  {isOwner
+                    ? "你创建"
+                    : `${owner?.display_name || wish.owner} 添加`}
+                  {wish.category === "watch"
+                    ? ` · ${[media?.label, wish.place, wish.releaseDate ? `上映 ${wish.releaseDate}` : "", wish.plannedWatchDate ? `计划 ${wish.plannedWatchDate}` : ""].filter(Boolean).join(" · ")}`
+                    : ` · ${wish.region}${wish.place ? ` · ${wish.place}` : ""}`}
+                </p>
+                {wish.note && <small>{wish.note}</small>}
+                <div className="wish-meta">
+                  <span className="wish-people">
+                    {wish.participants.map((email) => {
+                      const person = members.find(
+                        (item) => item.email === email,
+                      );
+                      return person ? (
+                        <i key={email} className={`wish-face ${person.color}`}>
+                          {person.display_name.slice(0, 1).toUpperCase()}
+                        </i>
+                      ) : null;
+                    })}
+                  </span>
+                  <span>
+                    {wish.participants.length} 人
+                    {wish.category === "watch" ? "想看" : "想去"}
+                  </span>
+                  {isOwner && <span>点击整行编辑</span>}
+                </div>
+              </div>
+              <div
+                className="wish-actions"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {isOwner ? (
+                  <select
+                    className="wish-status-select"
+                    aria-label="修改愿望状态"
+                    value={wish.status}
+                    onChange={(event) =>
+                      changeWishStatus(wish, event.target.value as WishStatus)
+                    }
+                  >
+                    {statuses.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className={`wish-status-label status-${wish.status}`}>
+                    {status.label}
+                  </span>
+                )}
+                <button
+                  className={`wish-heart ${joined ? "joined" : ""}`}
+                  aria-label={
+                    isOwner
+                      ? "创建者默认参加"
+                      : joined
+                        ? "取消我也想去"
+                        : "我也想去"
+                  }
+                  aria-pressed={joined}
+                  disabled={isOwner}
+                  onClick={() => toggleWish(wish)}
+                >
+                  {joined ? "♥" : "♡"}
+                </button>
+              </div>
+            </article>
+          );
+        })}
+        {visibleWishes.length === 0 && (
+          <div className="wish-empty">
+            <span>♡</span>
+            <h3>还没有愿望</h3>
+            <p>
+              {wishFilter === "watch"
+                ? "添加一部想看的电影、电视剧或综艺。"
+                : "添加一家想吃的店、一次想玩的体验，或下一段旅行。"}
+            </p>
+          </div>
+        )}
+      </div>
+      {wishOpen && (
+        <div
+          className="overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setWishOpen(false);
+          }}
+        >
+          <section className="sheet wish-sheet">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">
+                  {editingWish ? "EDIT WISH" : "NEW WISH"}
+                </p>
+                <h2>{editingWish ? "编辑愿望" : "添加愿望"}</h2>
+              </div>
+              <button onClick={() => setWishOpen(false)}>×</button>
+            </div>
+            <label>
+              愿望名称
+              <input
+                value={wishDraft.title}
+                onChange={(e) =>
+                  setWishDraft({ ...wishDraft, title: e.target.value })
+                }
+                placeholder="例如：一起去看海"
+              />
+            </label>
+            <label>
+              分类
+              <select
+                value={wishDraft.category}
+                onChange={(e) => {
+                  const category = e.target.value as WishCategory;
+                  setWishDraft({
+                    ...wishDraft,
+                    category,
+                    region: category === "watch" ? "" : wishDraft.region,
+                    status: "wish",
+                    mediaType: "tv",
+                    releaseDate:
+                      category === "watch" ? wishDraft.releaseDate : "",
+                    plannedWatchDate:
+                      category === "watch" ? wishDraft.plannedWatchDate : "",
+                  });
+                }}
+              >
+                {WISH_CATEGORIES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.icon} {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {wishDraft.category === "watch" ? (
+              <>
+                <label>
+                  类型
+                  <select
+                    value={wishDraft.mediaType}
+                    onChange={(e) =>
+                      setWishDraft({
+                        ...wishDraft,
+                        mediaType: e.target.value as WishMediaType,
+                      })
+                    }
+                  >
+                    {WATCH_TYPES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  播放平台 <span>可选</span>
+                  <input
+                    value={wishDraft.place}
+                    onChange={(e) =>
+                      setWishDraft({ ...wishDraft, place: e.target.value })
+                    }
+                    placeholder="例如：Netflix、腾讯视频"
+                  />
+                </label>
+                <div className="wish-date-grid">
+                  <label>
+                    上映时间 <span>可选</span>
+                    <input
+                      type="date"
+                      value={wishDraft.releaseDate}
+                      onChange={(e) =>
+                        setWishDraft({
+                          ...wishDraft,
+                          releaseDate: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    计划观看时间 <span>可选</span>
+                    <input
+                      type="date"
+                      value={wishDraft.plannedWatchDate}
+                      onChange={(e) =>
+                        setWishDraft({
+                          ...wishDraft,
+                          plannedWatchDate: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+              </>
+            ) : (
+              <>
+                <label>
+                  城市或地区
+                  <input
+                    value={wishDraft.region}
+                    onChange={(e) =>
+                      setWishDraft({ ...wishDraft, region: e.target.value })
+                    }
+                    placeholder="例如：上海、东京"
+                  />
+                </label>
+                <label>
+                  具体地点 <span>可选</span>
+                  <input
+                    value={wishDraft.place}
+                    onChange={(e) =>
+                      setWishDraft({ ...wishDraft, place: e.target.value })
+                    }
+                    placeholder="店名、景点或地址"
+                  />
+                </label>
+              </>
+            )}
+            <label>
+              备注 <span>可选</span>
+              <textarea
+                value={wishDraft.note}
+                onChange={(e) =>
+                  setWishDraft({ ...wishDraft, note: e.target.value })
+                }
+                placeholder="想做什么、推荐理由……"
+              />
+            </label>
+            <label>
+              状态
+              <select
+                value={wishDraft.status}
+                onChange={(e) =>
+                  setWishDraft({
+                    ...wishDraft,
+                    status: e.target.value as WishStatus,
+                  })
+                }
+              >
+                {(wishDraft.category === "watch"
+                  ? WATCH_STATUSES
+                  : WISH_STATUSES
+                ).map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="primary save"
+              disabled={
+                !wishDraft.title.trim() ||
+                (wishDraft.category !== "watch" && !wishDraft.region.trim())
+              }
+              onClick={saveWish}
+            >
+              保存{wishDraft.category === "watch" ? "想看" : "愿望"}
+            </button>
+            {editingWish && (
+              <button className="delete" onClick={removeWish}>
+                删除愿望
+              </button>
+            )}
+          </section>
+        </div>
+      )}
+    </section>
+  );
+  return (
+    <main
+      className="app-shell"
+      onClick={() => {
+        if (profileOpen) setProfileOpen(false);
+        if (memberFilterOpen) setMemberFilterOpen(false);
+      }}
+    >
+      <header className="topbar">
+        <div>
+          <p className="eyebrow">PRIVATE</p>
+          <h1>Shared Calendar</h1>
+        </div>
+        <div className="top-actions">
+          <div
+            className="profile-wrap"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className={`profile-avatar ${member.color}`}
+              aria-label="打开个人设置"
+              aria-expanded={profileOpen}
+              onClick={() => {
+                setProfileOpen(!profileOpen);
+                setProfileView("menu");
+                setProfileMessage("");
+              }}
+            >
+              {member.display_name.slice(0, 1).toUpperCase()}
+            </button>
+            {profileOpen && (
+              <section className="profile-popover">
+                <header>
+                  <span className={`profile-avatar small ${member.color}`}>
+                    {member.display_name.slice(0, 1).toUpperCase()}
+                  </span>
+                  <div>
+                    <strong>{member.display_name}</strong>
+                    <small>{user.email}</small>
+                  </div>
+                </header>
+                {profileView === "menu" ? (
+                  <div className="profile-menu">
+                    <button onClick={() => setProfileView("color")}>
+                      <span>●</span>
+                      <b>我的颜色</b>
+                      <small>{COLOR_NAMES[member.color]}　›</small>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        setSettingsOpen(true);
+                        setPasswordMessage("");
+                      }}
+                    >
+                      <span>⌁</span>
+                      <b>账户与安全</b>
+                      <small>修改密码　›</small>
+                    </button>
+                    <button onClick={() => setProfileView("birthday")}>
+                      <span>♢</span>
+                      <b>生日设置</b>
+                      <small>
+                        {member.birthday
+                          ? member.birthday.slice(5).replace("-", "/")
+                          : "未设置"}
+                        　›
+                      </small>
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setProfileOpen(false);
+                          setAdminOpen(true);
+                        }}
+                      >
+                        <span>◇</span>
+                        <b>管理员设置</b>
+                        <small>日历权限　›</small>
+                      </button>
+                    )}
+                  </div>
+                ) : profileView === "color" ? (
+                  <div className="profile-detail">
+                    <button
+                      className="profile-back"
+                      onClick={() => setProfileView("menu")}
+                    >
+                      ‹ 返回
+                    </button>
+                    <h3>选择个人颜色</h3>
+                    <div className="profile-colors">
+                      {COLORS.map((color) => (
+                        <button
+                          key={color}
+                          aria-label={COLOR_NAMES[color]}
+                          className={`profile-color ${color} ${member.color === color ? "selected" : ""}`}
+                          disabled={members.some(
+                            (m) =>
+                              m.email !== member.email && m.color === color,
+                          )}
+                          onClick={() => changeColor(color)}
+                        />
+                      ))}
+                    </div>
+                    <p>更换后，以前和以后添加的行程都会同步使用新颜色。</p>
+                  </div>
+                ) : (
+                  <div className="profile-detail">
+                    <button
+                      className="profile-back"
+                      onClick={() => setProfileView("menu")}
+                    >
+                      ‹ 返回
+                    </button>
+                    <h3>生日设置</h3>
+                    <label>
+                      生日
+                      <input
+                        type="date"
+                        value={birthday}
+                        onChange={(e) => setBirthday(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      className="primary birthday-save"
+                      onClick={saveBirthday}
+                    >
+                      保存生日
+                    </button>
+                    <p>
+                      {profileMessage || "保存后会自动出现在每一年对应日期。"}
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+        </div>
+      </header>
+      <nav className="section-tabs" aria-label="页面切换">
+        <button
+          className={section === "calendar" ? "active" : ""}
+          onClick={() => setSection("calendar")}
+        >
+          日历
+        </button>
+        <button
+          className={section === "special" ? "active" : ""}
+          onClick={() => setSection("special")}
+        >
+          纪念日
+        </button>
+        <button
+          className={section === "wishes" ? "active" : ""}
+          onClick={() => setSection("wishes")}
+        >
+          愿望清单
+        </button>
+        <button
+          className={section === "lucky" ? "active" : ""}
+          onClick={() => setSection("lucky")}
+        >
+          好运抽选机
+        </button>
+        <button
+          className={section === "expenses" ? "active" : ""}
+          onClick={() => setSection("expenses")}
+        >
+          记账
+        </button>
+      </nav>
+      {section === "wishes" && wishPage}
+      {section === "lucky" && luckyPage}
+      {section === "expenses" && expensePage}
+      {section === "calendar" && (
+        <>
+          <section className="toolbar">
+            <div className="move">
+              <button
+                onClick={() =>
+                  setCursor(
+                    new Date(
+                      cursor.getFullYear(),
+                      cursor.getMonth() + (view === "month" ? -1 : 0),
+                      cursor.getDate() + (view === "week" ? -7 : 0),
+                    ),
+                  )
+                }
+              >
+                ‹
+              </button>
+              <button
+                onClick={() =>
+                  setCursor(
+                    new Date(
+                      cursor.getFullYear(),
+                      cursor.getMonth() + (view === "month" ? 1 : 0),
+                      cursor.getDate() + (view === "week" ? 7 : 0),
+                    ),
+                  )
+                }
+              >
+                ›
+              </button>
+            </div>
+            <strong>{label}</strong>
+            <div className="toolbar-right">
+              <div
+                className="member-filter"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  aria-expanded={memberFilterOpen}
+                  onClick={() => setMemberFilterOpen((current) => !current)}
+                >
+                  {selectedOwners.length === allowedOwners.length
+                    ? "所有可见成员"
+                    : `已选 ${selectedOwners.length} 人`}
+                  <span aria-hidden="true">⌄</span>
+                </button>
+                {memberFilterOpen && (
+                  <div className="member-filter-menu">
+                    {allowedOwners.map((item) => (
+                      <label key={item.email}>
+                        <input
+                          type="checkbox"
+                          checked={selectedOwners.includes(item.email)}
+                          onChange={() => toggleOwner(item.email)}
+                        />
+                        <i className={`dot ${item.color}`} />
+                        {item.display_name}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <select value={zone} onChange={(e) => setZone(e.target.value)}>
+                {ZONES.map((z) => (
+                  <option key={z}>{z}</option>
+                ))}
+              </select>
+              <div className="segment">
+                <button
+                  className={view === "week" ? "active" : ""}
+                  onClick={() => setView("week")}
+                >
+                  周
+                </button>
+                <button
+                  className={view === "month" ? "active" : ""}
+                  onClick={() => setView("month")}
+                >
+                  月
+                </button>
+              </div>
+              <button
+                className="calendar-add"
+                aria-label="添加新行程"
+                title="添加新行程"
+                onClick={() => startAdd()}
+              >
+                ＋
+              </button>
+            </div>
+          </section>
+          {view === "month" ? (
+            <section className="calendar month">
+              <div className="weekdays">
+                {["一", "二", "三", "四", "五", "六", "日"].map((x) => (
+                  <span key={x}>周{x}</span>
+                ))}
+              </div>
+              <div className="grid">
+                {dates.map((d) => {
+                  const key = dateKey(d);
+                  const dayEvents = displayEvents.filter(
+                    (e) => e.date === key && matchesFilter(e),
+                  );
+                  return (
+                    <button
+                      className={`day ${key === dateKey(new Date()) ? "today" : ""} ${d.getMonth() !== cursor.getMonth() ? "muted" : ""}`}
+                      key={key}
+                      aria-label={`${key} 查看当天全部行程`}
+                      onClick={() => setMonthAgendaDate(key)}
+                    >
+                      <span className="day-number">{d.getDate()}</span>
+                      <span className="event-list">
+                        {dayEvents.slice(0, 2).map((e) => (
+                          <span
+                            key={`${e.id}-${e.date}`}
+                            className={`event ${e.birthday ? "birthday-event" : ""}`}
+                            style={eventStyle(e)}
+                            onClick={(x) => {
+                              x.stopPropagation();
+                              if (!e.birthday && e.id > 0)
+                                startEdit(
+                                  events.find((item) => item.id === e.id)!,
+                                );
+                            }}
+                          >
+                            {!e.allDay && !e.continuesFromPrevious && (
+                              <b>{e.time}</b>
+                            )}
+                            {e.title}
+                          </span>
+                        ))}
+                      </span>
+                      {dayEvents.length > 2 && (
+                        <span
+                          className="day-overflow-count"
+                          aria-label={`还有 ${dayEvents.length - 2} 项行程`}
+                        >
+                          ＋{dayEvents.length - 2}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : (
+            <section className="calendar week">
+              <div className="week-scroll">
+                <div className="week-head">
+                  <span className="time-corner">时间</span>
+                  {dates.map((d, index) => (
+                    <span
+                      className={
+                        dateKey(d) === dateKey(new Date()) ? "current-day" : ""
+                      }
+                      key={dateKey(d)}
+                    >
+                      周{["一", "二", "三", "四", "五", "六", "日"][index]}
+                      <b>
+                        {d.getMonth() + 1}/{d.getDate()}
+                      </b>
+                    </span>
+                  ))}
+                </div>
+                <div className="week-all-day">
+                  <span>全天</span>
+                  {dates.map((d) => {
+                    const key = dateKey(d);
+                    const allDayEvents = displayEvents.filter(
+                      (e) => e.allDay && e.date === key && matchesFilter(e),
+                    );
+                    return (
+                      <div key={key}>
+                        {allDayEvents.map((e) => (
+                          <button
+                            key={`${e.id}-${e.date}`}
+                            className={`all-day-event ${e.birthday ? "birthday-event" : ""}`}
+                            style={eventStyle(e)}
+                            onClick={() => {
+                              if (!e.birthday && e.id > 0)
+                                startEdit(
+                                  events.find((item) => item.id === e.id)!,
+                                );
+                            }}
+                          >
+                            {e.title}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="week-body">
+                  <div className="time-axis">
+                    {HOURS.map((hour) => (
+                      <span key={hour} style={{ top: hour * HOUR_HEIGHT }}>
+                        {String(hour).padStart(2, "0")}:00
+                      </span>
+                    ))}
+                  </div>
+                  {dates.map((d) => {
+                    const key = dateKey(d);
+                    const dayEvents = displayEvents.filter(
+                      (e) => !e.allDay && e.date === key && matchesFilter(e),
+                    );
+                    return (
+                      <div
+                        className={`week-column ${key === dateKey(new Date()) ? "today-column" : ""}`}
+                        key={key}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${key} 添加行程`}
+                        onClick={(event) =>
+                          startAdd(
+                            key,
+                            timeFromPosition(event.nativeEvent.offsetY),
+                          )
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") startAdd(key);
+                        }}
+                      >
+                        {dayEvents.map((e) => (
+                          <button
+                            key={`${e.id}-${e.date}-${e.time}`}
+                            className="week-event"
+                            style={{
+                              ...eventStyle(e),
+                              top: timeTop(e.time),
+                              height: durationHeight(e.time, e.endTime),
+                            }}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              startEdit(
+                                events.find((item) => item.id === e.id)!,
+                              );
+                            }}
+                          >
+                            <b>
+                              {e.time}–{e.endTime}
+                            </b>
+                            <span>{e.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+        </>
+      )}
+      {section === "special" && (
+        <section className="special-page">
+          <div className="special-heading">
+            <div>
+              <p className="eyebrow">SPECIAL DATES</p>
+              <h2>纪念日</h2>
+            </div>
+            <div className="special-heading-actions">
+              <div className="special-filters">
+                <button
+                  className={specialFilter === "all" ? "active" : ""}
+                  onClick={() => setSpecialFilter("all")}
+                >
+                  全部
+                </button>
+                {SPECIAL_TYPES.map((type) => (
+                  <button
+                    key={type.kind}
+                    className={specialFilter === type.kind ? "active" : ""}
+                    onClick={() => setSpecialFilter(type.kind)}
+                  >
+                    {type.icon} {type.label}
+                  </button>
+                ))}
+              </div>
+              <button className="primary" onClick={startAddSpecial}>
+                ＋ 添加
+              </button>
+            </div>
+          </div>
+          <div className="special-grid">
+            {specialPageDays
+              .filter(
+                (day) => specialFilter === "all" || day.kind === specialFilter,
+              )
+              .sort((a, b) => daysUntil(a) - daysUntil(b))
+              .map((day) => {
+                const people = [day.owner, ...day.participants]
+                  .map(
+                    (email) =>
+                      members.find((item) => item.email === email)
+                        ?.display_name,
+                  )
+                  .filter(Boolean);
+                const remaining = daysUntil(day);
+                const type = SPECIAL_TYPES.find(
+                  (item) => item.kind === day.kind,
+                )!;
+                const color = SPECIAL_COLORS.find(
+                  (item) => item.color === day.color,
+                )!;
+                return (
+                  <button
+                    key={`${day.memberBirthday ? "birthday" : "special"}-${day.id}`}
+                    className="special-card"
+                    style={{ borderTopColor: color.hex }}
+                    onClick={() => !day.memberBirthday && startEditSpecial(day)}
+                    disabled={!day.canEdit}
+                  >
+                    <span
+                      className="special-icon"
+                      style={{ backgroundColor: `${color.hex}45` }}
+                    >
+                      {type.icon}
+                    </span>
+                    <span className="special-kind">{type.label}</span>
+                    <strong>{day.title}</strong>
+                    <span className="special-date">
+                      {day.repeatYearly
+                        ? day.date.slice(5).replace("-", " 月 ") + " 日"
+                        : day.date.replaceAll("-", " / ")}
+                    </span>
+                    <b>
+                      {remaining === 0
+                        ? "就是今天"
+                        : remaining > 0
+                          ? `还有 ${remaining} 天`
+                          : `已经过去 ${Math.abs(remaining)} 天`}
+                    </b>
+                    <small>
+                      {day.memberBirthday
+                        ? `Owner · ${people[0]}`
+                        : people.join("、")}
+                      {day.showInCalendar ? " · 显示在日历" : ""}
+                    </small>
+                  </button>
+                );
+              })}
+            {specialPageDays.filter(
+              (day) => specialFilter === "all" || day.kind === specialFilter,
+            ).length === 0 && (
+              <div className="special-empty">
+                <span>♡</span>
+                <h3>暂无这一类纪念日</h3>
+                <p>可以添加见面、纪念、旅行或生日。</p>
+                <button className="primary" onClick={startAddSpecial}>
+                  添加纪念日
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+      <footer>
+        {members.map((m) => (
+          <span key={m.email}>
+            <i className={`dot ${m.color}`} /> {m.display_name}
+          </span>
+        ))}
+        <span className="zone-note">
+          {user.email} ·{" "}
+          <button className="logout" onClick={() => supabase.auth.signOut()}>
+            退出
+          </button>
+        </span>
+      </footer>
+      {adminOpen && isAdmin && (
+        <div
+          className="overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setAdminOpen(false);
+          }}
+        >
+          <section className="admin-sheet">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">ADMIN</p>
+                <h2>日历查看权限</h2>
+              </div>
+              <button onClick={() => setAdminOpen(false)}>×</button>
+            </div>
+            <p>每一行代表该成员可以查看谁的日历。自己的日历始终可见。</p>
+            <div className="permission-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>成员</th>
+                    {members.map((owner) => (
+                      <th key={owner.email}>{owner.display_name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((viewer) => (
+                    <tr key={viewer.email}>
+                      <th>{viewer.display_name}</th>
+                      {members.map((owner) => {
+                        const checked =
+                          viewer.email === owner.email ||
+                          visibility.some(
+                            (row) =>
+                              row.viewer_email === viewer.email &&
+                              row.owner_email === owner.email,
+                          );
+                        return (
+                          <td key={owner.email}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={viewer.email === owner.email}
+                              aria-label={`${viewer.display_name} 查看 ${owner.display_name}`}
+                              onChange={() =>
+                                toggleVisibility(viewer.email, owner.email)
+                              }
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      )}
+      {settingsOpen && (
+        <div
+          className="overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setSettingsOpen(false);
+          }}
+        >
+          <section className="security-sheet">
+            <aside className="security-profile">
+              <span className={`security-avatar ${member.color}`}>
+                {member.display_name.slice(0, 1).toUpperCase()}
+              </span>
+              <strong>{member.display_name}</strong>
+              <small>{user.email}</small>
+              <span>账户与安全</span>
+            </aside>
+            <div className="security-content">
+              <div className="sheet-head">
+                <div>
+                  <p className="eyebrow">ACCOUNT &amp; SECURITY</p>
+                  <h2>重设密码</h2>
+                </div>
+                <button onClick={() => setSettingsOpen(false)}>×</button>
+              </div>
+              <p className="security-copy">
+                修改密码前需要验证当前密码。你的成员资料、颜色和行程不会改变。
+              </p>
+              <label>
+                当前密码
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="输入当前密码"
+                />
+              </label>
+              <hr />
+              <label>
+                新密码
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="至少 8 位"
+                />
+              </label>
+              <label>
+                确认新密码
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="再次输入新密码"
+                />
+              </label>
+              <p className="password-tip">
+                建议同时包含字母和数字，不要与邮箱密码相同。
+              </p>
+              {passwordMessage && (
+                <p
+                  className={`password-message ${passwordMessage === "密码已更新" ? "success" : ""}`}
+                >
+                  {passwordMessage}
+                </p>
+              )}
+              <button
+                className="primary save"
+                onClick={() => updatePassword(false)}
+                disabled={savingPassword}
+              >
+                {savingPassword ? "正在保存…" : "保存新密码"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {specialOpen && (
+        <div
+          className="overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setSpecialOpen(false);
+          }}
+        >
+          <section className="sheet special-sheet">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">
+                  {editingSpecial ? "EDIT SPECIAL DATE" : "NEW SPECIAL DATE"}
+                </p>
+                <h2>{editingSpecial ? "编辑纪念日" : "添加纪念日"}</h2>
+              </div>
+              <button onClick={() => setSpecialOpen(false)}>×</button>
+            </div>
+            <label>
+              名称
+              <input
+                value={specialDraft.title}
+                onChange={(e) =>
+                  setSpecialDraft({ ...specialDraft, title: e.target.value })
+                }
+                placeholder="例如：四个人下一次见面"
+              />
+            </label>
+            <fieldset className="special-type-picker">
+              <legend>类型</legend>
+              <div>
+                {SPECIAL_TYPES.map((type) => (
+                  <button
+                    key={type.kind}
+                    className={specialDraft.kind === type.kind ? "active" : ""}
+                    onClick={() =>
+                      setSpecialDraft({ ...specialDraft, kind: type.kind })
+                    }
+                  >
+                    <span>{type.icon}</span>
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <label>
+              日期
+              <input
+                type="date"
+                value={specialDraft.date}
+                onChange={(e) =>
+                  setSpecialDraft({ ...specialDraft, date: e.target.value })
+                }
+              />
+            </label>
+            {specialDraft.kind === "meet" && (
+              <div className="special-meet-time">
+                <label>
+                  开始时间
+                  <input
+                    type="time"
+                    value={specialDraft.startTime}
+                    onChange={(e) =>
+                      setSpecialDraft({
+                        ...specialDraft,
+                        startTime: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  结束时间
+                  <input
+                    type="time"
+                    value={specialDraft.endTime}
+                    onChange={(e) =>
+                      setSpecialDraft({
+                        ...specialDraft,
+                        endTime: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  时区
+                  <select
+                    value={specialDraft.timezone}
+                    onChange={(e) =>
+                      setSpecialDraft({
+                        ...specialDraft,
+                        timezone: e.target.value,
+                      })
+                    }
+                  >
+                    {ZONES.map((timezone) => (
+                      <option key={timezone} value={timezone}>
+                        {ZONE_NAMES[timezone]} · {timezone}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+            <fieldset className="special-color-picker">
+              <legend>
+                颜色{" "}
+                <span>
+                  {
+                    SPECIAL_COLORS.find(
+                      (item) => item.color === specialDraft.color,
+                    )?.label
+                  }
+                </span>
+              </legend>
+              <div>
+                {SPECIAL_COLORS.map((item) => (
+                  <button
+                    key={item.color}
+                    className={
+                      specialDraft.color === item.color ? "active" : ""
+                    }
+                    style={{ backgroundColor: item.hex }}
+                    aria-label={item.label}
+                    onClick={() =>
+                      setSpecialDraft({ ...specialDraft, color: item.color })
+                    }
+                  />
+                ))}
+              </div>
+            </fieldset>
+            <label className="special-check">
+              <input
+                type="checkbox"
+                checked={specialDraft.repeatYearly}
+                onChange={(e) =>
+                  setSpecialDraft({
+                    ...specialDraft,
+                    repeatYearly: e.target.checked,
+                  })
+                }
+              />{" "}
+              每年重复
+            </label>
+            <label className="special-check">
+              <input
+                type="checkbox"
+                checked={specialDraft.showInCalendar}
+                onChange={(e) =>
+                  setSpecialDraft({
+                    ...specialDraft,
+                    showInCalendar: e.target.checked,
+                  })
+                }
+              />{" "}
+              同时显示在日历中
+            </label>
+            <fieldset className="participant-picker">
+              <legend>
+                一起的人 <span>仅显示可以查看你日历的成员</span>
+              </legend>
+              {eligibleSpecialParticipants.map((item) => (
+                <label
+                  key={item.email}
+                  className={
+                    specialDraft.participants.includes(item.email)
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    checked={specialDraft.participants.includes(item.email)}
+                    onChange={() => toggleSpecialParticipant(item.email)}
+                  />
+                  <i className={`dot ${item.color}`} />
+                  <span>{item.display_name}</span>
+                </label>
+              ))}
+              {eligibleSpecialParticipants.length === 0 && (
+                <p>目前没有可选择的成员</p>
+              )}
+            </fieldset>
+            {specialDraft.kind === "meet" &&
+              specialDraft.endTime <= specialDraft.startTime && (
+                <p className="time-error">结束时间必须晚于开始时间</p>
+              )}
+            <button
+              className="primary save"
+              disabled={
+                !specialDraft.title.trim() ||
+                !specialDraft.date ||
+                (specialDraft.kind === "meet" &&
+                  specialDraft.endTime <= specialDraft.startTime)
+              }
+              onClick={saveSpecial}
+            >
+              保存纪念日
+            </button>
+            {editingSpecial && (
+              <button className="delete" onClick={removeSpecial}>
+                删除纪念日
+              </button>
+            )}
+          </section>
+        </div>
+      )}
+      {monthAgendaDate && (
+        <div
+          className="overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setMonthAgendaDate(null);
+          }}
+        >
+          <section className="sheet month-agenda">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">DAY AGENDA</p>
+                <h2>
+                  {Number(monthAgendaDate.slice(5, 7))} 月{" "}
+                  {Number(monthAgendaDate.slice(8, 10))} 日
+                </h2>
+              </div>
+              <button onClick={() => setMonthAgendaDate(null)}>×</button>
+            </div>
+            <div className="agenda-list">
+              {displayEvents
+                .filter(
+                  (event) =>
+                    event.date === monthAgendaDate && matchesFilter(event),
+                )
+                .map((event) => (
+                  <button
+                    key={`${event.id}-${event.date}-${event.time}`}
+                    className="agenda-event"
+                    style={eventStyle(event)}
+                    disabled={Boolean(event.birthday) || event.id <= 0}
+                    onClick={() => {
+                      const original = events.find(
+                        (item) => item.id === event.id,
+                      );
+                      if (original) {
+                        setMonthAgendaDate(null);
+                        startEdit(original);
+                      }
+                    }}
+                  >
+                    <time>{event.allDay ? "全天" : event.time}</time>
+                    <span>
+                      <b>{event.title}</b>
+                      {event.location && <small>{event.location}</small>}
+                    </span>
+                  </button>
+                ))}
+            </div>
+            <button
+              className="primary agenda-add"
+              onClick={() => {
+                const date = monthAgendaDate;
+                setMonthAgendaDate(null);
+                startAdd(date);
+              }}
+            >
+              ＋ 添加当天行程
+            </button>
+          </section>
+        </div>
+      )}
+      {open && (
+        <div
+          className="overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+        >
+          <div className="sheet">
+            <div className="sheet-head">
+              <div>
+                <p className="eyebrow">
+                  {editing ? "EDIT EVENT" : "NEW EVENT"}
+                </p>
+                <h2>{editing ? "编辑行程" : "添加新行程"}</h2>
+              </div>
+              <button onClick={() => setOpen(false)}>×</button>
+            </div>
+            <label>
+              行程名称
+              <input
+                value={draft.title}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                placeholder="例如：一起吃晚饭"
+              />
+            </label>
+            <div className="event-options">
+              <label className="option-toggle">
+                <input
+                  type="checkbox"
+                  checked={draft.allDay}
+                  onChange={(e) =>
+                    setDraft({ ...draft, allDay: e.target.checked })
+                  }
+                />
+                <span>全天</span>
+              </label>
+              <label className="option-toggle">
+                <input
+                  type="checkbox"
+                  checked={draft.useTimezone}
+                  onChange={(e) => toggleDraftTimezone(e.target.checked)}
+                />
+                <span>时区</span>
+              </label>
+            </div>
+            {draft.useTimezone && (
+              <label className="timezone-picker">
+                时区
+                <select
+                  value={draft.timezone}
+                  onChange={(e) => changeDraftTimezone(e.target.value)}
+                >
+                  {ZONES.map((timezone) => (
+                    <option key={timezone} value={timezone}>
+                      {ZONE_NAMES[timezone]} · {timezone}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div className="datetime-row">
+              <strong>开始</strong>
+              <label>
+                日期
+                <input
+                  type="date"
+                  value={draft.date}
+                  onChange={(e) => {
+                    const date = e.target.value;
+                    setDraft({
+                      ...draft,
+                      date,
+                      endDate: draft.endDate < date ? date : draft.endDate,
+                    });
+                  }}
+                />
+              </label>
+              {!draft.allDay && (
+                <label>
+                  时间
+                  <input
+                    type="time"
+                    value={draft.time}
+                    onChange={(e) => {
+                      const time = e.target.value;
+                      setDraft({
+                        ...draft,
+                        time,
+                        endTime:
+                          draft.endTime === time
+                            ? nextHour(time)
+                            : draft.endTime,
+                      });
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            <div className="datetime-row">
+              <strong>结束</strong>
+              <label>
+                日期
+                <input
+                  type="date"
+                  min={draft.date}
+                  value={draft.endDate}
+                  onChange={(e) =>
+                    setDraft({ ...draft, endDate: e.target.value })
+                  }
+                />
+              </label>
+              {!draft.allDay && (
+                <label>
+                  时间
+                  <input
+                    type="time"
+                    value={draft.endTime}
+                    onChange={(e) =>
+                      setDraft({ ...draft, endTime: e.target.value })
+                    }
+                  />
+                </label>
+              )}
+            </div>
+            {draft.useTimezone && !draft.allDay && (
+              <p className="timezone-help">
+                切换时区会保持同一个真实时刻，并自动换算开始、结束日期与时间。
+              </p>
+            )}
+            <fieldset className="participant-picker">
+              <legend>
+                一起的成员 <span>可选</span>
+              </legend>
+              {members
+                .filter((item) => item.email !== member.email)
+                .map((item) => (
+                  <label
+                    key={item.email}
+                    className={
+                      draft.participants.includes(item.email) ? "selected" : ""
+                    }
+                  >
+                    <input
+                      type="checkbox"
+                      checked={draft.participants.includes(item.email)}
+                      onChange={() => toggleParticipant(item.email)}
+                    />
+                    <i className={`dot ${item.color}`} />
+                    <span>{item.display_name}</span>
+                  </label>
+                ))}
+              {members.length === 1 && <p>目前还没有其他成员</p>}
+            </fieldset>
+            <label>
+              地点
+              <input
+                value={draft.location}
+                onChange={(e) =>
+                  setDraft({ ...draft, location: e.target.value })
+                }
+                placeholder="输入地址"
+              />
+            </label>
+            <label>
+              备注
+              <textarea
+                value={draft.note}
+                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+                placeholder="补充信息"
+              />
+            </label>
+            <p className="owner-line">
+              <i className={`dot ${member.color}`} /> 由 {member.display_name}{" "}
+              添加
+            </p>
+            {!validRange && (
+              <p className="time-error">结束日期与时间必须晚于开始日期与时间</p>
+            )}
+            <button
+              className="primary save"
+              onClick={save}
+              disabled={!draft.title.trim() || !validRange}
+            >
+              保存到 Shared Calendar
+            </button>
+            {editing && (
+              <button className="delete" onClick={remove}>
+                删除行程
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </main>
+  );
 }
