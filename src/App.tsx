@@ -504,6 +504,7 @@ export default function Home() {
   const [pollMode, setPollMode] = useState<"pass" | "invite">("pass");
   const [pollInvited, setPollInvited] = useState<string[]>([]);
   const [pollChoice, setPollChoice] = useState<boolean | null>(null);
+  const [passHandoff, setPassHandoff] = useState(false);
   const [pollSaving, setPollSaving] = useState(false);
   const [pollMessage, setPollMessage] = useState("");
   async function loadMemberAccess() {
@@ -1629,13 +1630,15 @@ export default function Home() {
     setPollOpen(false);
     setActivePollId(data.id);
     setPollChoice(null);
+    setPassHandoff(false);
   }
   function openPoll(poll: Poll) {
     setActivePollId(poll.id);
     setPollChoice(null);
+    setPassHandoff(false);
     setPollMessage("");
   }
-  async function submitPollVote(finishPass = false) {
+  async function submitPollVote() {
     const poll = polls.find((item) => item.id === activePollId);
     if (!poll || pollChoice === null || !user || pollSaving) return;
     setPollSaving(true);
@@ -1652,14 +1655,27 @@ export default function Home() {
       );
       return;
     }
-    if (finishPass) {
-      const { error: closeError } = await supabase
-        .from("shared_calendar_polls")
-        .update({ status: "closed", closed_at: new Date().toISOString() })
-        .eq("id", poll.id);
-      if (closeError) setPollMessage(`暂时无法揭晓：${closeError.message}`);
-    }
     setPollChoice(null);
+    await refreshPolls();
+    if (poll.mode === "pass") setPassHandoff(true);
+    setPollSaving(false);
+  }
+  async function finishPassPoll() {
+    const poll = polls.find((item) => item.id === activePollId);
+    if (!poll || poll.mode !== "pass" || pollSaving) return;
+    setPollSaving(true);
+    setPollMessage("");
+    const { data, error } = await supabase.rpc(
+      "finish_shared_calendar_pass_poll",
+      { p_poll_id: poll.id },
+    );
+    if (error || !data) {
+      setPollMessage(error ? `暂时无法揭晓：${error.message}` : "该投票已经结束");
+      await refreshPolls();
+      setPollSaving(false);
+      return;
+    }
+    setPassHandoff(false);
     await refreshPolls();
     setPollSaving(false);
   }
@@ -2504,6 +2520,32 @@ export default function Home() {
               </div>
               <small>只公布总票数，不显示任何人的选择。</small>
             </div>
+          ) : activePoll.mode === "pass" && passHandoff ? (
+            <div className="poll-handoff" aria-live="polite">
+              <span className="poll-handoff-mark">✓</span>
+              <h4>这一票已记录</h4>
+              <p>请把设备交给下一位</p>
+              <small>
+                目前已有 {activePoll.responseCount} 人完成作答，票数仍然保密。
+              </small>
+              <div className="poll-handoff-actions">
+                <button
+                  onClick={() => {
+                    setPassHandoff(false);
+                    setPollChoice(null);
+                  }}
+                >
+                  下一位开始
+                </button>
+                <button
+                  className="primary"
+                  disabled={pollSaving}
+                  onClick={finishPassPoll}
+                >
+                  {pollSaving ? "正在揭晓…" : "完成投票并揭晓"}
+                </button>
+              </div>
+            </div>
           ) : activePoll.mode === "invite" &&
             (activePoll.hasVoted || !canVoteInActivePoll) ? (
             <div className="poll-waiting" aria-live="polite">
@@ -2548,26 +2590,18 @@ export default function Home() {
                   : "提交后等待其他受邀成员，中途不会显示票数。"}
               </p>
               {activePoll.mode === "pass" ? (
-                <div className="poll-vote-actions">
-                  <button
-                    disabled={pollChoice === null || pollSaving}
-                    onClick={() => submitPollVote(false)}
-                  >
-                    提交并给下一位
-                  </button>
-                  <button
-                    className="primary"
-                    disabled={pollChoice === null || pollSaving}
-                    onClick={() => submitPollVote(true)}
-                  >
-                    完成投票
-                  </button>
-                </div>
+                <button
+                  className="primary poll-submit"
+                  disabled={pollChoice === null || pollSaving}
+                  onClick={submitPollVote}
+                >
+                  {pollSaving ? "正在提交…" : "提交本次选择"}
+                </button>
               ) : (
                 <button
                   className="primary poll-submit"
                   disabled={pollChoice === null || pollSaving}
-                  onClick={() => submitPollVote(false)}
+                  onClick={submitPollVote}
                 >
                   {pollSaving ? "正在提交…" : "提交我的选择"}
                 </button>
