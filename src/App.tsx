@@ -104,6 +104,21 @@ type Expense = {
   creator: string;
   createdAt: string;
 };
+type Poll = {
+  id: number;
+  question: string;
+  mode: "pass" | "invite";
+  creatorUserId: string;
+  creator: string;
+  invited: string[];
+  status: "open" | "closed";
+  responseCount: number;
+  expectedCount: number | null;
+  hasVoted: boolean;
+  yesCount: number | null;
+  noCount: number | null;
+  createdAt: string;
+};
 const COLORS = ["sage", "clay", "gold", "rose", "stone"] as const;
 const COLOR_NAMES: { [key: string]: string } = {
   sage: "鼠尾草绿",
@@ -364,7 +379,7 @@ export default function Home() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [section, setSection] = useState<
-    "calendar" | "special" | "wishes" | "lucky" | "expenses"
+    "calendar" | "special" | "wishes" | "lucky" | "expenses" | "polls"
   >("calendar");
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(new Date());
@@ -482,6 +497,15 @@ export default function Home() {
     splitWith: [] as string[],
     note: "",
   });
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [pollOpen, setPollOpen] = useState(false);
+  const [activePollId, setActivePollId] = useState<number | null>(null);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollMode, setPollMode] = useState<"pass" | "invite">("pass");
+  const [pollInvited, setPollInvited] = useState<string[]>([]);
+  const [pollChoice, setPollChoice] = useState<boolean | null>(null);
+  const [pollSaving, setPollSaving] = useState(false);
+  const [pollMessage, setPollMessage] = useState("");
   async function loadMemberAccess() {
     const retryDelays = [0, 450, 1000];
     let lastResult: any = null;
@@ -518,6 +542,7 @@ export default function Home() {
       setSavedLuckySets([]);
       setExpensePeriods([]);
       setExpenses([]);
+      setPolls([]);
       setMemberLoading(false);
       setMemberLoadError("");
       return;
@@ -564,6 +589,7 @@ export default function Home() {
       setSavedLuckySets([]);
       setExpensePeriods([]);
       setExpenses([]);
+      setPolls([]);
       setMemberLoading(false);
       return;
     }
@@ -574,6 +600,7 @@ export default function Home() {
       { data: luckySetData },
       { data: expensePeriodData },
       { data: expenseData },
+      { data: pollData },
     ] = await Promise.all([
       supabase.rpc("get_shared_calendar_events"),
       supabase.rpc("get_shared_calendar_special_days"),
@@ -597,6 +624,7 @@ export default function Home() {
           "id,period_id,item,amount,payer_email,split_with,note,creator_user_id,creator_email,created_at",
         )
         .order("created_at", { ascending: false }),
+      supabase.rpc("get_shared_calendar_polls"),
     ]);
     setEvents(
       (data || []).map((e: any) => ({
@@ -682,7 +710,34 @@ export default function Home() {
         createdAt: expense.created_at,
       })),
     );
+    setPolls(mapPollRows(pollData || []));
     setMemberLoading(false);
+  }
+  function mapPollRows(rows: any[]): Poll[] {
+    return rows.map((poll: any) => ({
+      id: poll.id,
+      question: poll.question,
+      mode: poll.mode,
+      creatorUserId: poll.creator_user_id,
+      creator: poll.creator_email,
+      invited: poll.invited_emails || [],
+      status: poll.status,
+      responseCount: Number(poll.response_count),
+      expectedCount:
+        poll.expected_count === null ? null : Number(poll.expected_count),
+      hasVoted: Boolean(poll.has_voted),
+      yesCount: poll.yes_count === null ? null : Number(poll.yes_count),
+      noCount: poll.no_count === null ? null : Number(poll.no_count),
+      createdAt: poll.created_at,
+    }));
+  }
+  async function refreshPolls() {
+    const { data, error } = await supabase.rpc("get_shared_calendar_polls");
+    if (error) {
+      console.warn("[no-push] refresh failed", error.message);
+      return;
+    }
+    setPolls(mapPollRows(data || []));
   }
   useEffect(() => {
     let alive = true;
@@ -723,6 +778,12 @@ export default function Home() {
       data.subscription.unsubscribe();
     };
   }, []);
+  useEffect(() => {
+    if (section !== "polls" || !user || !member) return;
+    refreshPolls();
+    const timer = window.setInterval(refreshPolls, 5000);
+    return () => window.clearInterval(timer);
+  }, [section, user?.id, member?.email]);
   useEffect(() => {
     const control = luckySelectAllRef.current;
     if (!control) return;
@@ -1522,6 +1583,102 @@ export default function Home() {
     );
   }
 
+  function openPollBuilder() {
+    setPollQuestion("");
+    setPollMode("pass");
+    setPollInvited(members.map((item) => item.email));
+    setPollMessage("");
+    setPollOpen(true);
+  }
+  function togglePollInvite(email: string) {
+    setPollInvited((current) =>
+      current.includes(email)
+        ? current.filter((item) => item !== email)
+        : [...current, email],
+    );
+  }
+  async function createPoll() {
+    const question = pollQuestion.trim();
+    if (
+      !question ||
+      !user ||
+      !member ||
+      (pollMode === "invite" && !pollInvited.length) ||
+      pollSaving
+    )
+      return;
+    setPollSaving(true);
+    setPollMessage("");
+    const { data, error } = await supabase
+      .from("shared_calendar_polls")
+      .insert({
+        question,
+        mode: pollMode,
+        creator_user_id: user.id,
+        creator_email: member.email,
+        invited_emails: pollMode === "invite" ? pollInvited : [],
+      })
+      .select("id")
+      .single();
+    setPollSaving(false);
+    if (error) {
+      setPollMessage(`暂时无法创建：${error.message}`);
+      return;
+    }
+    await refreshPolls();
+    setPollOpen(false);
+    setActivePollId(data.id);
+    setPollChoice(null);
+  }
+  function openPoll(poll: Poll) {
+    setActivePollId(poll.id);
+    setPollChoice(null);
+    setPollMessage("");
+  }
+  async function submitPollVote(finishPass = false) {
+    const poll = polls.find((item) => item.id === activePollId);
+    if (!poll || pollChoice === null || !user || pollSaving) return;
+    setPollSaving(true);
+    setPollMessage("");
+    const { error } = await supabase.from("shared_calendar_poll_votes").insert({
+      poll_id: poll.id,
+      choice: pollChoice,
+      voter_user_id: poll.mode === "invite" ? user.id : null,
+    });
+    if (error) {
+      setPollSaving(false);
+      setPollMessage(
+        error.code === "23505" ? "你已经提交过了" : `提交失败：${error.message}`,
+      );
+      return;
+    }
+    if (finishPass) {
+      const { error: closeError } = await supabase
+        .from("shared_calendar_polls")
+        .update({ status: "closed", closed_at: new Date().toISOString() })
+        .eq("id", poll.id);
+      if (closeError) setPollMessage(`暂时无法揭晓：${closeError.message}`);
+    }
+    setPollChoice(null);
+    await refreshPolls();
+    setPollSaving(false);
+  }
+  async function deletePoll(poll: Poll) {
+    if (poll.creatorUserId !== user?.id) return;
+    if (!window.confirm(`删除投票“${poll.question}”？`)) return;
+    const previous = polls;
+    setPolls((current) => current.filter((item) => item.id !== poll.id));
+    setActivePollId(null);
+    const { error } = await supabase
+      .from("shared_calendar_polls")
+      .delete()
+      .eq("id", poll.id);
+    if (error) {
+      setPolls(previous);
+      setPollMessage(`删除失败：${error.message}`);
+    }
+  }
+
   const expenseMember = (email: string) =>
     members.find((item) => item.email.toLowerCase() === email.toLowerCase());
   const expenseName = (email: string) =>
@@ -2264,6 +2421,228 @@ export default function Home() {
     : [];
   const activeExpenseSettlement =
     calculateExpenseSettlement(activePeriodExpenses);
+  const activePoll = polls.find((poll) => poll.id === activePollId) || null;
+  const canVoteInActivePoll = Boolean(
+    activePoll?.mode === "pass" ||
+      activePoll?.invited.some(
+        (email) => email.toLowerCase() === member.email.toLowerCase(),
+      ),
+  );
+  const pollPage = (
+    <section className="poll-page">
+      <div className="poll-page-head">
+        <div>
+          <p className="eyebrow">ANONYMOUS VOTE</p>
+          <h2>No Push</h2>
+        </div>
+        {activePoll ? (
+          <button className="poll-back" onClick={() => setActivePollId(null)}>
+            ‹ 所有投票
+          </button>
+        ) : (
+          <button className="primary poll-new" onClick={openPollBuilder}>
+            ＋ 新投票
+          </button>
+        )}
+      </div>
+
+      {!activePoll ? (
+        <div className="poll-list">
+          {polls.length ? (
+            polls.map((poll) => (
+              <div className="poll-list-wrap" key={poll.id}>
+                <button className="poll-list-row" onClick={() => openPoll(poll)}>
+                  <span className="poll-list-icon">?</span>
+                  <span className="poll-list-copy">
+                    <b>{poll.question}</b>
+                    <small>
+                      {poll.mode === "pass" ? "轮流作答" : "邀请成员"} ·{" "}
+                      {poll.status === "closed"
+                        ? "已揭晓"
+                        : poll.mode === "invite"
+                          ? `${poll.responseCount}/${poll.expectedCount} 已提交`
+                          : `${poll.responseCount} 人已作答`}
+                    </small>
+                  </span>
+                  <span className={`poll-state ${poll.status}`}>
+                    {poll.status === "closed" ? "查看结果" : "进行中"}
+                  </span>
+                  <i>›</i>
+                </button>
+                {poll.creatorUserId === user.id && (
+                  <button
+                    className="poll-delete"
+                    aria-label={`删除投票 ${poll.question}`}
+                    onClick={() => deletePoll(poll)}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="poll-empty">
+              <span>?</span>
+              <h3>还没有匿名投票</h3>
+              <p>答案在所有人完成前都会保密。</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="poll-detail">
+          <div className="poll-detail-label">
+            {activePoll.mode === "pass" ? "轮流作答" : "邀请成员"}
+          </div>
+          <h3>{activePoll.question}</h3>
+
+          {activePoll.status === "closed" ? (
+            <div className="poll-results" aria-live="polite">
+              <p>所有人已提交 · 结果已揭晓</p>
+              <div>
+                <span className="yes">YES<strong>{activePoll.yesCount}</strong></span>
+                <span className="no">NO<strong>{activePoll.noCount}</strong></span>
+              </div>
+              <small>只公布总票数，不显示任何人的选择。</small>
+            </div>
+          ) : activePoll.mode === "invite" &&
+            (activePoll.hasVoted || !canVoteInActivePoll) ? (
+            <div className="poll-waiting" aria-live="polite">
+              <span className="poll-waiting-mark">···</span>
+              <h4>等待大家完成投票</h4>
+              <p>答案暂时保密</p>
+              <div className="poll-progress">
+                <i
+                  style={{
+                    width: `${Math.round(
+                      (activePoll.responseCount /
+                        Math.max(activePoll.expectedCount || 1, 1)) *
+                        100,
+                    )}%`,
+                  }}
+                />
+              </div>
+              <small>
+                已提交 {activePoll.responseCount}/{activePoll.expectedCount}
+              </small>
+            </div>
+          ) : (
+            <div className="poll-voting">
+              <p>匿名选择</p>
+              <div className="poll-choice-row">
+                <button
+                  className={`poll-choice yes ${pollChoice === true ? "selected" : ""}`}
+                  onClick={() => setPollChoice(true)}
+                >
+                  YES
+                </button>
+                <button
+                  className={`poll-choice no ${pollChoice === false ? "selected" : ""}`}
+                  onClick={() => setPollChoice(false)}
+                >
+                  NO
+                </button>
+              </div>
+              <p className="poll-secret">
+                {activePoll.mode === "pass"
+                  ? "选完后把设备交给下一位，中途不会显示票数。"
+                  : "提交后等待其他受邀成员，中途不会显示票数。"}
+              </p>
+              {activePoll.mode === "pass" ? (
+                <div className="poll-vote-actions">
+                  <button
+                    disabled={pollChoice === null || pollSaving}
+                    onClick={() => submitPollVote(false)}
+                  >
+                    提交并给下一位
+                  </button>
+                  <button
+                    className="primary"
+                    disabled={pollChoice === null || pollSaving}
+                    onClick={() => submitPollVote(true)}
+                  >
+                    完成投票
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="primary poll-submit"
+                  disabled={pollChoice === null || pollSaving}
+                  onClick={() => submitPollVote(false)}
+                >
+                  {pollSaving ? "正在提交…" : "提交我的选择"}
+                </button>
+              )}
+            </div>
+          )}
+          {pollMessage && <p className="poll-message">{pollMessage}</p>}
+        </div>
+      )}
+
+      {pollOpen && (
+        <div className="overlay" onClick={() => setPollOpen(false)}>
+          <section className="sheet poll-sheet" onClick={(e) => e.stopPropagation()}>
+            <button className="close" onClick={() => setPollOpen(false)}>×</button>
+            <p className="eyebrow">NEW VOTE</p>
+            <h2>发起匿名投票</h2>
+            <label>
+              想问什么？
+              <input
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                placeholder="例如：周末一起去露营吗？"
+                maxLength={200}
+              />
+            </label>
+            <div className="poll-mode-picker">
+              <button
+                className={pollMode === "pass" ? "selected" : ""}
+                onClick={() => setPollMode("pass")}
+              >
+                <b>轮流作答</b><small>在同一台设备上依次匿名投票</small>
+              </button>
+              <button
+                className={pollMode === "invite" ? "selected" : ""}
+                onClick={() => setPollMode("invite")}
+              >
+                <b>邀请成员</b><small>选定成员，各自在账号内投票</small>
+              </button>
+            </div>
+            {pollMode === "invite" && (
+              <fieldset className="poll-member-picker">
+                <legend>谁可以投票？</legend>
+                {members.map((item) => (
+                  <label key={item.email}>
+                    <input
+                      type="checkbox"
+                      checked={pollInvited.includes(item.email)}
+                      onChange={() => togglePollInvite(item.email)}
+                    />
+                    <i className={`dot ${item.color}`} />
+                    {item.display_name}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            <p className="poll-sheet-note">
+              所有人提交完成前不会显示票数，也不会公开个人选择。
+            </p>
+            <button
+              className="primary save"
+              disabled={
+                !pollQuestion.trim() ||
+                (pollMode === "invite" && !pollInvited.length) ||
+                pollSaving
+              }
+              onClick={createPoll}
+            >
+              {pollSaving ? "正在创建…" : "开始投票"}
+            </button>
+            {pollMessage && <p className="poll-message">{pollMessage}</p>}
+          </section>
+        </div>
+      )}
+    </section>
+  );
   const expensePage = (
     <section className="expense-page">
       <div className="expense-page-head">
@@ -3545,10 +3924,17 @@ export default function Home() {
         >
           记账
         </button>
+        <button
+          className={section === "polls" ? "active" : ""}
+          onClick={() => setSection("polls")}
+        >
+          No Push
+        </button>
       </nav>
       {section === "wishes" && wishPage}
       {section === "lucky" && luckyPage}
       {section === "expenses" && expensePage}
+      {section === "polls" && pollPage}
       {section === "calendar" && (
         <>
           <section className="toolbar">
