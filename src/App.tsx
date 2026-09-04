@@ -482,6 +482,29 @@ export default function Home() {
     splitWith: [] as string[],
     note: "",
   });
+  async function loadMemberAccess() {
+    const retryDelays = [0, 450, 1000];
+    let lastResult: any = null;
+
+    for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
+      if (retryDelays[attempt]) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      }
+      const result = await supabase
+        .from("shared_calendar_members")
+        .select("email,display_name,color,birthday")
+        .order("created_at");
+      if (!result.error) return result;
+      lastResult = result;
+      console.warn("[member-check] attempt failed", {
+        attempt: attempt + 1,
+        code: result.error.code,
+        message: result.error.message,
+      });
+    }
+
+    return lastResult!;
+  }
   async function load(current?: User | null, showMemberCheck = false) {
     const active =
       current === undefined
@@ -504,10 +527,7 @@ export default function Home() {
     const email = (active.email || "").toLowerCase();
     const [{ data: memberRows, error: memberError }, { data: visibilityRows }] =
       await Promise.all([
-        supabase
-          .from("shared_calendar_members")
-          .select("email,display_name,color,birthday")
-          .order("created_at"),
+        loadMemberAccess(),
         supabase
           .from("shared_calendar_visibility")
           .select("viewer_email,owner_email"),
@@ -1956,7 +1976,10 @@ export default function Home() {
           <p className="eyebrow">CONNECTION ERROR</p>
           <h1>成员验证未完成</h1>
           <p className="login-copy">{memberLoadError}</p>
-          <button className="primary login-action" onClick={() => load(user)}>
+          <button
+            className="primary login-action"
+            onClick={() => load(user, true)}
+          >
             重新验证
           </button>
           <button
