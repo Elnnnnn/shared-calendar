@@ -4122,6 +4122,51 @@ footer span {
 .poll-waiting small {
   color: var(--muted);
 }
+.poll-handoff {
+  max-width: 480px;
+  margin: 36px auto 0;
+  text-align: center;
+}
+.poll-handoff-mark {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  background: var(--deep);
+  color: var(--white);
+  font-size: 24px;
+}
+.poll-handoff h4 {
+  margin: 0 0 7px;
+  font: 700 23px Georgia, "Songti SC", serif;
+}
+.poll-handoff p {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-weight: 700;
+}
+.poll-handoff small {
+  color: var(--muted);
+}
+.poll-handoff-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+.poll-handoff-actions button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--white);
+  color: var(--ink);
+}
+.poll-handoff-actions .primary {
+  background: var(--deep);
+  color: var(--white);
+}
 .poll-progress {
   height: 7px;
   margin: 22px 0 8px;
@@ -4154,7 +4199,16 @@ footer span {
   font-size: 10px;
 }
 .poll-sheet {
+  position: relative;
   width: min(610px, 100%);
+}
+.poll-sheet > .close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  left: auto;
+  margin: 0;
+  z-index: 2;
 }
 .poll-mode-picker {
   display: grid;
@@ -4258,7 +4312,12 @@ footer span {
     min-height: 90px;
   }
   .poll-vote-actions,
-  .poll-mode-picker {
+  .poll-mode-picker,
+  .poll-handoff-actions {
     grid-template-columns: 1fr;
+  }
+  .poll-sheet > .close {
+    top: 14px;
+    right: 14px;
   }
 }
