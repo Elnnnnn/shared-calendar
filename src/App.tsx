@@ -1228,7 +1228,7 @@ export default function Home() {
     const { data, error } = await supabase
       .from("shared_calendar_members")
       .update({ color })
-      .eq("id", user?.id || "")
+      .eq("email", member.email.toLowerCase())
       .select("email,color")
       .maybeSingle();
     if (error || !data) {
