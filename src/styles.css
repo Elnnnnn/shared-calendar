@@ -114,6 +114,18 @@ footer {
   --event: #d5e5e1;
   --event-line: #6f9b95;
 }
+.lavender {
+  --event: #e4dce8;
+  --event-line: #8f819b;
+}
+.peach {
+  --event: #f0dfcb;
+  --event-line: #b88d67;
+}
+.moss {
+  --event: #d5ddca;
+  --event-line: #728266;
+}
 .dot.sage {
   background: #8e9270;
 }
@@ -135,6 +147,30 @@ footer {
 .dot.sea {
   background: #6f9b95;
 }
+.dot.lavender { background: #8f819b; }
+.dot.peach { background: #b88d67; }
+.dot.moss { background: #728266; }
+.audience-picker {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.audience-picker legend { padding: 0 6px; font-weight: 700; color: var(--muted); }
+.audience-picker > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.audience-picker button {
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbf8f1;
+  color: var(--ink);
+  text-align: left;
+}
+.audience-picker button.selected { background: var(--deep); color: white; border-color: var(--deep); }
+.audience-picker b, .audience-picker small { display: block; }
+.audience-picker small { margin-top: 3px; font-size: 9px; opacity: .78; }
+.audience-picker p { margin: 8px 2px 0; color: var(--muted); font-size: 9px; }
 .primary {
   height: 42px;
   border: 0;

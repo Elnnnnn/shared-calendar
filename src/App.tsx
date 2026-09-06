@@ -14,6 +14,7 @@ type Member = {
   birthday: string | null;
 };
 type Visibility = { viewer_email: string; owner_email: string };
+type AudienceGroup = "besties" | "friends";
 type CalendarEvent = {
   id: number;
   title: string;
@@ -120,7 +121,11 @@ type Poll = {
   noCount: number | null;
   createdAt: string;
 };
-const COLORS = ["sage", "clay", "gold", "rose", "stone", "mist", "sea"] as const;
+const COLORS = [
+  "sage", "clay", "gold", "rose", "lavender", "peach", "moss",
+  "stone", "mist", "sea",
+] as const;
+const BESTIE_COLORS = ["sage", "clay", "gold", "rose", "lavender", "peach", "moss"] as const;
 const JINYUAN_COLORS = ["stone", "mist", "sea"] as const;
 const COLOR_NAMES: { [key: string]: string } = {
   sage: "鼠尾草绿",
@@ -130,6 +135,9 @@ const COLOR_NAMES: { [key: string]: string } = {
   stone: "岩石灰",
   mist: "雾霾蓝",
   sea: "海盐青",
+  lavender: "雾紫",
+  peach: "奶油杏",
+  moss: "苔藓绿",
 };
 const ZONES = [
   "America/Los_Angeles",
@@ -163,6 +171,9 @@ const EVENT_COLORS: { [key: string]: string } = {
   stone: "#dedbd1",
   mist: "#d9e4e8",
   sea: "#d5e5e1",
+  lavender: "#e4dce8",
+  peach: "#f0dfcb",
+  moss: "#d5ddca",
 };
 const EVENT_LINES: { [key: string]: string } = {
   sage: "#7d835f",
@@ -172,7 +183,19 @@ const EVENT_LINES: { [key: string]: string } = {
   stone: "#817c6c",
   mist: "#7896a6",
   sea: "#6f9b95",
+  lavender: "#8f819b",
+  peach: "#b88d67",
+  moss: "#728266",
 };
+const ELAINE_EMAIL = "elainezhang1110@gmail.com";
+const JINYUAN_EMAIL = "test@test.com";
+const BESTIE_EMAILS = [
+  ELAINE_EMAIL,
+  "zxu1115@icloud.com",
+  "1914660774@qq.com",
+  "mqianw00@163.com",
+];
+const FRIEND_EMAILS = [ELAINE_EMAIL, JINYUAN_EMAIL];
 const SPECIAL_TYPES: { kind: SpecialKind; label: string; icon: string }[] = [
   { kind: "meet", label: "见面", icon: "✦" },
   { kind: "memory", label: "纪念", icon: "♡" },
@@ -523,6 +546,8 @@ export default function Home() {
   const [passHandoff, setPassHandoff] = useState(false);
   const [pollSaving, setPollSaving] = useState(false);
   const [pollMessage, setPollMessage] = useState("");
+  const [audienceGroup, setAudienceGroup] =
+    useState<AudienceGroup>("besties");
   async function loadMemberAccess() {
     const retryDelays = [0, 450, 1000];
     let lastResult: any = null;
@@ -911,6 +936,7 @@ export default function Home() {
   function startAdd(date?: string, time = "12:00") {
     const startDate = date || dateKey(new Date());
     setEditing(null);
+    setAudienceGroup(member?.email === JINYUAN_EMAIL ? "friends" : "besties");
     setDraft({
       title: "",
       date: startDate,
@@ -998,6 +1024,7 @@ export default function Home() {
       location: draft.location,
       note: draft.note,
       timezone: draft.timezone,
+      audience_group: audienceGroup,
       updated_at: new Date().toISOString(),
     };
     setOpen(false);
@@ -1047,6 +1074,7 @@ export default function Home() {
   }
   function startAddSpecial() {
     setEditingSpecial(null);
+    setAudienceGroup(member?.email === JINYUAN_EMAIL ? "friends" : "besties");
     setSpecialDraft({
       title: "",
       date: today,
@@ -1130,6 +1158,7 @@ export default function Home() {
       repeat_yearly: specialDraft.repeatYearly,
       show_in_calendar: specialDraft.showInCalendar,
       participant_emails: permittedParticipants,
+      audience_group: audienceGroup,
       updated_at: new Date().toISOString(),
     };
     setSpecialOpen(false);
@@ -1187,11 +1216,27 @@ export default function Home() {
       members.some((m) => m.email !== member.email && m.color === color)
     )
       return;
-    const { error } = await supabase
+    setProfileMessage("");
+    const previous = member.color;
+    setMember({ ...member, color });
+    setMembers((current) =>
+      current.map((item) => item.email === member.email ? { ...item, color } : item),
+    );
+    const { data, error } = await supabase
       .from("shared_calendar_members")
       .update({ color })
-      .eq("email", member.email);
-    if (!error) await load(user);
+      .eq("id", user?.id || "")
+      .select("email,color")
+      .maybeSingle();
+    if (error || !data) {
+      setMember({ ...member, color: previous });
+      setMembers((current) =>
+        current.map((item) => item.email === member.email ? { ...item, color: previous } : item),
+      );
+      setProfileMessage("颜色暂时无法保存，请重试");
+      return;
+    }
+    setProfileMessage("颜色已更新");
   }
   async function saveBirthday() {
     if (!member) return;
@@ -1234,6 +1279,7 @@ export default function Home() {
   }
   function startAddWish() {
     setEditingWish(null);
+    setAudienceGroup(member?.email === JINYUAN_EMAIL ? "friends" : "besties");
     setWishDraft({
       title: "",
       category: wishFilter,
@@ -1303,6 +1349,7 @@ export default function Home() {
       media_type: optimistic.mediaType,
       release_date: optimistic.releaseDate,
       planned_watch_date: optimistic.plannedWatchDate,
+      audience_group: audienceGroup,
       updated_at: new Date().toISOString(),
     };
     setWishOpen(false);
@@ -1561,7 +1608,7 @@ export default function Home() {
       );
       const { error } = await supabase
         .from("shared_calendar_lucky_sets")
-        .update({ name, options, updated_at: new Date().toISOString() })
+        .update({ name, options, audience_group: audienceGroup, updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) {
         setSavedLuckySets(previous);
@@ -1587,6 +1634,7 @@ export default function Home() {
         options,
         owner_user_id: user.id,
         owner_email: member.email,
+        audience_group: audienceGroup,
       })
       .select("id,name,options,owner_user_id,owner_email")
       .single();
@@ -1615,7 +1663,9 @@ export default function Home() {
   function openPollBuilder() {
     setPollQuestion("");
     setPollMode("pass");
-    setPollInvited(members.map((item) => item.email));
+    const nextGroup = member?.email === JINYUAN_EMAIL ? "friends" : "besties";
+    setAudienceGroup(nextGroup);
+    setPollInvited(members.filter((item) => audienceEmails(nextGroup).includes(item.email)).map((item) => item.email));
     setPollMessage("");
     setPollOpen(true);
   }
@@ -1646,6 +1696,7 @@ export default function Home() {
         creator_user_id: user.id,
         creator_email: member.email,
         invited_emails: pollMode === "invite" ? pollInvited : [],
+        audience_group: audienceGroup,
       })
       .select("id")
       .single();
@@ -1775,7 +1826,12 @@ export default function Home() {
     setExpenseSaving(true);
     const { data, error } = await supabase
       .from("shared_calendar_expense_periods")
-      .insert({ name, owner_user_id: user.id, owner_email: member.email })
+      .insert({
+        name,
+        owner_user_id: user.id,
+        owner_email: member.email,
+        audience_group: audienceGroup,
+      })
       .select("id,name,owner_user_id,owner_email,created_at")
       .single();
     setExpenseSaving(false);
@@ -2323,7 +2379,47 @@ export default function Home() {
       endTime: end.time,
     });
   }
-  const isAdmin = user.email?.toLowerCase() === "elainezhang1110@gmail.com";
+  const isAdmin = user.email?.toLowerCase() === ELAINE_EMAIL;
+  const audienceEmails = (group: AudienceGroup) =>
+    group === "friends" ? FRIEND_EMAILS : BESTIE_EMAILS;
+  const audienceMembers = members.filter((item) =>
+    audienceEmails(audienceGroup).includes(item.email.toLowerCase()),
+  );
+  function chooseAudienceGroup(group: AudienceGroup) {
+    setAudienceGroup(group);
+    const allowed = audienceEmails(group);
+    setDraft((current) => ({
+      ...current,
+      participants: current.participants.filter((email) => allowed.includes(email)),
+    }));
+    setSpecialDraft((current) => ({
+      ...current,
+      participants: current.participants.filter((email) => allowed.includes(email)),
+    }));
+    setPollInvited((current) => current.filter((email) => allowed.includes(email)));
+  }
+  const audiencePicker = isAdmin ? (
+    <fieldset className="audience-picker">
+      <legend>发布到</legend>
+      <div>
+        <button
+          type="button"
+          className={audienceGroup === "besties" ? "selected" : ""}
+          onClick={() => chooseAudienceGroup("besties")}
+        >
+          <b>闺蜜组</b><small>Elaine、Jennifer、Christina、Olivia</small>
+        </button>
+        <button
+          type="button"
+          className={audienceGroup === "friends" ? "selected" : ""}
+          onClick={() => chooseAudienceGroup("friends")}
+        >
+          <b>朋友组</b><small>Elaine、Jinyuan</small>
+        </button>
+      </div>
+      <p>组别只决定谁能看，参与成员仍需另外勾选。</p>
+    </fieldset>
+  ) : null;
   const allowedOwners = members.filter(
     (item) =>
       item.email === member.email ||
@@ -2332,7 +2428,7 @@ export default function Home() {
           row.viewer_email === member.email && row.owner_email === item.email,
       ),
   );
-  const eligibleSpecialParticipants = members.filter(
+  const eligibleSpecialParticipants = audienceMembers.filter(
     (item) =>
       item.email !== member.email &&
       visibility.some(
@@ -2661,6 +2757,7 @@ export default function Home() {
                 maxLength={200}
               />
             </label>
+            {audiencePicker}
             <div className="poll-mode-picker">
               <button
                 className={pollMode === "pass" ? "selected" : ""}
@@ -2678,7 +2775,7 @@ export default function Home() {
             {pollMode === "invite" && (
               <fieldset className="poll-member-picker">
                 <legend>谁可以投票？</legend>
-                {members.map((item) => (
+                {audienceMembers.map((item) => (
                   <label key={item.email}>
                     <input
                       type="checkbox"
@@ -2723,6 +2820,7 @@ export default function Home() {
             className="primary expense-new-period"
             onClick={() => {
               setExpensePeriodName("");
+              setAudienceGroup(member.email === JINYUAN_EMAIL ? "friends" : "besties");
               setExpensePeriodOpen(true);
             }}
           >
@@ -2791,7 +2889,10 @@ export default function Home() {
               <p>新建一个账单，四个人就可以开始记录付款。</p>
               <button
                 className="primary"
-                onClick={() => setExpensePeriodOpen(true)}
+                onClick={() => {
+                  setAudienceGroup(member.email === JINYUAN_EMAIL ? "friends" : "besties");
+                  setExpensePeriodOpen(true);
+                }}
               >
                 新建第一个账单
               </button>
@@ -2971,6 +3072,7 @@ export default function Home() {
                 placeholder="例如：新疆旅行"
               />
             </label>
+            {audiencePicker}
             <button
               className="primary save"
               disabled={!expensePeriodName.trim() || expenseSaving}
@@ -3034,7 +3136,7 @@ export default function Home() {
             </div>
             <fieldset className="expense-split-picker">
               <legend>这笔账和谁一起分</legend>
-              {members.map((item) => (
+              {audienceMembers.map((item) => (
                 <label key={item.email}>
                   <input
                     type="checkbox"
@@ -3096,7 +3198,10 @@ export default function Home() {
         </div>
         <button
           className="lucky-settings-button"
-          onClick={() => setLuckySettingsOpen(true)}
+          onClick={() => {
+            setAudienceGroup(member.email === JINYUAN_EMAIL ? "friends" : "besties");
+            setLuckySettingsOpen(true);
+          }}
         >
           ⚙ <span>设置选项</span>
         </button>
@@ -3179,6 +3284,7 @@ export default function Home() {
               </div>
               <button onClick={() => setLuckySettingsOpen(false)}>×</button>
             </div>
+            {audiencePicker}
             <div className="lucky-source-tabs">
               <button
                 className={luckyMode === "manual" ? "active" : ""}
@@ -3661,6 +3767,7 @@ export default function Home() {
                 placeholder="例如：一起去看海"
               />
             </label>
+            {audiencePicker}
             <label>
               分类
               <select
@@ -3926,13 +4033,10 @@ export default function Home() {
                     <h3>选择个人颜色</h3>
                     <div className="profile-colors">
                       {COLORS.filter((color) => {
-                        if (
-                          member.email === "test@test.com" &&
-                          !JINYUAN_COLORS.includes(
-                            color as (typeof JINYUAN_COLORS)[number],
-                          )
-                        )
-                          return false;
+                        const pool = member.email === JINYUAN_EMAIL
+                          ? JINYUAN_COLORS
+                          : BESTIE_COLORS;
+                        if (!pool.includes(color as never)) return false;
                         return !members.some(
                           (m) =>
                             m.email !== member.email && m.color === color,
@@ -3946,6 +4050,9 @@ export default function Home() {
                         />
                       ))}
                     </div>
+                    {profileMessage && (
+                      <p className="profile-menu-message">{profileMessage}</p>
+                    )}
                     <p>更换后，以前和以后添加的行程都会同步使用新颜色。</p>
                   </div>
                 ) : (
@@ -4570,6 +4677,7 @@ export default function Home() {
                 placeholder="例如：四个人下一次见面"
               />
             </label>
+            {audiencePicker}
             <fieldset className="special-type-picker">
               <legend>类型</legend>
               <div>
@@ -4834,6 +4942,7 @@ export default function Home() {
                 placeholder="例如：一起吃晚饭"
               />
             </label>
+            {audiencePicker}
             <div className="event-options">
               <label className="option-toggle">
                 <input
@@ -4942,7 +5051,7 @@ export default function Home() {
               <legend>
                 一起的成员 <span>可选</span>
               </legend>
-              {members
+              {audienceMembers
                 .filter((item) => item.email !== member.email)
                 .map((item) => (
                   <label
