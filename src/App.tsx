@@ -129,22 +129,28 @@ const COLOR_NAMES: { [key: string]: string } = {
   stone: "岩石灰",
 };
 const ZONES = [
-  "Asia/Shanghai",
-  "Asia/Tokyo",
-  "Asia/Dubai",
-  "Europe/Berlin",
-  "Europe/London",
   "America/Los_Angeles",
+  "America/Denver",
+  "America/Chicago",
   "America/New_York",
+  "Europe/London",
+  "Europe/Paris",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney",
 ];
 const ZONE_NAMES: { [key: string]: string } = {
-  "Asia/Shanghai": "上海",
-  "Asia/Tokyo": "东京",
-  "Asia/Dubai": "迪拜",
-  "Europe/Berlin": "德国",
-  "Europe/London": "伦敦",
   "America/Los_Angeles": "加州",
+  "America/Denver": "丹佛",
+  "America/Chicago": "芝加哥",
   "America/New_York": "纽约",
+  "Europe/London": "伦敦",
+  "Europe/Paris": "巴黎",
+  "Asia/Shanghai": "上海",
+  "Asia/Singapore": "新加坡",
+  "Asia/Tokyo": "东京",
+  "Australia/Sydney": "悉尼",
 };
 const EVENT_COLORS: { [key: string]: string } = {
   sage: "#dce0cc",
