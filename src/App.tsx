@@ -409,6 +409,8 @@ export default function Home() {
   );
   const [birthday, setBirthday] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
+  const [pendingColor, setPendingColor] = useState("");
+  const [colorSaving, setColorSaving] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [visibility, setVisibility] = useState<Visibility[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
@@ -1222,6 +1224,7 @@ export default function Home() {
     setMembers((current) =>
       current.map((item) => item.email === member.email ? { ...item, color } : item),
     );
+    setColorSaving(true);
     const { data, error } = await supabase
       .from("shared_calendar_members")
       .update({ color })
@@ -1229,6 +1232,7 @@ export default function Home() {
       .select("email,color")
       .maybeSingle();
     if (error || !data) {
+      setColorSaving(false);
       setMember({ ...member, color: previous });
       setMembers((current) =>
         current.map((item) => item.email === member.email ? { ...item, color: previous } : item),
@@ -1236,6 +1240,7 @@ export default function Home() {
       setProfileMessage("颜色暂时无法保存，请重试");
       return;
     }
+    setColorSaving(false);
     setProfileMessage("颜色已更新");
   }
   async function saveBirthday() {
@@ -3981,7 +3986,11 @@ export default function Home() {
                 </header>
                 {profileView === "menu" ? (
                   <div className="profile-menu">
-                    <button onClick={() => setProfileView("color")}>
+                    <button onClick={() => {
+                      setPendingColor(member.color);
+                      setProfileMessage("");
+                      setProfileView("color");
+                    }}>
                       <span>●</span>
                       <b>我的颜色</b>
                       <small>{COLOR_NAMES[member.color]}　›</small>
@@ -4055,11 +4064,21 @@ export default function Home() {
                         <button
                           key={color}
                           aria-label={COLOR_NAMES[color]}
-                          className={`profile-color ${color} ${member.color === color ? "selected" : ""}`}
-                          onClick={() => changeColor(color)}
+                          className={`profile-color ${color} ${pendingColor === color ? "selected" : ""}`}
+                          onClick={() => {
+                            setPendingColor(color);
+                            setProfileMessage("");
+                          }}
                         />
                       ))}
                     </div>
+                    <button
+                      className="primary profile-color-save"
+                      disabled={!pendingColor || pendingColor === member.color || colorSaving}
+                      onClick={() => changeColor(pendingColor)}
+                    >
+                      {colorSaving ? "正在保存…" : "保存颜色"}
+                    </button>
                     {profileMessage && (
                       <p className="profile-menu-message">{profileMessage}</p>
                     )}
