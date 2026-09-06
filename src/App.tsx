@@ -1,3 +1,4 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -2946,7 +2947,7 @@ export default function Home() {
               <input
                 value={expensePeriodName}
                 onChange={(event) => setExpensePeriodName(event.target.value)}
-                placeholder="例如：东京旅行"
+                placeholder="例如：新疆旅行"
               />
             </label>
             <button
@@ -3733,7 +3734,7 @@ export default function Home() {
                     onChange={(e) =>
                       setWishDraft({ ...wishDraft, region: e.target.value })
                     }
-                    placeholder="例如：上海、东京"
+                    placeholder="例如：上海、新疆"
                   />
                 </label>
                 <label>
