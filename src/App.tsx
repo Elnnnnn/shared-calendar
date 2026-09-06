@@ -516,10 +516,7 @@ export default function Home() {
       if (retryDelays[attempt]) {
         await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
       }
-      const result = await supabase
-        .from("shared_calendar_members")
-        .select("email,display_name,color,birthday")
-        .order("created_at");
+      const result = await supabase.rpc("get_shared_calendar_members");
       if (!result.error) return result;
       lastResult = result;
       console.warn("[member-check] attempt failed", {
