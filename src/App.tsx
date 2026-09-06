@@ -60,6 +60,7 @@ type SpecialDay = {
   participants: string[];
   canEdit: boolean;
   memberBirthday?: boolean;
+  pendingBirthday?: boolean;
 };
 type WishCategory = "eat_drink" | "fun_shop" | "travel" | "watch";
 type WishStatus = "wish" | "planning" | "done";
@@ -343,6 +344,7 @@ function occurrenceDate(day: SpecialDay, year: number) {
   return day.repeatYearly ? `${year}-${day.date.slice(5)}` : day.date;
 }
 function daysUntil(day: SpecialDay) {
+  if (day.pendingBirthday) return Number.MAX_SAFE_INTEGER;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   let target = new Date(`${occurrenceDate(day, today.getFullYear())}T00:00:00`);
@@ -610,12 +612,7 @@ export default function Home() {
     ] = await Promise.all([
       supabase.rpc("get_shared_calendar_events"),
       supabase.rpc("get_shared_calendar_special_days"),
-      supabase
-        .from("shared_calendar_wishes")
-        .select(
-          "id,title,category,region,place,note,status,media_type,release_date,planned_watch_date,owner_user_id,owner_email,participant_emails",
-        )
-        .order("updated_at", { ascending: false }),
+      supabase.rpc("get_shared_calendar_wishes"),
       supabase
         .from("shared_calendar_lucky_sets")
         .select("id,name,options,owner_user_id,owner_email")
@@ -1202,6 +1199,12 @@ export default function Home() {
       setProfileMessage("生日已保存，会自动显示在每一年");
       await load(user);
     }
+  }
+  function openBirthdaySettings() {
+    setBirthday(member?.birthday || "");
+    setProfileMessage("");
+    setProfileView("birthday");
+    setProfileOpen(true);
   }
   async function toggleVisibility(viewer: string, owner: string) {
     if (
@@ -2331,13 +2334,18 @@ export default function Home() {
           row.viewer_email === item.email && row.owner_email === member.email,
       ),
   );
-  const birthdaySpecialDays = members.flatMap((item, index) =>
-    item.birthday
+  const birthdaySpecialDays = members.flatMap((item, index) => {
+    const pendingBirthday =
+      item.email === "test@test.com" && !item.birthday;
+    return item.birthday || pendingBirthday
       ? [
           {
             id: -(10000 + index),
-            title: `${item.display_name} 的生日`,
-            date: item.birthday,
+            title:
+              item.email === "test@test.com"
+                ? "Jinyuan的生日"
+                : `${item.display_name} 的生日`,
+            date: item.birthday || "9999-12-31",
             kind: "birthday" as SpecialKind,
             icon: "♢",
             color: (SPECIAL_COLORS.some((color) => color.color === item.color)
@@ -2350,12 +2358,13 @@ export default function Home() {
             showInCalendar: true,
             owner: item.email,
             participants: [],
-            canEdit: false,
+            canEdit: item.email === member.email,
             memberBirthday: true,
+            pendingBirthday,
           },
         ]
-      : [],
-  );
+      : [];
+  });
   const specialPageDays = [...specialDays, ...birthdaySpecialDays];
   const birthdayEvents = dates.flatMap((date, dateIndex) =>
     members.flatMap((item, memberIndex) =>
@@ -4311,7 +4320,11 @@ export default function Home() {
                     key={`${day.memberBirthday ? "birthday" : "special"}-${day.id}`}
                     className="special-card"
                     style={{ borderTopColor: color.hex }}
-                    onClick={() => !day.memberBirthday && startEditSpecial(day)}
+                    onClick={() =>
+                      day.memberBirthday
+                        ? day.canEdit && openBirthdaySettings()
+                        : startEditSpecial(day)
+                    }
                     disabled={!day.canEdit}
                   >
                     <span
@@ -4323,12 +4336,18 @@ export default function Home() {
                     <span className="special-kind">{type.label}</span>
                     <strong>{day.title}</strong>
                     <span className="special-date">
-                      {day.repeatYearly
+                      {day.pendingBirthday
+                        ? "To be set"
+                        : day.repeatYearly
                         ? day.date.slice(5).replace("-", " 月 ") + " 日"
                         : day.date.replaceAll("-", " / ")}
                     </span>
                     <b>
-                      {remaining === 0
+                      {day.pendingBirthday
+                        ? day.canEdit
+                          ? "点击设置生日"
+                          : "等待 Jinyuan 设置"
+                        : remaining === 0
                         ? "就是今天"
                         : remaining > 0
                           ? `还有 ${remaining} 天`
