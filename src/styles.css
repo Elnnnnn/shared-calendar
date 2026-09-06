@@ -106,6 +106,14 @@ footer {
   --event: #dedbd1;
   --event-line: #817c6c;
 }
+.mist {
+  --event: #d9e4e8;
+  --event-line: #7896a6;
+}
+.sea {
+  --event: #d5e5e1;
+  --event-line: #6f9b95;
+}
 .dot.sage {
   background: #8e9270;
 }
@@ -120,6 +128,12 @@ footer {
 }
 .dot.stone {
   background: #85806f;
+}
+.dot.mist {
+  background: #7896a6;
+}
+.dot.sea {
+  background: #6f9b95;
 }
 .primary {
   height: 42px;

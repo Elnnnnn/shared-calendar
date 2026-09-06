@@ -120,13 +120,16 @@ type Poll = {
   noCount: number | null;
   createdAt: string;
 };
-const COLORS = ["sage", "clay", "gold", "rose", "stone"] as const;
+const COLORS = ["sage", "clay", "gold", "rose", "stone", "mist", "sea"] as const;
+const JINYUAN_COLORS = ["stone", "mist", "sea"] as const;
 const COLOR_NAMES: { [key: string]: string } = {
   sage: "鼠尾草绿",
   clay: "陶土橘",
   gold: "麦穗黄",
   rose: "干燥玫瑰",
   stone: "岩石灰",
+  mist: "雾霾蓝",
+  sea: "海盐青",
 };
 const ZONES = [
   "America/Los_Angeles",
@@ -158,6 +161,8 @@ const EVENT_COLORS: { [key: string]: string } = {
   gold: "#eee2bd",
   rose: "#ead5d2",
   stone: "#dedbd1",
+  mist: "#d9e4e8",
+  sea: "#d5e5e1",
 };
 const EVENT_LINES: { [key: string]: string } = {
   sage: "#7d835f",
@@ -165,6 +170,8 @@ const EVENT_LINES: { [key: string]: string } = {
   gold: "#b2944e",
   rose: "#b37b78",
   stone: "#817c6c",
+  mist: "#7896a6",
+  sea: "#6f9b95",
 };
 const SPECIAL_TYPES: { kind: SpecialKind; label: string; icon: string }[] = [
   { kind: "meet", label: "见面", icon: "✦" },
@@ -3918,15 +3925,23 @@ export default function Home() {
                     </button>
                     <h3>选择个人颜色</h3>
                     <div className="profile-colors">
-                      {COLORS.map((color) => (
+                      {COLORS.filter((color) => {
+                        if (
+                          member.email === "test@test.com" &&
+                          !JINYUAN_COLORS.includes(
+                            color as (typeof JINYUAN_COLORS)[number],
+                          )
+                        )
+                          return false;
+                        return !members.some(
+                          (m) =>
+                            m.email !== member.email && m.color === color,
+                        );
+                      }).map((color) => (
                         <button
                           key={color}
                           aria-label={COLOR_NAMES[color]}
                           className={`profile-color ${color} ${member.color === color ? "selected" : ""}`}
-                          disabled={members.some(
-                            (m) =>
-                              m.email !== member.email && m.color === color,
-                          )}
                           onClick={() => changeColor(color)}
                         />
                       ))}
