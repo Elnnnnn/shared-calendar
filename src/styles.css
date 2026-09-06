@@ -1030,6 +1030,25 @@ footer span {
   color: #918775;
   font-size: 10px;
 }
+.profile-menu .profile-signout {
+  margin-top: 5px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 9px 9px;
+  color: #9b625b;
+}
+.profile-menu .profile-signout span,
+.profile-menu .profile-signout small {
+  color: #9b625b;
+}
+.profile-menu button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.profile-menu-message {
+  margin: 5px 8px 7px;
+  color: #a46861;
+  font-size: 9px;
+}
 .profile-detail {
   padding: 14px 16px 17px;
 }
