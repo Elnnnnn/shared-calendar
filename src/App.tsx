@@ -14,7 +14,7 @@ type Member = {
   birthday: string | null;
 };
 type Visibility = { viewer_email: string; owner_email: string };
-type AudienceGroup = "besties" | "friends";
+type AudienceGroup = "besties" | "friends" | "both";
 type CalendarEvent = {
   id: number;
   title: string;
@@ -2381,13 +2381,23 @@ export default function Home() {
   }
   const isAdmin = user.email?.toLowerCase() === ELAINE_EMAIL;
   const audienceEmails = (group: AudienceGroup) =>
-    group === "friends" ? FRIEND_EMAILS : BESTIE_EMAILS;
+    group === "friends"
+      ? FRIEND_EMAILS
+      : group === "besties"
+        ? BESTIE_EMAILS
+        : Array.from(new Set([...BESTIE_EMAILS, ...FRIEND_EMAILS]));
   const audienceMembers = members.filter((item) =>
     audienceEmails(audienceGroup).includes(item.email.toLowerCase()),
   );
-  function chooseAudienceGroup(group: AudienceGroup) {
-    setAudienceGroup(group);
-    const allowed = audienceEmails(group);
+  function chooseAudienceGroup(group: "besties" | "friends") {
+    const next: AudienceGroup =
+      audienceGroup === "both"
+        ? group === "besties" ? "friends" : "besties"
+        : audienceGroup === group
+          ? audienceGroup
+          : "both";
+    setAudienceGroup(next);
+    const allowed = audienceEmails(next);
     setDraft((current) => ({
       ...current,
       participants: current.participants.filter((email) => allowed.includes(email)),
@@ -2400,21 +2410,21 @@ export default function Home() {
   }
   const audiencePicker = isAdmin ? (
     <fieldset className="audience-picker">
-      <legend>发布到</legend>
+      <legend>发布到 <span>可多选</span></legend>
       <div>
         <button
           type="button"
-          className={audienceGroup === "besties" ? "selected" : ""}
+          className={audienceGroup === "besties" || audienceGroup === "both" ? "selected" : ""}
           onClick={() => chooseAudienceGroup("besties")}
         >
-          <b>闺蜜组</b><small>Elaine、Jennifer、Christina、Olivia</small>
+          <b>{audienceGroup === "besties" || audienceGroup === "both" ? "✓ " : ""}闺蜜组</b><small>Elaine、Jennifer、Christina、Olivia</small>
         </button>
         <button
           type="button"
-          className={audienceGroup === "friends" ? "selected" : ""}
+          className={audienceGroup === "friends" || audienceGroup === "both" ? "selected" : ""}
           onClick={() => chooseAudienceGroup("friends")}
         >
-          <b>朋友组</b><small>Elaine、Jinyuan</small>
+          <b>{audienceGroup === "friends" || audienceGroup === "both" ? "✓ " : ""}朋友组</b><small>Elaine、Jinyuan</small>
         </button>
       </div>
       <p>组别只决定谁能看，参与成员仍需另外勾选。</p>
