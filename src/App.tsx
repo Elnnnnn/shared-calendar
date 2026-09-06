@@ -371,6 +371,7 @@ export default function Home() {
   );
   const [birthday, setBirthday] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
   const [visibility, setVisibility] = useState<Visibility[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -827,6 +828,20 @@ export default function Home() {
     });
     if (error) setAuthMessage("邮箱或密码不正确");
     setSigningIn(false);
+  }
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setProfileMessage("");
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+    if (error) {
+      setProfileMessage(`退出失败：${error.message}`);
+      setSigningOut(false);
+      return;
+    }
+    setProfileOpen(false);
+    setSettingsOpen(false);
+    setSigningOut(false);
   }
   async function sendRecovery(event: FormEvent) {
     event.preventDefault();
@@ -2157,7 +2172,7 @@ export default function Home() {
           </button>
           <button
             className="text-action"
-            onClick={() => supabase.auth.signOut()}
+            onClick={signOut}
           >
             退出登录
           </button>
@@ -2176,7 +2191,7 @@ export default function Home() {
           </p>
           <button
             className="primary login-action"
-            onClick={() => supabase.auth.signOut()}
+            onClick={signOut}
           >
             退出并更换邮箱
           </button>
@@ -3868,6 +3883,18 @@ export default function Home() {
                         <small>日历权限　›</small>
                       </button>
                     )}
+                    <button
+                      className="profile-signout"
+                      disabled={signingOut}
+                      onClick={signOut}
+                    >
+                      <span>↪</span>
+                      <b>{signingOut ? "正在退出…" : "退出登录"}</b>
+                      <small>退出此设备</small>
+                    </button>
+                    {profileMessage && (
+                      <p className="profile-menu-message">{profileMessage}</p>
+                    )}
                   </div>
                 ) : profileView === "color" ? (
                   <div className="profile-detail">
@@ -4335,8 +4362,8 @@ export default function Home() {
         ))}
         <span className="zone-note">
           {user.email} ·{" "}
-          <button className="logout" onClick={() => supabase.auth.signOut()}>
-            退出
+          <button className="logout" onClick={signOut} disabled={signingOut}>
+            {signingOut ? "正在退出…" : "退出"}
           </button>
         </span>
       </footer>
