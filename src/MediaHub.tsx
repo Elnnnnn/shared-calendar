@@ -63,8 +63,9 @@ function ProtectedPhoto({ photo, alt = "共享照片" }: { photo: Photo; alt?: s
 
 function GroupSelect({ value, onChange, email }: { value: GroupKey; onChange: (group: GroupKey) => void; email: string }) {
   const groups = allowedGroups(email);
+  const [open, setOpen] = useState(false);
   if (groups.length === 1) return <span className="media-group-label">{groupLabel(groups[0])}</span>;
-  return <select value={value} onChange={(e) => onChange(e.target.value as GroupKey)}>{groups.map((group) => <option key={group} value={group}>{groupLabel(group)}</option>)}</select>;
+  return <div className="themed-dropdown"><button type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>{groupLabel(value)}<span>⌄</span></button>{open && <div className="themed-dropdown-menu">{groups.map((group) => <button type="button" className={value === group ? "selected" : ""} key={group} onClick={() => { onChange(group); setOpen(false); }}>{groupLabel(group)}</button>)}</div>}</div>;
 }
 
 export function EventMediaPanel({ event, user, member, members }: { event: CalendarEvent; user: User; member: Member; members: Member[] }) {

@@ -427,6 +427,7 @@ export default function Home() {
     | "moments"
     | "photos"
   >("calendar");
+  const [navMenu, setNavMenu] = useState<"calendar" | "bag" | null>(null);
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(new Date());
   const [zone, setZone] = useState(
@@ -3952,6 +3953,7 @@ export default function Home() {
       onClick={() => {
         if (profileOpen) setProfileOpen(false);
         if (memberFilterOpen) setMemberFilterOpen(false);
+        if (navMenu) setNavMenu(null);
       }}
     >
       <header className="topbar">
@@ -4120,19 +4122,27 @@ export default function Home() {
           </div>
         </div>
       </header>
-      <nav className="section-tabs" aria-label="页面切换">
-        <button
-          className={section === "calendar" ? "active" : ""}
-          onClick={() => setSection("calendar")}
-        >
-          日历
-        </button>
-        <button
-          className={["bag", "wishes", "lucky", "expenses", "polls"].includes(section) ? "active" : ""}
-          onClick={() => setSection("bag")}
-        >
-          百宝袋
-        </button>
+      <nav className="section-tabs" aria-label="页面切换" onClick={(event) => event.stopPropagation()}>
+        <div className="nav-dropdown">
+          <button
+            className={["calendar", "special"].includes(section) ? "active" : ""}
+            aria-expanded={navMenu === "calendar"}
+            onClick={() => setNavMenu((current) => current === "calendar" ? null : "calendar")}
+          >
+            日历 <span className="nav-chevron">⌄</span>
+          </button>
+          {navMenu === "calendar" && <div className="nav-dropdown-menu"><button className={section === "calendar" ? "selected" : ""} onClick={() => { setSection("calendar"); setNavMenu(null); }}>日历</button><button className={section === "special" ? "selected" : ""} onClick={() => { setSection("special"); setNavMenu(null); }}>纪念日</button></div>}
+        </div>
+        <div className="nav-dropdown">
+          <button
+            className={["bag", "wishes", "lucky", "expenses", "polls"].includes(section) ? "active" : ""}
+            aria-expanded={navMenu === "bag"}
+            onClick={() => setNavMenu((current) => current === "bag" ? null : "bag")}
+          >
+            百宝袋 <span className="nav-chevron">⌄</span>
+          </button>
+          {navMenu === "bag" && <div className="nav-dropdown-menu bag-nav-menu"><button className={section === "wishes" ? "selected" : ""} onClick={() => { setSection("wishes"); setNavMenu(null); }}>愿望清单</button><button className={section === "lucky" ? "selected" : ""} onClick={() => { setSection("lucky"); setNavMenu(null); }}>好运抽选机</button><button className={section === "expenses" ? "selected" : ""} onClick={() => { setSection("expenses"); setNavMenu(null); }}>一起记账</button><button className={section === "polls" ? "selected" : ""} onClick={() => { setSection("polls"); setNavMenu(null); }}>No Push</button></div>}
+        </div>
         <button
           className={section === "moments" ? "active" : ""}
           onClick={() => setSection("moments")}
@@ -4146,9 +4156,8 @@ export default function Home() {
           相册
         </button>
       </nav>
-      {(section === "calendar" || section === "special") && <nav className="calendar-subtabs"><button className={section === "calendar" ? "active" : ""} onClick={() => setSection("calendar")}>日历</button><button className={section === "special" ? "active" : ""} onClick={() => setSection("special")}>纪念日</button></nav>}
-      {section === "bag" && <section className="bag-home"><div><p className="eyebrow">MORE TOGETHER</p><h2>百宝袋</h2><p>把四个人一起做决定、收藏愿望和记账的小工具放在这里。</p></div><div className="bag-grid"><button onClick={() => setSection("wishes")}><b>愿望清单</b><span>想吃、想玩、想去、想看</span></button><button onClick={() => setSection("lucky")}><b>好运抽选机</b><span>拉一下，替今天做决定</span></button><button onClick={() => setSection("expenses")}><b>一起记账</b><span>共同消费与一键结算</span></button><button onClick={() => setSection("polls")}><b>No Push</b><span>答案揭晓前不互相影响</span></button></div></section>}
-      {["wishes", "lucky", "expenses", "polls"].includes(section) && <div className="bag-tool"><button className="bag-back" onClick={() => setSection("bag")}>‹ 百宝袋</button>{section === "wishes" && wishPage}{section === "lucky" && luckyPage}{section === "expenses" && expensePage}{section === "polls" && pollPage}</div>}
+      {section === "bag" && wishPage}
+      {["wishes", "lucky", "expenses", "polls"].includes(section) && <div className="bag-tool">{section === "wishes" && wishPage}{section === "lucky" && luckyPage}{section === "expenses" && expensePage}{section === "polls" && pollPage}</div>}
       {section === "moments" && (
         <MomentsPage user={user} member={member} members={members} events={events} onOpenEvent={setEventDetail} />
       )}
