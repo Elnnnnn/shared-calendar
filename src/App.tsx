@@ -1226,12 +1226,9 @@ export default function Home() {
     );
     setColorSaving(true);
     const { data, error } = await supabase
-      .from("shared_calendar_members")
-      .update({ color })
-      .eq("email", member.email.toLowerCase())
-      .select("email,color")
-      .maybeSingle();
-    if (error || !data) {
+      .rpc("set_shared_calendar_member_color", { p_color: color });
+    const savedMember = Array.isArray(data) ? data[0] : data;
+    if (error || !savedMember) {
       setColorSaving(false);
       setMember({ ...member, color: previous });
       setMembers((current) =>
