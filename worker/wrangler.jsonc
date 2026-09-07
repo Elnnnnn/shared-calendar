@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "shared-calendar-media",
+  "main": "media-worker.js",
+  "compatibility_date": "2026-09-07",
+  "r2_buckets": [
+    { "binding": "PHOTOS", "bucket_name": "shared-calendar-photos" }
+  ],
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}

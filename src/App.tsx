@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { createClient, type User } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  "https://yytyntrgqkddfsliooke.supabase.co",
-  "sb_publishable_r82IW91PSRwRa_dye0g1Cw_qU0zLeDW",
-);
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "./supabase";
+import { AlbumsPage, EventMediaPanel, MomentsPage } from "./MediaHub";
 type Member = {
   email: string;
   display_name: string;
@@ -420,7 +417,15 @@ export default function Home() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [section, setSection] = useState<
-    "calendar" | "special" | "wishes" | "lucky" | "expenses" | "polls"
+    | "calendar"
+    | "special"
+    | "bag"
+    | "wishes"
+    | "lucky"
+    | "expenses"
+    | "polls"
+    | "moments"
+    | "photos"
   >("calendar");
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(new Date());
@@ -430,6 +435,7 @@ export default function Home() {
   const [monthAgendaDate, setMonthAgendaDate] = useState<string | null>(null);
   const [memberFilterOpen, setMemberFilterOpen] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [eventDetail, setEventDetail] = useState<CalendarEvent | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const today = dateKey(new Date());
@@ -4122,40 +4128,33 @@ export default function Home() {
           日历
         </button>
         <button
-          className={section === "special" ? "active" : ""}
-          onClick={() => setSection("special")}
+          className={["bag", "wishes", "lucky", "expenses", "polls"].includes(section) ? "active" : ""}
+          onClick={() => setSection("bag")}
         >
-          纪念日
+          百宝袋
         </button>
         <button
-          className={section === "wishes" ? "active" : ""}
-          onClick={() => setSection("wishes")}
+          className={section === "moments" ? "active" : ""}
+          onClick={() => setSection("moments")}
         >
-          愿望清单
+          动态
         </button>
         <button
-          className={section === "lucky" ? "active" : ""}
-          onClick={() => setSection("lucky")}
+          className={section === "photos" ? "active" : ""}
+          onClick={() => setSection("photos")}
         >
-          好运抽选机
-        </button>
-        <button
-          className={section === "expenses" ? "active" : ""}
-          onClick={() => setSection("expenses")}
-        >
-          记账
-        </button>
-        <button
-          className={section === "polls" ? "active" : ""}
-          onClick={() => setSection("polls")}
-        >
-          No Push
+          相册
         </button>
       </nav>
-      {section === "wishes" && wishPage}
-      {section === "lucky" && luckyPage}
-      {section === "expenses" && expensePage}
-      {section === "polls" && pollPage}
+      {(section === "calendar" || section === "special") && <nav className="calendar-subtabs"><button className={section === "calendar" ? "active" : ""} onClick={() => setSection("calendar")}>日历</button><button className={section === "special" ? "active" : ""} onClick={() => setSection("special")}>纪念日</button></nav>}
+      {section === "bag" && <section className="bag-home"><div><p className="eyebrow">MORE TOGETHER</p><h2>百宝袋</h2><p>把四个人一起做决定、收藏愿望和记账的小工具放在这里。</p></div><div className="bag-grid"><button onClick={() => setSection("wishes")}><b>愿望清单</b><span>想吃、想玩、想去、想看</span></button><button onClick={() => setSection("lucky")}><b>好运抽选机</b><span>拉一下，替今天做决定</span></button><button onClick={() => setSection("expenses")}><b>一起记账</b><span>共同消费与一键结算</span></button><button onClick={() => setSection("polls")}><b>No Push</b><span>答案揭晓前不互相影响</span></button></div></section>}
+      {["wishes", "lucky", "expenses", "polls"].includes(section) && <div className="bag-tool"><button className="bag-back" onClick={() => setSection("bag")}>‹ 百宝袋</button>{section === "wishes" && wishPage}{section === "lucky" && luckyPage}{section === "expenses" && expensePage}{section === "polls" && pollPage}</div>}
+      {section === "moments" && (
+        <MomentsPage user={user} member={member} members={members} events={events} onOpenEvent={setEventDetail} />
+      )}
+      {section === "photos" && (
+        <AlbumsPage user={user} member={member} members={members} />
+      )}
       {section === "calendar" && (
         <>
           <section className="toolbar">
@@ -4278,9 +4277,7 @@ export default function Home() {
                             onClick={(x) => {
                               x.stopPropagation();
                               if (!e.birthday && e.id > 0)
-                                startEdit(
-                                  events.find((item) => item.id === e.id)!,
-                                );
+                                setEventDetail(events.find((item) => item.id === e.id)!);
                             }}
                           >
                             {!e.allDay && !e.continuesFromPrevious && (
@@ -4338,9 +4335,7 @@ export default function Home() {
                             style={eventStyle(e)}
                             onClick={() => {
                               if (!e.birthday && e.id > 0)
-                                startEdit(
-                                  events.find((item) => item.id === e.id)!,
-                                );
+                                setEventDetail(events.find((item) => item.id === e.id)!);
                             }}
                           >
                             {e.title}
@@ -4391,9 +4386,7 @@ export default function Home() {
                             }}
                             onClick={(event) => {
                               event.stopPropagation();
-                              startEdit(
-                                events.find((item) => item.id === e.id)!,
-                              );
+                              setEventDetail(events.find((item) => item.id === e.id)!);
                             }}
                           >
                             <b>
@@ -4882,6 +4875,16 @@ export default function Home() {
           </section>
         </div>
       )}
+      {eventDetail && (
+        <div className="overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setEventDetail(null); }}>
+          <section className="sheet event-detail-sheet">
+            <div className="sheet-head"><div><p className="eyebrow">EVENT</p><h2>{eventDetail.title}</h2></div><button onClick={() => setEventDetail(null)}>×</button></div>
+            <div className="event-detail-meta"><p><b>{eventDetail.allDay ? "全天" : `${eventDetail.time}–${eventDetail.endTime}`}</b><span>{eventDetail.date}{eventDetail.endDate !== eventDetail.date ? ` 至 ${eventDetail.endDate}` : ""}</span></p>{eventDetail.location && <p><b>地点</b><span>{eventDetail.location}</span></p>}{eventDetail.note && <p><b>备注</b><span>{eventDetail.note}</span></p>}</div>
+            <EventMediaPanel event={eventDetail} user={user} member={member} members={members}/>
+            {eventDetail.canEdit !== false && <button className="primary event-detail-edit" onClick={() => { const original = eventDetail; setEventDetail(null); startEdit(original); }}>编辑行程</button>}
+          </section>
+        </div>
+      )}
       {monthAgendaDate && (
         <div
           className="overlay"
@@ -4918,7 +4921,7 @@ export default function Home() {
                       );
                       if (original) {
                         setMonthAgendaDate(null);
-                        startEdit(original);
+                        setEventDetail(original);
                       }
                     }}
                   >
