@@ -2087,6 +2087,18 @@ select option {
   background: #fffdf8;
   color: var(--ink);
 }
+.event-photo-actions > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.event-photo-actions > button b {
+  color: var(--olive);
+  font-size: inherit;
+}
 .photo-picker {
   margin-top: 12px;
   padding: 14px;
@@ -2259,7 +2271,8 @@ select option {
 }
 .event-mood-list .event-mood-delete {
   position: absolute;
-  top: 7px;
+  top: auto;
+  bottom: 7px;
   right: 9px;
   padding: 3px 5px;
   border: 0;
@@ -2287,10 +2300,17 @@ select option {
   border-radius: 12px;
   background: #f3ecdf;
 }
+.event-moment-option {
+  display: inline-flex;
+  width: auto;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: transparent;
+}
 .event-moment-option input {
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   margin: 0;
 }
 .event-moment-option span,
@@ -2300,6 +2320,16 @@ select option {
 }
 .event-moment-option small,
 .event-moment-status span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.event-moment-option span {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.event-moment-compact {
+  margin: 12px 0 0;
   color: var(--muted);
   font-size: 12px;
 }
@@ -2325,7 +2355,34 @@ select option {
   opacity: .5;
 }
 
+/* Event photo sheet: denser hierarchy and clearer actions. */
+.event-detail-sheet {
+  width: min(680px, calc(100vw - 30px));
+  padding: 28px 30px;
+}
+.event-detail-sheet .sheet-head h2 {
+  margin-bottom: 6px;
+}
+.event-detail-meta p {
+  margin: 0;
+  padding: 8px 0;
+}
+.event-media-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.event-media-heading p {
+  font-size: 13px;
+}
+.event-mood-field {
+  margin-top: 14px;
+}
+.event-mood-field textarea {
+  min-height: 74px;
+}
+
 @media (max-width: 700px) {
+  .event-detail-sheet { padding: 22px 18px; }
   .event-detail-tabs button { padding: 0 14px; }
   .event-media-heading { align-items: flex-start; }
   .event-group-checks { gap: 5px; }
