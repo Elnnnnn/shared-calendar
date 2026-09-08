@@ -2190,16 +2190,20 @@ select option {
   color: #fff;
 }
 .moment-actions .moment-action-button {
-  border: 1px solid #746f50;
-  background: #746f50;
-  color: #fff;
+  min-height: 30px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #5d6480;
   font-weight: 700;
   opacity: 1;
-  -webkit-text-fill-color: #fff;
+  -webkit-text-fill-color: currentColor;
 }
 .moment-actions .moment-action-button.liked {
-  border-color: #aa7470;
-  background: #aa7470;
+  border-color: transparent;
+  background: transparent;
+  color: #aa7470;
 }
 .moment-comments .moment-comment-send {
   display: inline-flex;
@@ -2257,6 +2261,41 @@ select option {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 12px;
+}
+.event-mood-actions.single {
+  grid-template-columns: 1fr;
+}
+.event-moment-option,
+.event-moment-status {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f3ecdf;
+}
+.event-moment-option input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+.event-moment-option span,
+.event-moment-status span {
+  display: grid;
+  gap: 3px;
+}
+.event-moment-option small,
+.event-moment-status span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.event-moment-status {
+  align-items: flex-start;
+  border-color: #b6b08e;
+  background: #efeadb;
 }
 .event-mood-actions button {
   min-height: 44px;

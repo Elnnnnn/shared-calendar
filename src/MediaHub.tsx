@@ -88,6 +88,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [moods, setMoods] = useState<EventMood[]>([]);
   const [eventMoment, setEventMoment] = useState<Moment | null>(null);
+  const [shareToMoment, setShareToMoment] = useState(false);
   async function load() {
     const [photoResult, linkResult, moodResult, momentResult] = await Promise.all([
       supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").order("created_at", { ascending: false }),
@@ -96,7 +97,14 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
       supabase.from("shared_calendar_moments").select("*").eq("event_id", event.id).maybeSingle(),
     ]);
     if (photoResult.error || linkResult.error || moodResult.error || momentResult.error) setMessage("活动内容读取失败");
-    else { setPhotos((photoResult.data || []) as Photo[]); setEventLinks((linkResult.data || []) as EventPhotoLink[]); setMoods((moodResult.data || []) as EventMood[]); setEventMoment(momentResult.data as Moment | null); }
+    else {
+      const existingMoment = momentResult.data as Moment | null;
+      setPhotos((photoResult.data || []) as Photo[]);
+      setEventLinks((linkResult.data || []) as EventPhotoLink[]);
+      setMoods((moodResult.data || []) as EventMood[]);
+      setEventMoment(existingMoment);
+      if (existingMoment) setShareToMoment(false);
+    }
   }
   useEffect(() => { void load(); }, [event.id]);
   useEffect(() => { setGroup(groups[0]); }, [event.id, event.audienceGroup]);
@@ -157,6 +165,10 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     else { setMood(""); await load(); }
     setBusy(false);
   }
+  async function submitMood() {
+    if (shareToMoment && !eventMoment) await publishMoment();
+    else await saveMood();
+  }
   const eventPhotoId = eventLinks[0]?.photo_id;
   const eventPhoto = photos.find((photo) => photo.id === eventPhotoId);
   const libraryPhotos = photos.filter((photo) => photo.id !== eventPhotoId && photo.group_key === group);
@@ -174,7 +186,10 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     {libraryOpen && <div className="photo-picker"><div className="photo-picker-head"><b>选择已有照片</b><button onClick={()=>setLibraryOpen(false)}>×</button></div><div className="photo-library-grid">{libraryPhotos.map((photo)=><button key={photo.id} onClick={()=>chooseExisting(photo)} disabled={busy}><ProtectedPhoto photo={photo}/></button>)}</div>{!libraryPhotos.length&&<p>这个组的相册里还没有可选照片</p>}</div>}
     <div className="event-mood-list">{moods.map((entry)=>{const color=members.find((item)=>item.email.toLowerCase()===entry.author_email.toLowerCase())?.color||"stone";return <div key={entry.id}><span className={`moment-avatar ${color}`}>{displayName(entry.author_email,members).slice(0,1)}</span><p><b>{displayName(entry.author_email,members)}</b><span>{entry.body}</span></p></div>})}</div>
     <label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label>
-    <div className="event-mood-actions"><button type="button" disabled={busy||!mood.trim()} onClick={saveMood}>发表心情</button><button className="primary" disabled={publishing || Boolean(eventMoment) || (!mood.trim() && !eventPhoto)} onClick={publishMoment}>{publishing?"正在发布…":eventMoment?"已发布到动态":"发布到动态"}</button></div>
+    {eventMoment
+      ? <div className="event-moment-status"><b>已发布到动态</b><span>由 {displayName(eventMoment.author_email, members)} 发布；之后大家写的心情都会同步到这条动态的评论。</span></div>
+      : <label className="event-moment-option"><input type="checkbox" checked={shareToMoment} onChange={(input)=>setShareToMoment(input.target.checked)}/><span><b>同时发布到动态</b><small>每个活动只能发布一次；发布后，其他人的心情会自动成为评论。</small></span></label>}
+    <div className="event-mood-actions single"><button className="primary" type="button" disabled={busy || publishing || (!mood.trim() && !(shareToMoment && eventPhoto))} onClick={submitMood}>{publishing?"正在发布…":shareToMoment?"发表并发布动态":"发表心情"}</button></div>
     {message&&<p className={message === "已发布到动态" ? "media-success" : "media-error"}>{message}</p>}
   </section>;
 }
@@ -257,8 +272,8 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           <header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div>{isAuthor&&<button className="moment-delete" onClick={()=>deleteMoment(moment.id)}>删除</button>}</header>
           {moment.caption && <p className="moment-caption">{moment.caption}</p>}
           {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><div className="moment-photo" key={photo.id}><ProtectedPhoto photo={photo}/></div>)}</div>}
-          <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length || "赞"}</button><span className="moment-action-button">评论 {momentComments.length + syncedMoods.length}</span></div>
-          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><b>{displayName(entry.author_email,members)}</b> {entry.body}</p>)}{momentComments.map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
+          <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length ? `${momentLikes.length} 人赞` : "赞"}</button><button className="moment-action-button" onClick={()=>document.getElementById(`moment-comment-${moment.id}`)?.focus()}>◯ 评论{momentComments.length + syncedMoods.length ? ` ${momentComments.length + syncedMoods.length}` : ""}</button></div>
+          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><b>{displayName(entry.author_email,members)}</b> {entry.body}</p>)}{momentComments.map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
       {!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}
