@@ -5370,10 +5370,10 @@ select option {
 }
 
 .event-moment-option {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  width: auto;
+  gap: 1em;
+  width: 100%;
   margin-top: 12px;
   padding: 0;
   border: 0;
@@ -5381,15 +5381,13 @@ select option {
   cursor: pointer;
 }
 
-.event-moment-option span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  line-height: 1;
-}
-
 .event-moment-option b { color: var(--ink); font-size: 12px; }
-.event-moment-option small { color: var(--muted); font-size: 10px; font-weight: 500; }
+.event-moment-option small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+}
 
 .event-media-panel .event-mood-actions.single {
   display: flex;

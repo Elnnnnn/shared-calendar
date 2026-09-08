@@ -999,8 +999,9 @@ export default function Home() {
   }
   function openEventSheet(e: CalendarEvent) {
     prepareEventDraft(e);
-    const involved = e.owner.toLowerCase() === member?.email.toLowerCase() || e.participants.some((email) => email.toLowerCase() === member?.email.toLowerCase());
-    setEventSheetTab(involved ? (e.date <= today ? "photos" : e.canEdit === false ? "details" : "edit") : "details");
+    const isOwner = e.owner.toLowerCase() === member?.email.toLowerCase();
+    const isParticipant = e.participants.some((email) => email.toLowerCase() === member?.email.toLowerCase());
+    setEventSheetTab(isParticipant && !isOwner ? "photos" : isOwner ? (e.date <= today ? "photos" : "edit") : "details");
     setOpen(true);
   }
   const validRange =
