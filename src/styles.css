@@ -2243,8 +2243,9 @@ select option {
   font-size: 13px;
 }
 .event-mood-list p {
+  position: relative;
   margin: 0;
-  padding: 9px 11px;
+  padding: 9px 54px 9px 11px;
   border-radius: 11px;
   background: #f3ecdf;
 }
@@ -2254,6 +2255,16 @@ select option {
 }
 .event-mood-list p b {
   margin-bottom: 3px;
+  font-size: 12px;
+}
+.event-mood-list .event-mood-delete {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  padding: 3px 5px;
+  border: 0;
+  background: transparent;
+  color: #a6635d;
   font-size: 12px;
 }
 .event-mood-actions {

@@ -165,6 +165,12 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     else { setMood(""); await load(); }
     setBusy(false);
   }
+  async function deleteMood(entry: EventMood) {
+    setMessage("");
+    const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
+    if (error) { setMessage("评论删除失败"); return; }
+    await load();
+  }
   async function submitMood() {
     if (shareToMoment && !eventMoment) await publishMoment();
     else await saveMood();
@@ -184,7 +190,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     {eventPhoto && <div className="event-cover"><ProtectedPhoto photo={eventPhoto} alt={`${event.title} 封面`}/><button onClick={()=>remove(eventPhoto)} aria-label="从日历移除照片" title="从日历移除，原图仍保留在相册">×</button></div>}
     {!eventPhoto && <div className="event-photo-actions"><label className="media-file-picker">＋ 从设备上传<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{busy?"正在上传…":"选择照片"}</span></label><button type="button" onClick={()=>setLibraryOpen(true)}>从相册选择</button></div>}
     {libraryOpen && <div className="photo-picker"><div className="photo-picker-head"><b>选择已有照片</b><button onClick={()=>setLibraryOpen(false)}>×</button></div><div className="photo-library-grid">{libraryPhotos.map((photo)=><button key={photo.id} onClick={()=>chooseExisting(photo)} disabled={busy}><ProtectedPhoto photo={photo}/></button>)}</div>{!libraryPhotos.length&&<p>这个组的相册里还没有可选照片</p>}</div>}
-    <div className="event-mood-list">{moods.map((entry)=>{const color=members.find((item)=>item.email.toLowerCase()===entry.author_email.toLowerCase())?.color||"stone";return <div key={entry.id}><span className={`moment-avatar ${color}`}>{displayName(entry.author_email,members).slice(0,1)}</span><p><b>{displayName(entry.author_email,members)}</b><span>{entry.body}</span></p></div>})}</div>
+    <div className="event-mood-list">{moods.map((entry)=>{const color=members.find((item)=>item.email.toLowerCase()===entry.author_email.toLowerCase())?.color||"stone";const canDelete=entry.author_user_id===user.id;return <div key={entry.id}><span className={`moment-avatar ${color}`}>{displayName(entry.author_email,members).slice(0,1)}</span><p><b>{displayName(entry.author_email,members)}</b><span>{entry.body}</span>{canDelete&&<button type="button" className="event-mood-delete" onClick={()=>deleteMood(entry)}>删除</button>}</p></div>})}</div>
     <label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label>
     {eventMoment
       ? <div className="event-moment-status"><b>已发布到动态</b><span>由 {displayName(eventMoment.author_email, members)} 发布；之后大家写的心情都会同步到这条动态的评论。</span></div>
