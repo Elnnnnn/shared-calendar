@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
-const MEDIA_API = "https://shared-calendar-media.elaine-shared-calendar.workers.dev";
+const MEDIA_API = "https://yytyntrgqkddfsliooke.supabase.co/functions/v1/shared-calendar-media-proxy";
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
 type GroupKey = "besties" | "friends";
 type Member = { email: string; display_name: string; color: string };
@@ -83,6 +83,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
   async function add(eventInput: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(eventInput.target.files || []);
     if (!files.length) return;
+    if (visible.length) { setMessage("每个活动只能添加一张照片，请先删除原照片再更换。"); eventInput.target.value = ""; return; }
     setBusy(true); setMessage("");
     try { for (const file of files) await uploadPhoto(file, group, event.id); await load(); }
     catch (error) { setMessage(error instanceof Error ? error.message : "上传失败"); }
@@ -95,7 +96,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     await load();
   }
   const visible = photos.filter((photo) => photo.group_key === group);
-  return <section className="event-media-panel"><div className="event-media-heading"><div><h3>活动照片</h3><p>{visible.length ? `${visible.length} 张照片` : "为这次活动留下第一张照片"}</p></div><GroupSelect value={group} onChange={setGroup} email={member.email}/></div>{visible[0] && <div className="event-cover"><ProtectedPhoto photo={visible[0]} alt={`${event.title} 封面`}/>{visible[0].uploader_email.toLowerCase()===member.email.toLowerCase()&&<button onClick={()=>remove(visible[0])} aria-label="删除封面照片">×</button>}</div>}<div className="event-photo-grid">{visible.slice(1).map((photo)=><div key={photo.id}><ProtectedPhoto photo={photo}/>{photo.uploader_email.toLowerCase()===member.email.toLowerCase()&&<button onClick={()=>remove(photo)} aria-label="删除照片">×</button>}<small>{displayName(photo.uploader_email,members)}</small></div>)}</div><label className="media-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={add}/><span>{busy?"正在上传…":"从设备选择"}</span></label>{message&&<p className="media-error">{message}</p>}</section>;
+  return <section className="event-media-panel"><div className="event-media-heading"><div><h3>活动照片</h3><p>{visible.length ? "1 张照片" : "为这次活动留下一张照片"}</p></div><GroupSelect value={group} onChange={setGroup} email={member.email}/></div>{visible[0] && <div className="event-cover"><ProtectedPhoto photo={visible[0]} alt={`${event.title} 封面`}/>{visible[0].uploader_email.toLowerCase()===member.email.toLowerCase()&&<button onClick={()=>remove(visible[0])} aria-label="删除活动照片">×</button>}</div>}{!visible.length&&<label className="media-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{busy?"正在上传…":"从设备选择"}</span></label>}{message&&<p className="media-error">{message}</p>}</section>;
 }
 
 export function MomentsPage({ user, member, members, events, onOpenEvent }: { user: User; member: Member; members: Member[]; events: CalendarEvent[]; onOpenEvent: (event: CalendarEvent) => void }) {
@@ -131,7 +132,7 @@ export function MomentsPage({ user, member, members, events, onOpenEvent }: { us
     setBusy(true); setMessage("");
     try {
       const uploaded: Photo[] = [];
-      for (const file of files.slice(0, 9)) uploaded.push(await uploadPhoto(file, group, eventId ? Number(eventId) : null));
+      for (const file of files.slice(0, 9)) uploaded.push(await uploadPhoto(file, group));
       const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: eventId ? Number(eventId) : null }).select().single();
       if (error) throw error;
       if (uploaded.length) {
