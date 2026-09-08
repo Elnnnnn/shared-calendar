@@ -5335,3 +5335,39 @@ select option {
     height: 13px !important;
   }
 }
+
+/* Keep event-photo checkboxes square after every responsive form override. */
+.event-media-panel input[type="checkbox"],
+.event-group-menu input[type="checkbox"] {
+  box-sizing: border-box;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  border-radius: 4px;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 18px;
+}
+
+.event-moment-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.event-moment-option span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1;
+}
+
+.event-moment-option b { color: var(--ink); font-size: 12px; }
+.event-moment-option small { color: var(--muted); font-size: 10px; font-weight: 500; }
