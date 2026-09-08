@@ -2189,6 +2189,39 @@ select option {
   background: #aa7470;
   color: #fff;
 }
+.moment-actions .moment-action-button {
+  border: 1px solid #746f50;
+  background: #746f50;
+  color: #fff;
+  font-weight: 700;
+  opacity: 1;
+  -webkit-text-fill-color: #fff;
+}
+.moment-actions .moment-action-button.liked {
+  border-color: #aa7470;
+  background: #aa7470;
+}
+.moment-comments .moment-comment-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #746f50;
+  border-radius: 12px;
+  background: #746f50;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 1;
+  -webkit-text-fill-color: #fff;
+}
+.moment-comments .moment-comment-send:disabled {
+  border-color: #c9c1ae;
+  background: #c9c1ae;
+  cursor: default;
+}
 .event-mood-list {
   display: grid;
   gap: 10px;

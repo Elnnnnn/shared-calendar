@@ -123,7 +123,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
   async function chooseExisting(photo: Photo) {
     setBusy(true); setMessage("");
     const { error } = await supabase.from("shared_calendar_event_photos").insert({ event_id: event.id, photo_id: photo.id, linked_by_user_id: user.id, linked_by_email: member.email });
-    if (error) setMessage(error.code === "23505" ? "这个活动已经有照片了" : "无法选择这张照片");
+    if (error) setMessage(error.code === "23505" ? "这个活动已经有照片了" : error.message || "无法选择这张照片");
     else { setLibraryOpen(false); await load(); }
     setBusy(false);
   }
@@ -257,8 +257,8 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           <header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div>{isAuthor&&<button className="moment-delete" onClick={()=>deleteMoment(moment.id)}>删除</button>}</header>
           {moment.caption && <p className="moment-caption">{moment.caption}</p>}
           {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><div className="moment-photo" key={photo.id}><ProtectedPhoto photo={photo}/></div>)}</div>}
-          <div className="moment-actions"><button className={momentLikes.some((like)=>like.user_id===user.id)?"liked":""} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length || "赞"}</button><span>评论 {momentComments.length + syncedMoods.length}</span></div>
-          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><b>{displayName(entry.author_email,members)}</b> {entry.body}</p>)}{momentComments.map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button onClick={()=>addComment(moment.id)}>发送</button></div></div>
+          <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length || "赞"}</button><span className="moment-action-button">评论 {momentComments.length + syncedMoods.length}</span></div>
+          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><b>{displayName(entry.author_email,members)}</b> {entry.body}</p>)}{momentComments.map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
       {!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}
