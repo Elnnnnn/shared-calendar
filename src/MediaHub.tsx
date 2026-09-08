@@ -191,7 +191,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     {eventMoment
       ? <p className="event-moment-compact">已发布动态 · 新心情会同步为评论</p>
       : <label className="event-moment-option"><input type="checkbox" checked={shareToMoment} onChange={(input)=>setShareToMoment(input.target.checked)}/><span><b>发布到动态</b><small>可选</small></span></label>}
-    <div className="event-mood-actions single"><button className="primary" type="button" disabled={busy || uploadingPhoto || !hasDraft} onClick={saveActivityMedia}>{busy?(publishing?"正在保存并发布…":"正在保存…"):shareToMoment?"保存并发布":"保存"}</button></div>
+    <div className="event-mood-actions single"><button className="primary" type="button" disabled={busy || uploadingPhoto} onClick={saveActivityMedia}>{busy?(publishing?"正在保存并发布…":"正在保存…"):shareToMoment?"保存并发布":"保存"}</button></div>
     {message&&<p className={message.startsWith("已保存") ? "media-success" : "media-error"}>{message}</p>}
   </section>;
 }
