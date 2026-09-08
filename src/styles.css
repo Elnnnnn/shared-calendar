@@ -2086,6 +2086,9 @@ select option {
   border-radius: 12px;
   background: #fffdf8;
   color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
 }
 .event-photo-actions > button {
   display: flex;
@@ -2098,6 +2101,7 @@ select option {
 .event-photo-actions > button b {
   color: var(--olive);
   font-size: inherit;
+  font-weight: inherit;
 }
 .photo-picker {
   margin-top: 12px;
