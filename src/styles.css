@@ -5353,7 +5353,7 @@ select option {
 .event-moment-option {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: auto;
   margin-top: 12px;
   padding: 0;
@@ -5371,3 +5371,31 @@ select option {
 
 .event-moment-option b { color: var(--ink); font-size: 12px; }
 .event-moment-option small { color: var(--muted); font-size: 10px; font-weight: 500; }
+
+.event-media-panel .event-mood-actions.single {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.event-media-panel .event-mood-actions.single .primary {
+  width: auto;
+  min-width: 104px;
+  min-height: 38px;
+  padding: 0 20px;
+  border: 1px solid var(--deep);
+  border-radius: 10px;
+  background: var(--deep);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.event-media-panel .event-mood-actions.single .primary:disabled {
+  border-color: #aaa58a;
+  background: #c8c3a8;
+  color: #56523f;
+  cursor: not-allowed;
+  opacity: 1;
+}

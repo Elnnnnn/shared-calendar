@@ -145,7 +145,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
   const libraryPhotos = photos.filter((photo) => photo.id !== selectedPhotoId && photo.group_key === group);
   const hasDraft = pendingPhotoId !== undefined || Boolean(mood.trim()) || shareToMoment;
   async function saveActivityMedia() {
-    if (!hasDraft) return;
+    if (!hasDraft) { setMessage("已保存"); return; }
     setBusy(true); setPublishing(shareToMoment); setMessage("");
     try {
       if (pendingPhotoId !== undefined) {
