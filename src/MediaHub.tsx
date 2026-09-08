@@ -12,7 +12,8 @@ type Moment = { id: number; group_key: GroupKey; author_email: string; caption: 
 type MomentPhoto = { moment_id: number; photo_id: string; position: number };
 type Like = { moment_id: number; user_id: string; user_email: string };
 type Comment = { id: number; moment_id: number; author_email: string; body: string; created_at: string };
-type CalendarEvent = { id: number; title: string; date: string; owner: string; audienceGroup?: GroupKey };
+type CalendarEvent = { id: number; title: string; date: string; owner: string; participants: string[]; audienceGroup?: GroupKey };
+type EventPhotoLink = { event_id: number; photo_id: string };
 
 function groupLabel(group: GroupKey) { return group === "besties" ? "闺蜜组" : group === "friends" ? "朋友组" : "两个组"; }
 function allowedGroups(email: string): GroupKey[] {
@@ -78,42 +79,54 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
         : allowedGroups(member.email);
   const [group, setGroup] = useState<GroupKey>(groups[0]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [eventLinks, setEventLinks] = useState<EventPhotoLink[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [mood, setMood] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   async function load() {
-    const { data, error } = await supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").eq("event_id", event.id).order("created_at");
-    if (error) setMessage("活动照片读取失败");
-    else setPhotos((data || []) as Photo[]);
+    const [photoResult, linkResult] = await Promise.all([
+      supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").order("created_at", { ascending: false }),
+      supabase.from("shared_calendar_event_photos").select("event_id,photo_id").eq("event_id", event.id),
+    ]);
+    if (photoResult.error || linkResult.error) setMessage("活动照片读取失败");
+    else { setPhotos((photoResult.data || []) as Photo[]); setEventLinks((linkResult.data || []) as EventPhotoLink[]); }
   }
   useEffect(() => { void load(); }, [event.id]);
   useEffect(() => { setGroup(groups[0]); }, [event.id, event.audienceGroup]);
   async function add(eventInput: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(eventInput.target.files || []);
     if (!files.length) return;
-    if (visible.length) { setMessage("每个活动只能添加一张照片，请先删除原照片再更换。"); eventInput.target.value = ""; return; }
+    if (eventPhoto) { setMessage("每个活动只能添加一张照片，请先移除原照片再更换。"); eventInput.target.value = ""; return; }
     setBusy(true); setMessage("");
-    try { for (const file of files) await uploadPhoto(file, group, event.id); await load(); }
+    try {
+      const photo = await uploadPhoto(files[0], group);
+      const { error } = await supabase.from("shared_calendar_event_photos").insert({ event_id: event.id, photo_id: photo.id, linked_by_user_id: user.id, linked_by_email: member.email });
+      if (error) throw error;
+      await load();
+    }
     catch (error) { setMessage(error instanceof Error ? error.message : "上传失败"); }
     finally { setBusy(false); eventInput.target.value = ""; }
   }
   async function remove(photo: Photo) {
     setMessage("");
-    const { data, error } = await supabase
-      .from("shared_calendar_photos")
-      .update({ event_id: null })
-      .eq("id", photo.id)
-      .select("id")
-      .maybeSingle();
-    if (error || !data) { setMessage("无法从日历移除照片"); return; }
+    const { error } = await supabase.from("shared_calendar_event_photos").delete().eq("event_id", event.id).eq("photo_id", photo.id);
+    if (error) { setMessage("无法从日历移除照片"); return; }
     await load();
   }
+  async function chooseExisting(photo: Photo) {
+    setBusy(true); setMessage("");
+    const { error } = await supabase.from("shared_calendar_event_photos").insert({ event_id: event.id, photo_id: photo.id, linked_by_user_id: user.id, linked_by_email: member.email });
+    if (error) setMessage(error.code === "23505" ? "这个活动已经有照片了" : "无法选择这张照片");
+    else { setLibraryOpen(false); await load(); }
+    setBusy(false);
+  }
   async function publishMoment() {
-    const photo = visible[0];
+    const photo = eventPhoto;
     if (!mood.trim() && !photo) return;
     setPublishing(true); setMessage("");
-    const publishGroup = photo?.group_key || group;
+    const publishGroup = group;
     try {
       const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: publishGroup, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id }).select().single();
       if (error) throw error;
@@ -125,11 +138,28 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     } catch (error) { setMessage(error instanceof Error ? error.message : "发布失败"); }
     finally { setPublishing(false); }
   }
-  const visible = photos.filter((photo) => photo.group_key === group || (photo.group_key === "both" && group !== "both"));
-  return <section className="event-media-panel"><div className="event-media-heading"><div><h3>活动照片</h3><p>{visible.length ? "1 张照片" : "为这次活动留下一张照片"}</p></div><GroupSelect value={group} onChange={setGroup} email={member.email} options={groups}/></div>{visible[0] && <div className="event-cover"><ProtectedPhoto photo={visible[0]} alt={`${event.title} 封面`}/>{visible[0].uploader_email.toLowerCase()===member.email.toLowerCase()&&<button onClick={()=>remove(visible[0])} aria-label="从日历移除照片" title="从日历移除，原图仍保留在相册">×</button>}</div>}{!photos.length&&<label className="media-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{busy?"正在上传…":"从设备选择"}</span></label>}<label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label><button className="primary event-moment-publish" disabled={publishing || (!mood.trim() && !visible[0])} onClick={publishMoment}>{publishing?"正在发布…":"发布到动态"}</button>{message&&<p className={message === "已发布到动态" ? "media-success" : "media-error"}>{message}</p>}</section>;
+  const eventPhotoId = eventLinks[0]?.photo_id;
+  const eventPhoto = photos.find((photo) => photo.id === eventPhotoId);
+  const libraryPhotos = photos.filter((photo) => photo.id !== eventPhotoId && photo.group_key === group);
+  const selectedGroups = group === "both" ? ["besties", "friends"] : [group];
+  function toggleGroup(next: "besties" | "friends") {
+    const has = selectedGroups.includes(next);
+    if (has && selectedGroups.length === 1) return;
+    const nextGroups = has ? selectedGroups.filter((item) => item !== next) : [...selectedGroups, next];
+    setGroup(nextGroups.length === 2 ? "both" : nextGroups[0] as GroupKey);
+  }
+  return <section className="event-media-panel">
+    <div className="event-media-heading"><div><h3>活动照片</h3><p>{eventPhoto ? "1 张照片" : "为这次活动留下一张照片"}</p></div>{groups.length === 1 ? <span className="media-group-label">{groupLabel(groups[0])}</span> : <div className="event-group-checks"><label><input type="checkbox" checked={selectedGroups.includes("besties")} onChange={()=>toggleGroup("besties")}/>闺蜜组</label><label><input type="checkbox" checked={selectedGroups.includes("friends")} onChange={()=>toggleGroup("friends")}/>朋友组</label></div>}</div>
+    {eventPhoto && <div className="event-cover"><ProtectedPhoto photo={eventPhoto} alt={`${event.title} 封面`}/><button onClick={()=>remove(eventPhoto)} aria-label="从日历移除照片" title="从日历移除，原图仍保留在相册">×</button></div>}
+    {!eventPhoto && <div className="event-photo-actions"><label className="media-file-picker">＋ 从设备上传<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{busy?"正在上传…":"选择照片"}</span></label><button type="button" onClick={()=>setLibraryOpen(true)}>从相册选择</button></div>}
+    {libraryOpen && <div className="photo-picker"><div className="photo-picker-head"><b>选择已有照片</b><button onClick={()=>setLibraryOpen(false)}>×</button></div><div className="photo-library-grid">{libraryPhotos.map((photo)=><button key={photo.id} onClick={()=>chooseExisting(photo)} disabled={busy}><ProtectedPhoto photo={photo}/></button>)}</div>{!libraryPhotos.length&&<p>这个组的相册里还没有可选照片</p>}</div>}
+    <label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label>
+    <button className="primary event-moment-publish" disabled={publishing || (!mood.trim() && !eventPhoto)} onClick={publishMoment}>{publishing?"正在发布…":"发布到动态"}</button>
+    {message&&<p className={message === "已发布到动态" ? "media-success" : "media-error"}>{message}</p>}
+  </section>;
 }
 
-export function MomentsPage({ user, member, members, events, onOpenEvent }: { user: User; member: Member; members: Member[]; events: CalendarEvent[]; onOpenEvent: (event: CalendarEvent) => void }) {
+export function MomentsPage({ user, member, members }: { user: User; member: Member; members: Member[] }) {
   const groups = allowedGroups(member.email);
   const [group, setGroup] = useState<GroupKey>(groups[0]);
   const [moments, setMoments] = useState<Moment[]>([]);
@@ -139,7 +169,6 @@ export function MomentsPage({ user, member, members, events, onOpenEvent }: { us
   const [comments, setComments] = useState<Comment[]>([]);
   const [composer, setComposer] = useState(false);
   const [caption, setCaption] = useState("");
-  const [eventId, setEventId] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
@@ -162,14 +191,14 @@ export function MomentsPage({ user, member, members, events, onOpenEvent }: { us
     setBusy(true); setMessage("");
     try {
       const uploaded: Photo[] = [];
-      for (const file of files.slice(0, 9)) uploaded.push(await uploadPhoto(file, group));
-      const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: eventId ? Number(eventId) : null }).select().single();
+      for (const file of files.slice(0, 3)) uploaded.push(await uploadPhoto(file, group));
+      const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: null }).select().single();
       if (error) throw error;
       if (uploaded.length) {
         const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert(uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position })));
         if (linkError) throw linkError;
       }
-      setCaption(""); setFiles([]); setEventId(""); setComposer(false); await load();
+      setCaption(""); setFiles([]); setComposer(false); await load();
     } catch (error) { setMessage(error instanceof Error ? error.message : "发布失败"); }
     finally { setBusy(false); }
   }
@@ -194,11 +223,17 @@ export function MomentsPage({ user, member, members, events, onOpenEvent }: { us
     if (error) { setMessage("无法从动态移除照片"); return; }
     await load();
   }
+  async function deleteMoment(momentId: number) {
+    if (!window.confirm("确定删除这条动态吗？照片仍会保留在相册中。")) return;
+    const { error } = await supabase.from("shared_calendar_moments").delete().eq("id", momentId);
+    if (error) { setMessage("动态删除失败"); return; }
+    await load();
+  }
   const visible = moments.filter((moment) => moment.group_key === group || moment.group_key === "both");
   return <section className="media-page moments-page">
     <header className="media-page-head"><div><p className="eyebrow">MOMENTS</p><h2>动态</h2></div><div className="media-head-actions"><GroupSelect value={group} onChange={setGroup} email={member.email}/><button className="primary" onClick={() => setComposer(true)}>＋ 发布</button></div></header>
-    {composer && <div className="media-composer"><div className="media-composer-head"><h3>发布到 {groupLabel(group)}</h3><button onClick={() => setComposer(false)}>×</button></div><GroupSelect value={group} onChange={setGroup} email={member.email}/><textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="说点什么……"/><label className="media-file-picker">选择照片（最多 9 张）<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 9))}/><span>{files.length ? `已选择 ${files.length} 张` : "从设备上传"}</span></label><label>关联日历活动（可选）<select value={eventId} onChange={(e) => setEventId(e.target.value)}><option value="">不关联</option>{events.filter((event) => event.id > 0).map((event) => <option key={event.id} value={event.id}>{event.title} · {event.date}</option>)}</select></label>{message && <p className="media-error">{message}</p>}<button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : "发布动态"}</button></div>}
-    <div className="moment-feed">{visible.map((moment) => { const momentPhotos = links.filter((link) => link.moment_id === moment.id).sort((a,b) => a.position-b.position).map((link) => photos.find((photo) => photo.id === link.photo_id)).filter(Boolean) as Photo[]; const momentLikes=likes.filter((like)=>like.moment_id===moment.id); const event=events.find((item)=>item.id===moment.event_id); const isAuthor=moment.author_email.toLowerCase()===member.email.toLowerCase(); return <article className="moment-post" key={moment.id}><header><span className={`moment-avatar ${members.find((m)=>m.email===moment.author_email)?.color || "stone"}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div></header>{event && <button className="moment-event-link" onClick={()=>onOpenEvent(event)}>日历 · {event.title} →</button>}{moment.caption && <p className="moment-caption">{moment.caption}</p>} {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,4)}`}>{momentPhotos.map((photo)=><div className="moment-photo" key={photo.id}><ProtectedPhoto photo={photo}/>{isAuthor&&<button className="moment-photo-detach" onClick={()=>detachMomentPhoto(moment.id,photo.id)} aria-label="从动态移除照片" title="从动态移除，原图仍保留在相册">×</button>}</div>)}</div>}<div className="moment-actions"><button className={momentLikes.some((like)=>like.user_id===user.id)?"liked":""} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length || "赞"}</button><span>评论 {comments.filter((item)=>item.moment_id===moment.id).length}</span></div><div className="moment-comments">{comments.filter((item)=>item.moment_id===moment.id).map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button onClick={()=>addComment(moment.id)}>发送</button></div></div></article>; })}{!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}</div>
+    {composer && <div className="media-composer"><div className="media-composer-head"><h3>发布到 {groupLabel(group)}</h3><button onClick={() => setComposer(false)}>×</button></div><GroupSelect value={group} onChange={setGroup} email={member.email}/><textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="说点什么……"/><label className="media-file-picker">选择照片（最多 3 张）<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 3))}/><span>{files.length ? `已选择 ${files.length} 张` : "从设备上传"}</span></label>{message && <p className="media-error">{message}</p>}<button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : "发布动态"}</button></div>}
+    <div className="moment-feed">{visible.map((moment) => { const momentPhotos = links.filter((link) => link.moment_id === moment.id).sort((a,b) => a.position-b.position).map((link) => photos.find((photo) => photo.id === link.photo_id)).filter(Boolean) as Photo[]; const momentLikes=likes.filter((like)=>like.moment_id===moment.id); const isAuthor=moment.author_email.toLowerCase()===member.email.toLowerCase(); const authorColor=members.find((m)=>m.email.toLowerCase()===moment.author_email.toLowerCase())?.color || "stone"; return <article className="moment-post" key={moment.id}><header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div>{isAuthor&&<button className="moment-delete" onClick={()=>deleteMoment(moment.id)}>删除</button>}</header>{moment.caption && <p className="moment-caption">{moment.caption}</p>} {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><div className="moment-photo" key={photo.id}><ProtectedPhoto photo={photo}/>{isAuthor&&<button className="moment-photo-detach" onClick={()=>detachMomentPhoto(moment.id,photo.id)} aria-label="从动态移除照片" title="从动态移除，原图仍保留在相册">×</button>}</div>)}</div>}<div className="moment-actions"><button className={momentLikes.some((like)=>like.user_id===user.id)?"liked":""} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length || "赞"}</button><span>评论 {comments.filter((item)=>item.moment_id===moment.id).length}</span></div><div className="moment-comments">{comments.filter((item)=>item.moment_id===moment.id).map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button onClick={()=>addComment(moment.id)}>发送</button></div></div></article>; })}{!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}</div>
   </section>;
 }
 

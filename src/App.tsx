@@ -439,7 +439,7 @@ export default function Home() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
-  const [eventSheetTab, setEventSheetTab] = useState<"photos" | "edit">("edit");
+  const [eventSheetTab, setEventSheetTab] = useState<"photos" | "edit" | "details">("edit");
   const today = dateKey(new Date());
   const [draft, setDraft] = useState({
     title: "",
@@ -992,7 +992,8 @@ export default function Home() {
   }
   function openEventSheet(e: CalendarEvent) {
     prepareEventDraft(e);
-    setEventSheetTab(e.date <= today || e.canEdit === false ? "photos" : "edit");
+    const involved = e.owner.toLowerCase() === member?.email.toLowerCase() || e.participants.some((email) => email.toLowerCase() === member?.email.toLowerCase());
+    setEventSheetTab(involved ? (e.date <= today ? "photos" : e.canEdit === false ? "details" : "edit") : "details");
     setOpen(true);
   }
   const validRange =
@@ -4175,7 +4176,7 @@ export default function Home() {
       {section === "bag" && wishPage}
       {["wishes", "lucky", "expenses", "polls"].includes(section) && <div className="bag-tool">{section === "wishes" && wishPage}{section === "lucky" && luckyPage}{section === "expenses" && expensePage}{section === "polls" && pollPage}</div>}
       {section === "moments" && (
-        <MomentsPage user={user} member={member} members={members} events={events} onOpenEvent={openEventSheet} />
+        <MomentsPage user={user} member={member} members={members} />
       )}
       {section === "photos" && (
         <AlbumsPage user={user} member={member} members={members} />
@@ -4978,9 +4979,9 @@ export default function Home() {
               </div>
               <button onClick={() => setOpen(false)}>×</button>
             </div>
-            {editing && (
+            {editing && (editing.canEdit !== false || editing.owner.toLowerCase() === member.email.toLowerCase() || editing.participants.some((email) => email.toLowerCase() === member.email.toLowerCase())) && (
               <div className="event-detail-tabs" role="tablist">
-                <button type="button" className={eventSheetTab === "photos" ? "active" : ""} onClick={() => setEventSheetTab("photos")}>活动照片</button>
+                {(editing.owner.toLowerCase() === member.email.toLowerCase() || editing.participants.some((email) => email.toLowerCase() === member.email.toLowerCase())) && <button type="button" className={eventSheetTab === "photos" ? "active" : ""} onClick={() => setEventSheetTab("photos")}>活动照片</button>}
                 {editing.canEdit !== false && <button type="button" className={eventSheetTab === "edit" ? "active" : ""} onClick={() => setEventSheetTab("edit")}>编辑</button>}
               </div>
             )}
@@ -4989,6 +4990,8 @@ export default function Home() {
                 <div className="event-detail-meta"><p><b>{editing.allDay ? "全天" : `${editing.time}–${editing.endTime}`}</b><span>{editing.date}{editing.endDate !== editing.date ? ` 至 ${editing.endDate}` : ""}</span></p>{editing.location && <p><b>地点</b><span>{editing.location}</span></p>}{editing.note && <p><b>备注</b><span>{editing.note}</span></p>}</div>
                 <EventMediaPanel event={editing} user={user} member={member} members={members}/>
               </>
+            ) : editing && eventSheetTab === "details" ? (
+              <div className="event-detail-meta"><p><b>{editing.allDay ? "全天" : `${editing.time}–${editing.endTime}`}</b><span>{editing.date}{editing.endDate !== editing.date ? ` 至 ${editing.endDate}` : ""}</span></p>{editing.location && <p><b>地点</b><span>{editing.location}</span></p>}{editing.note && <p><b>备注</b><span>{editing.note}</span></p>}</div>
             ) : (
               <>
             <label>
