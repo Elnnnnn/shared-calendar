@@ -1,20 +1,20 @@
-þŠmþ&yºÞÃòân¶«Ëñè™æë{Ü™ßì…éez{ì†X§{_?n)ÿ¦Ã©z¶­Š‰ç¢Ú^®h­µçY›ÜÛXÞHYˆ^\ÝÈ™]™[\XÚ\[ÈšY]È[ÛÙÈˆÛˆX›XËœÚ\™YØØ[[™\—Ù]™[Û[ÛÙÎÂ˜Ü™X]HÛXÞHœ\XÚ\[È[™[ÛY[šY]Ù\œÈšY]È[ÛÙÈ‚›ÛˆX›XËœÚ\™YØØ[[™\—Ù]™[Û[ÛÙÈ›ÜˆÙ[XÝÈ]][XØ]Y\Ú[™È
-ˆ^\ÝÈ
-ˆÙ[XÝHœ›ÛHX›XËœÚ\™YØØ[[™\—Ù]™[ÈBˆÚ\™HKšYH]™[ÚYˆ[™
-ˆÝÙ\ŠK›ÝÛ™\—Ù[XZ[
-HHÝÙ\ŠÛØ[\ØÙJ
-Ù[XÝ]]šÝ
-
-JHOˆ	Ù[XZ[	Ë	ÉÊJBˆÜˆÝÙ\ŠÛØ[\ØÙJ
-Ù[XÝ]]šÝ
-
-JHOˆ	Ù[XZ[	Ë	ÉÊJHH[žH
-ˆÙ[XÝÝÙ\Š˜[YJHœ›ÛH[›™\Ý
-Kœ\XÚ\[Ù[XZ[ÊH\È˜[YBˆ
-Bˆ
-Bˆ
-BˆÜˆ^\ÝÈ
-ˆÙ[XÝHœ›ÛHX›XËœÚ\™YØØ[[™\—Û[ÛY[ÈBˆÚ\™HK™]™[ÚYH]™[ÚYˆ[™
-Ù[XÝš]˜]K˜Ø[—ØXØÙ\Ü×ÜÚ\™YØØ[[™\—ÙÜ›Ý\
-K™Ü›Ý\ÚÙ^JJBˆ
-BŠNÂ
+drop policy if exists "event participants view moods" on public.shared_calendar_event_moods;
+create policy "participants and moment viewers view moods"
+on public.shared_calendar_event_moods for select to authenticated
+using (
+  exists (
+    select 1 from public.shared_calendar_events e
+    where e.id = event_id
+      and (
+        lower(e.owner_email) = lower(coalesce((select auth.jwt()) ->> 'email', ''))
+        or lower(coalesce((select auth.jwt()) ->> 'email', '')) = any (
+          select lower(value) from unnest(e.participant_emails) as value
+        )
+      )
+  )
+  or exists (
+    select 1 from public.shared_calendar_moments m
+    where m.event_id = event_id
+      and (select private.can_access_shared_calendar_group(m.group_key))
+  )
+);
