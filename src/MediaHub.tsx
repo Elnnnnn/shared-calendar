@@ -8,7 +8,7 @@ type GroupKey = "besties" | "friends" | "both";
 type Member = { email: string; display_name: string; color: string };
 type Photo = { id: string; group_key: GroupKey; uploader_email: string; event_id: number | null; file_name: string; created_at: string };
 type Album = { id: number; name: string; group_key: GroupKey; owner_email: string; cover_photo_id: string | null; created_at: string };
-type Moment = { id: number; group_key: GroupKey; author_email: string; caption: string; event_id: number | null; created_at: string };
+type Moment = { id: number; group_key: GroupKey; author_email: string; caption: string; event_id: number | null; source_event_mood_id: number | null; created_at: string };
 type MomentPhoto = { moment_id: number; photo_id: string; position: number };
 type Like = { moment_id: number; user_id: string; user_email: string };
 type Comment = { id: number; moment_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
@@ -138,6 +138,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
     if (error) { setMessage("评论删除失败"); return; }
     setMoods((current) => current.filter((item) => item.id !== entry.id));
+    setEventMoment((current) => current?.source_event_mood_id === entry.id ? { ...current, caption: "", source_event_mood_id: null } : current);
   }
   const savedPhotoId = eventLinks[0]?.photo_id;
   const selectedPhotoId = pendingPhotoId === undefined ? savedPhotoId : pendingPhotoId;
@@ -159,12 +160,20 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
         }
       }
       if (mood.trim()) {
-        const { error } = await supabase.from("shared_calendar_event_moods").insert({ event_id: event.id, author_user_id: user.id, author_email: member.email, body: mood.trim() });
+        const { data: savedMood, error } = await supabase.from("shared_calendar_event_moods").insert({ event_id: event.id, author_user_id: user.id, author_email: member.email, body: mood.trim() }).select("id").single();
         if (error) throw error;
-      }
-      if (shareToMoment && !eventMoment) {
+        if (shareToMoment && !eventMoment) {
+          const momentGroup: GroupKey = allowedGroups(member.email).includes("besties") ? "besties" : group;
+          const { data, error: momentError } = await supabase.from("shared_calendar_moments").insert({ group_key: momentGroup, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id, source_event_mood_id: savedMood.id }).select().single();
+          if (momentError) throw momentError;
+          if (selectedPhotoId) {
+            const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert({ moment_id: data.id, photo_id: selectedPhotoId, position: 0 });
+            if (linkError) throw linkError;
+          }
+        }
+      } else if (shareToMoment && !eventMoment) {
         const momentGroup: GroupKey = allowedGroups(member.email).includes("besties") ? "besties" : group;
-        const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: momentGroup, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id }).select().single();
+        const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: momentGroup, author_user_id: user.id, author_email: member.email, caption: "", event_id: event.id, source_event_mood_id: null }).select().single();
         if (error) throw error;
         if (selectedPhotoId) {
           const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert({ moment_id: data.id, photo_id: selectedPhotoId, position: 0 });
@@ -262,6 +271,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
     if (error) { setMessage("评论删除失败"); return; }
     setEventMoods((current) => current.filter((item) => item.id !== entry.id));
+    setMoments((current) => current.map((item) => item.source_event_mood_id === entry.id ? { ...item, caption: "", source_event_mood_id: null } : item));
   }
   async function deleteMoment(momentId: number) {
     if (!window.confirm("确定删除这条动态吗？照片仍会保留在相册中。")) return;
@@ -278,7 +288,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
         const momentPhotos = links.filter((link) => link.moment_id === moment.id).sort((a,b) => a.position-b.position).map((link) => photos.find((photo) => photo.id === link.photo_id)).filter(Boolean) as Photo[];
         const momentLikes = likes.filter((like) => like.moment_id === moment.id);
         const momentComments = comments.filter((item) => item.moment_id === moment.id);
-        const syncedMoods = moment.event_id ? eventMoods.filter((item) => item.event_id === moment.event_id && !(item.author_email.toLowerCase() === moment.author_email.toLowerCase() && item.body === moment.caption)) : [];
+        const syncedMoods = moment.event_id ? eventMoods.filter((item) => item.event_id === moment.event_id && item.id !== moment.source_event_mood_id) : [];
         const isAuthor = moment.author_email.toLowerCase() === member.email.toLowerCase();
         const authorColor = members.find((item) => item.email.toLowerCase() === moment.author_email.toLowerCase())?.color || "stone";
         return <article className="moment-post" key={moment.id}>
