@@ -11,7 +11,7 @@ type Album = { id: number; name: string; group_key: GroupKey; owner_email: strin
 type Moment = { id: number; group_key: GroupKey; author_email: string; caption: string; event_id: number | null; created_at: string };
 type MomentPhoto = { moment_id: number; photo_id: string; position: number };
 type Like = { moment_id: number; user_id: string; user_email: string };
-type Comment = { id: number; moment_id: number; author_email: string; body: string; created_at: string };
+type Comment = { id: number; moment_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
 type EventMood = { id: number; event_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
 type CalendarEvent = { id: number; title: string; date: string; owner: string; participants: string[]; audienceGroup?: GroupKey };
 type EventPhotoLink = { event_id: number; photo_id: string };
@@ -137,7 +137,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     setMessage("");
     const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
     if (error) { setMessage("评论删除失败"); return; }
-    await load();
+    setMoods((current) => current.filter((item) => item.id !== entry.id));
   }
   const savedPhotoId = eventLinks[0]?.photo_id;
   const selectedPhotoId = pendingPhotoId === undefined ? savedPhotoId : pendingPhotoId;
@@ -163,7 +163,8 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
         if (error) throw error;
       }
       if (shareToMoment && !eventMoment) {
-        const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id }).select().single();
+        const momentGroup: GroupKey = allowedGroups(member.email).includes("besties") ? "besties" : group;
+        const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: momentGroup, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id }).select().single();
         if (error) throw error;
         if (selectedPhotoId) {
           const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert({ moment_id: data.id, photo_id: selectedPhotoId, position: 0 });
@@ -252,6 +253,16 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     await supabase.from("shared_calendar_moment_comments").insert({ moment_id: momentId, author_user_id: user.id, author_email: member.email, body });
     setCommentDrafts((value) => ({ ...value, [momentId]: "" })); await load();
   }
+  async function deleteComment(comment: Comment) {
+    const { error } = await supabase.from("shared_calendar_moment_comments").delete().eq("id", comment.id).eq("author_user_id", user.id);
+    if (error) { setMessage("评论删除失败"); return; }
+    setComments((current) => current.filter((item) => item.id !== comment.id));
+  }
+  async function deleteSyncedMood(entry: EventMood) {
+    const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
+    if (error) { setMessage("评论删除失败"); return; }
+    setEventMoods((current) => current.filter((item) => item.id !== entry.id));
+  }
   async function deleteMoment(momentId: number) {
     if (!window.confirm("确定删除这条动态吗？照片仍会保留在相册中。")) return;
     const { error } = await supabase.from("shared_calendar_moments").delete().eq("id", momentId);
@@ -275,7 +286,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           {moment.caption && <p className="moment-caption">{moment.caption}</p>}
           {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><div className="moment-photo" key={photo.id}><ProtectedPhoto photo={photo}/></div>)}</div>}
           <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length ? `${momentLikes.length} 人赞` : "赞"}</button><button className="moment-action-button" onClick={()=>document.getElementById(`moment-comment-${moment.id}`)?.focus()}>◯ 评论{momentComments.length + syncedMoods.length ? ` ${momentComments.length + syncedMoods.length}` : ""}</button></div>
-          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><b>{displayName(entry.author_email,members)}</b> {entry.body}</p>)}{momentComments.map((comment)=><p key={comment.id}><b>{displayName(comment.author_email,members)}</b> {comment.body}</p>)}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
+          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><span><b>{displayName(entry.author_email,members)}</b> {entry.body}</span>{entry.author_user_id===user.id&&<button type="button" className="moment-comment-delete" onClick={()=>deleteSyncedMood(entry)}>删除</button>}</p>)}{momentComments.map((comment)=><p key={comment.id}><span><b>{displayName(comment.author_email,members)}</b> {comment.body}</span>{comment.author_user_id===user.id&&<button type="button" className="moment-comment-delete" onClick={()=>deleteComment(comment)}>删除</button>}</p>)}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
       {!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}
