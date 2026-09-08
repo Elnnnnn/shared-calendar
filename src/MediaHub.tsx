@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 
 const MEDIA_API = "https://yytyntrgqkddfsliooke.supabase.co/functions/v1/shared-calendar-media-proxy";
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
-type GroupKey = "besties" | "friends";
+type GroupKey = "besties" | "friends" | "both";
 type Member = { email: string; display_name: string; color: string };
 type Photo = { id: string; group_key: GroupKey; uploader_email: string; event_id: number | null; file_name: string; created_at: string };
 type Album = { id: number; name: string; group_key: GroupKey; owner_email: string; cover_photo_id: string | null; created_at: string };
@@ -12,9 +12,9 @@ type Moment = { id: number; group_key: GroupKey; author_email: string; caption: 
 type MomentPhoto = { moment_id: number; photo_id: string; position: number };
 type Like = { moment_id: number; user_id: string; user_email: string };
 type Comment = { id: number; moment_id: number; author_email: string; body: string; created_at: string };
-type CalendarEvent = { id: number; title: string; date: string; owner: string };
+type CalendarEvent = { id: number; title: string; date: string; owner: string; audienceGroup?: GroupKey };
 
-function groupLabel(group: GroupKey) { return group === "besties" ? "闺蜜组" : "朋友组"; }
+function groupLabel(group: GroupKey) { return group === "besties" ? "闺蜜组" : group === "friends" ? "朋友组" : "两个组"; }
 function allowedGroups(email: string): GroupKey[] {
   return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === "test@test.com" ? ["friends"] : ["besties"];
 }
@@ -61,25 +61,34 @@ function ProtectedPhoto({ photo, alt = "共享照片" }: { photo: Photo; alt?: s
   return src ? <img src={src} alt={alt} loading="lazy" /> : <span className="media-photo-loading">照片载入中…</span>;
 }
 
-function GroupSelect({ value, onChange, email }: { value: GroupKey; onChange: (group: GroupKey) => void; email: string }) {
-  const groups = allowedGroups(email);
+function GroupSelect({ value, onChange, email, options }: { value: GroupKey; onChange: (group: GroupKey) => void; email: string; options?: GroupKey[] }) {
+  const groups = options || allowedGroups(email);
   const [open, setOpen] = useState(false);
   if (groups.length === 1) return <span className="media-group-label">{groupLabel(groups[0])}</span>;
   return <div className="themed-dropdown"><button type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>{groupLabel(value)}<span>⌄</span></button>{open && <div className="themed-dropdown-menu">{groups.map((group) => <button type="button" className={value === group ? "selected" : ""} key={group} onClick={() => { onChange(group); setOpen(false); }}>{groupLabel(group)}</button>)}</div>}</div>;
 }
 
 export function EventMediaPanel({ event, user, member, members }: { event: CalendarEvent; user: User; member: Member; members: Member[] }) {
-  const groups = allowedGroups(member.email);
+  const groups: GroupKey[] = event.audienceGroup === "besties"
+    ? ["besties"]
+    : event.audienceGroup === "friends"
+      ? ["friends"]
+      : member.email.toLowerCase() === ELAINE_EMAIL
+        ? ["besties", "friends", "both"]
+        : allowedGroups(member.email);
   const [group, setGroup] = useState<GroupKey>(groups[0]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [mood, setMood] = useState("");
+  const [publishing, setPublishing] = useState(false);
   async function load() {
     const { data, error } = await supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").eq("event_id", event.id).order("created_at");
     if (error) setMessage("活动照片读取失败");
     else setPhotos((data || []) as Photo[]);
   }
   useEffect(() => { void load(); }, [event.id]);
+  useEffect(() => { setGroup(groups[0]); }, [event.id, event.audienceGroup]);
   async function add(eventInput: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(eventInput.target.files || []);
     if (!files.length) return;
@@ -100,8 +109,24 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     if (error || !data) { setMessage("无法从日历移除照片"); return; }
     await load();
   }
-  const visible = photos.filter((photo) => photo.group_key === group);
-  return <section className="event-media-panel"><div className="event-media-heading"><div><h3>活动照片</h3><p>{visible.length ? "1 张照片" : "为这次活动留下一张照片"}</p></div><GroupSelect value={group} onChange={setGroup} email={member.email}/></div>{visible[0] && <div className="event-cover"><ProtectedPhoto photo={visible[0]} alt={`${event.title} 封面`}/>{visible[0].uploader_email.toLowerCase()===member.email.toLowerCase()&&<button onClick={()=>remove(visible[0])} aria-label="从日历移除照片" title="从日历移除，原图仍保留在相册">×</button>}</div>}{!visible.length&&<label className="media-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{busy?"正在上传…":"从设备选择"}</span></label>}{message&&<p className="media-error">{message}</p>}</section>;
+  async function publishMoment() {
+    const photo = visible[0];
+    if (!mood.trim() && !photo) return;
+    setPublishing(true); setMessage("");
+    const publishGroup = photo?.group_key || group;
+    try {
+      const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: publishGroup, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id }).select().single();
+      if (error) throw error;
+      if (photo) {
+        const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert({ moment_id: data.id, photo_id: photo.id, position: 0 });
+        if (linkError) throw linkError;
+      }
+      setMood(""); setMessage("已发布到动态");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "发布失败"); }
+    finally { setPublishing(false); }
+  }
+  const visible = photos.filter((photo) => photo.group_key === group || (photo.group_key === "both" && group !== "both"));
+  return <section className="event-media-panel"><div className="event-media-heading"><div><h3>活动照片</h3><p>{visible.length ? "1 张照片" : "为这次活动留下一张照片"}</p></div><GroupSelect value={group} onChange={setGroup} email={member.email} options={groups}/></div>{visible[0] && <div className="event-cover"><ProtectedPhoto photo={visible[0]} alt={`${event.title} 封面`}/>{visible[0].uploader_email.toLowerCase()===member.email.toLowerCase()&&<button onClick={()=>remove(visible[0])} aria-label="从日历移除照片" title="从日历移除，原图仍保留在相册">×</button>}</div>}{!photos.length&&<label className="media-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{busy?"正在上传…":"从设备选择"}</span></label>}<label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label><button className="primary event-moment-publish" disabled={publishing || (!mood.trim() && !visible[0])} onClick={publishMoment}>{publishing?"正在发布…":"发布到动态"}</button>{message&&<p className={message === "已发布到动态" ? "media-success" : "media-error"}>{message}</p>}</section>;
 }
 
 export function MomentsPage({ user, member, members, events, onOpenEvent }: { user: User; member: Member; members: Member[]; events: CalendarEvent[]; onOpenEvent: (event: CalendarEvent) => void }) {
@@ -169,7 +194,7 @@ export function MomentsPage({ user, member, members, events, onOpenEvent }: { us
     if (error) { setMessage("无法从动态移除照片"); return; }
     await load();
   }
-  const visible = moments.filter((moment) => moment.group_key === group);
+  const visible = moments.filter((moment) => moment.group_key === group || moment.group_key === "both");
   return <section className="media-page moments-page">
     <header className="media-page-head"><div><p className="eyebrow">MOMENTS</p><h2>动态</h2></div><div className="media-head-actions"><GroupSelect value={group} onChange={setGroup} email={member.email}/><button className="primary" onClick={() => setComposer(true)}>＋ 发布</button></div></header>
     {composer && <div className="media-composer"><div className="media-composer-head"><h3>发布到 {groupLabel(group)}</h3><button onClick={() => setComposer(false)}>×</button></div><GroupSelect value={group} onChange={setGroup} email={member.email}/><textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="说点什么……"/><label className="media-file-picker">选择照片（最多 9 张）<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 9))}/><span>{files.length ? `已选择 ${files.length} 张` : "从设备上传"}</span></label><label>关联日历活动（可选）<select value={eventId} onChange={(e) => setEventId(e.target.value)}><option value="">不关联</option>{events.filter((event) => event.id > 0).map((event) => <option key={event.id} value={event.id}>{event.title} · {event.date}</option>)}</select></label>{message && <p className="media-error">{message}</p>}<button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : "发布动态"}</button></div>}
@@ -193,7 +218,7 @@ export function AlbumsPage({ user, member, members }: { user: User; member: Memb
   async function createAlbum(){if(!newAlbum.trim())return;const{error}=await supabase.from("shared_calendar_albums").insert({name:newAlbum.trim(),group_key:group,owner_user_id:user.id,owner_email:member.email});if(error)setMessage("相册创建失败");else{setNewAlbum("");await load();}}
   async function onUpload(event: ChangeEvent<HTMLInputElement>){const files=Array.from(event.target.files||[]);if(!files.length)return;setBusy(true);setMessage("");try{for(const file of files){const photo=await uploadPhoto(file,group);if(selectedAlbum){const{error}=await supabase.from("shared_calendar_album_photos").insert({album_id:Number(selectedAlbum),photo_id:photo.id,added_by_user_id:user.id});if(error)throw error;}}await load();}catch(error){setMessage(error instanceof Error?error.message:"上传失败");}finally{setBusy(false);event.target.value="";}}
   async function removePhoto(photo: Photo){if(!window.confirm("确定永久删除这张照片吗？日历和动态中的引用也会一起移除。"))return;const accessToken=await token();const response=await fetch(`${MEDIA_API}/photos/${photo.id}`,{method:"DELETE",headers:{Authorization:`Bearer ${accessToken}`}});if(!response.ok){const result=await response.json();setMessage(result.error||"删除失败");return;}await load();}
-  const groupPhotos=photos.filter((photo)=>photo.group_key===group);const groupAlbums=albums.filter((album)=>album.group_key===group);
+  const groupPhotos=photos.filter((photo)=>photo.group_key===group || photo.group_key==="both");const groupAlbums=albums.filter((album)=>album.group_key===group);
   const openIds=openAlbum===null?null:new Set(albumLinks.filter((link)=>link.album_id===openAlbum).map((link)=>link.photo_id));const shownPhotos=openIds?groupPhotos.filter((photo)=>openIds.has(photo.id)):groupPhotos;const openName=groupAlbums.find((album)=>album.id===openAlbum)?.name;
   return <section className="media-page albums-page"><header className="media-page-head"><div><p className="eyebrow">PHOTOS</p><h2>相册</h2></div><GroupSelect value={group} onChange={(value)=>{setGroup(value);setSelectedAlbum("");setOpenAlbum(null)}} email={member.email}/></header><div className="album-upload-bar"><label className="media-file-picker">上传到 {groupLabel(group)}<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={onUpload}/><span>{busy?"正在上传…":"选择照片"}</span></label><label>放入相册（可选）<select value={selectedAlbum} onChange={(e)=>setSelectedAlbum(e.target.value)}><option value="">未整理</option>{groupAlbums.map((album)=><option key={album.id} value={album.id}>{album.name}</option>)}</select></label></div>{message&&<p className="media-error">{message}</p>}<div className="album-create"><input value={newAlbum} onChange={(e)=>setNewAlbum(e.target.value)} placeholder="新相册名称"/><button onClick={createAlbum}>＋ 新建相册</button></div><div className="album-section"><h3>{groupLabel(group)}相册</h3><div className="album-list">{groupAlbums.map((album)=>{const ids=albumLinks.filter((link)=>link.album_id===album.id).map((link)=>link.photo_id);const cover=photos.find((photo)=>photo.id===(album.cover_photo_id||ids[0]));return <button className="album-folder" key={album.id} onClick={()=>setOpenAlbum(album.id)}><span>{cover?<ProtectedPhoto photo={cover}/>:"暂无照片"}</span><b>{album.name}</b><small>{ids.length} 张 · {displayName(album.owner_email,members)}</small></button>})}</div></div><div className="album-section"><h3>{openName?<><button className="album-inline-back" onClick={()=>setOpenAlbum(null)}>‹</button>{openName}</>:"全部照片"}</h3><div className="photo-library-grid">{shownPhotos.map((photo)=><div className="library-photo" key={photo.id}><ProtectedPhoto photo={photo}/>{photo.uploader_email.toLowerCase()===member.email.toLowerCase()&&<button className="library-photo-delete" onClick={()=>removePhoto(photo)} aria-label="删除照片">×</button>}<small>{displayName(photo.uploader_email,members)}</small></div>)}</div>{!shownPhotos.length&&<div className="media-empty"><h3>还没有照片</h3><p>上传时选择组，照片只会出现在这个组的相册里。</p></div>}</div></section>;
 }

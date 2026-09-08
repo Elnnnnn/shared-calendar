@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 45518)
+Total output lines: 5175
+
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -25,6 +28,7 @@ type CalendarEvent = {
   note: string;
   timezone: string;
   allDay: boolean;
+  audienceGroup?: AudienceGroup;
   birthday?: boolean;
   canEdit?: boolean;
   continuesFromPrevious?: boolean;
@@ -436,9 +440,9 @@ export default function Home() {
   const [monthAgendaDate, setMonthAgendaDate] = useState<string | null>(null);
   const [memberFilterOpen, setMemberFilterOpen] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [eventDetail, setEventDetail] = useState<CalendarEvent | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
+  const [eventSheetTab, setEventSheetTab] = useState<"photos" | "edit">("edit");
   const today = dateKey(new Date());
   const [draft, setDraft] = useState({
     title: "",
@@ -649,6 +653,7 @@ export default function Home() {
       { data: expensePeriodData },
       { data: expenseData },
       { data: pollData },
+      { data: eventAudienceData },
     ] = await Promise.all([
       supabase.rpc("get_shared_calendar_events"),
       supabase.rpc("get_shared_calendar_special_days"),
@@ -668,7 +673,14 @@ export default function Home() {
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("get_shared_calendar_polls"),
+      supabase.from("shared_calendar_events").select("id,audience_group"),
     ]);
+    const eventAudience = new Map(
+      (eventAudienceData || []).map((row: any) => [
+        Number(row.id),
+        (row.audience_group || "both") as AudienceGroup,
+      ]),
+    );
     setEvents(
       (data || []).map((e: any) => ({
         id: e.id,
@@ -683,6 +695,7 @@ export default function Home() {
         note: e.note,
         timezone: e.timezone,
         allDay: Boolean(e.all_day),
+        audienceGroup: eventAudience.get(Number(e.id)) || "both",
         canEdit: e.can_edit,
       })),
     );
@@ -945,6 +958,7 @@ export default function Home() {
   function startAdd(date?: string, time = "12:00") {
     const startDate = date || dateKey(new Date());
     setEditing(null);
+    setEventSheetTab("edit");
     setAudienceGroup(member?.email === JINYUAN_EMAIL ? "friends" : "besties");
     setDraft({
       title: "",
@@ -961,10 +975,10 @@ export default function Home() {
     });
     setOpen(true);
   }
-  function startEdit(e: CalendarEvent) {
-    if (!e.canEdit) return;
+  function prepareEventDraft(e: CalendarEvent) {
     const timezone = e.timezone || "Asia/Shanghai";
     setEditing(e);
+    setAudienceGroup(e.audienceGroup || "both");
     setDraft({
       title: e.title,
       date: e.date,
@@ -978,6 +992,10 @@ export default function Home() {
       location: e.location || "",
       note: e.note || "",
     });
+  }
+  function openEventSheet(e: CalendarEvent) {
+    prepareEventDraft(e);
+    setEventSheetTab(e.date <= today || e.canEdit === false ? "photos" : "edit");
     setOpen(true);
   }
   const validRange =
@@ -1020,6 +1038,7 @@ export default function Home() {
       note: draft.note,
       timezone: draft.timezone,
       allDay: draft.allDay,
+      audienceGroup,
       canEdit: true,
     };
     const values = {
@@ -2493,584 +2512,7 @@ export default function Home() {
         ? [
             {
               id: -(dateIndex * 100 + memberIndex + 1),
-              title: `${item.display_name} 的生日`,
-              date: dateKey(date),
-              endDate: dateKey(date),
-              time: "09:00",
-              endTime: "10:00",
-              owner: item.email,
-              participants: [],
-              location: "",
-              note: "与纪念日共用成员生日资料，每年自动重复",
-              timezone: zone,
-              allDay: true,
-              birthday: true,
-            } as CalendarEvent,
-          ]
-        : [],
-    ),
-  );
-  const specialEvents = dates.flatMap((date, dateIndex) =>
-    specialDays
-      .filter(
-        (day) =>
-          day.showInCalendar &&
-          matchesFilter({
-            owner: day.owner,
-            participants: day.participants,
-          } as CalendarEvent) &&
-          occurrenceDate(day, date.getFullYear()) === dateKey(date),
-      )
-      .map((day, index) =>
-        eventInZone(
-          {
-            id: -(900000 + dateIndex * 100 + index),
-            title: `${day.icon} ${day.title}`,
-            date: dateKey(date),
-            endDate: dateKey(date),
-            time:
-              day.kind === "meet" && day.startTime ? day.startTime : "09:00",
-            endTime: day.kind === "meet" && day.endTime ? day.endTime : "10:00",
-            owner: day.owner,
-            participants: day.participants,
-            location: "",
-            note: "纪念日",
-            timezone: day.timezone,
-            allDay: day.kind !== "meet",
-            birthday: day.kind === "birthday",
-            canEdit: false,
-          } as CalendarEvent,
-          zone,
-        ),
-      ),
-  );
-  const shownEvents = [
-    ...events.map((event) => eventInZone(event, zone)),
-    ...birthdayEvents,
-    ...specialEvents,
-  ];
-  const displayEvents = shownEvents.flatMap(eventDayParts);
-  const wishRegions = Array.from(
-    new Set(
-      wishes
-        .filter((wish) => wish.category === wishFilter && wish.region)
-        .map((wish) => wish.region),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "zh-CN"));
-  const activeWishStatuses =
-    wishFilter === "watch" ? WATCH_STATUSES : WISH_STATUSES;
-  const visibleWishes = wishes.filter(
-    (wish) =>
-      wish.category === wishFilter &&
-      (wishFilter === "watch"
-        ? wishMediaType === "all" || wish.mediaType === wishMediaType
-        : wishRegion === "all" || wish.region === wishRegion) &&
-      (wishStatus === "all" || wish.status === wishStatus),
-  );
-  const luckyImportFilters =
-    luckyCategory === "watch"
-      ? WATCH_TYPES.map((item) => ({ value: item.value, label: item.label }))
-      : Array.from(
-          new Set(
-            luckyCategoryWishes()
-              .map((wish) => wish.region)
-              .filter(Boolean),
-          ),
-        ).map((region) => ({ value: region, label: region }));
-  const luckyCandidates = luckyFilteredWishes();
-  const activeExpensePeriod =
-    expensePeriods.find((period) => period.id === activeExpensePeriodId) ||
-    null;
-  const activePeriodExpenses = activeExpensePeriodId
-    ? expenses.filter((expense) => expense.periodId === activeExpensePeriodId)
-    : [];
-  const activeExpenseSettlement =
-    calculateExpenseSettlement(activePeriodExpenses);
-  const activePoll = polls.find((poll) => poll.id === activePollId) || null;
-  const canVoteInActivePoll = Boolean(
-    activePoll?.mode === "pass" ||
-      activePoll?.invited.some(
-        (email) => email.toLowerCase() === member.email.toLowerCase(),
-      ),
-  );
-  const pollPage = (
-    <section className="poll-page">
-      <div className="poll-page-head">
-        <div>
-          <p className="eyebrow">ANONYMOUS VOTE</p>
-          <h2>No Push</h2>
-        </div>
-        {activePoll ? (
-          <button className="poll-back" onClick={() => setActivePollId(null)}>
-            ‹ 所有投票
-          </button>
-        ) : (
-          <button className="primary poll-new" onClick={openPollBuilder}>
-            ＋ 新投票
-          </button>
-        )}
-      </div>
-
-      {!activePoll ? (
-        <div className="poll-list">
-          {polls.length ? (
-            polls.map((poll) => (
-              <div className="poll-list-wrap" key={poll.id}>
-                <button className="poll-list-row" onClick={() => openPoll(poll)}>
-                  <span className="poll-list-icon">?</span>
-                  <span className="poll-list-copy">
-                    <b>{poll.question}</b>
-                    <small>
-                      {poll.mode === "pass" ? "轮流作答" : "邀请成员"} ·{" "}
-                      {poll.status === "closed"
-                        ? "已揭晓"
-                        : poll.mode === "invite"
-                          ? `${poll.responseCount}/${poll.expectedCount} 已提交`
-                          : `${poll.responseCount} 人已作答`}
-                    </small>
-                  </span>
-                  <span className={`poll-state ${poll.status}`}>
-                    {poll.status === "closed" ? "查看结果" : "进行中"}
-                  </span>
-                  <i>›</i>
-                </button>
-                {poll.creatorUserId === user.id && (
-                  <button
-                    className="poll-delete"
-                    aria-label={`删除投票 ${poll.question}`}
-                    onClick={() => deletePoll(poll)}
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="poll-empty">
-              <span>?</span>
-              <h3>还没有匿名投票</h3>
-              <p>答案在所有人完成前都会保密。</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="poll-detail">
-          <div className="poll-detail-label">
-            {activePoll.mode === "pass" ? "轮流作答" : "邀请成员"}
-          </div>
-          <h3>{activePoll.question}</h3>
-
-          {activePoll.status === "closed" ? (
-            <div className="poll-results" aria-live="polite">
-              <p>所有人已提交 · 结果已揭晓</p>
-              <div>
-                <span className="yes">YES<strong>{activePoll.yesCount}</strong></span>
-                <span className="no">NO<strong>{activePoll.noCount}</strong></span>
-              </div>
-              <small>只公布总票数，不显示任何人的选择。</small>
-            </div>
-          ) : activePoll.mode === "pass" && passHandoff ? (
-            <div className="poll-handoff" aria-live="polite">
-              <span className="poll-handoff-mark">✓</span>
-              <h4>这一票已记录</h4>
-              <p>请把设备交给下一位</p>
-              <small>
-                目前已有 {activePoll.responseCount} 人完成作答，票数仍然保密。
-              </small>
-              <div className="poll-handoff-actions">
-                <button
-                  onClick={() => {
-                    setPassHandoff(false);
-                    setPollChoice(null);
-                  }}
-                >
-                  下一位开始
-                </button>
-                <button
-                  className="primary"
-                  disabled={pollSaving}
-                  onClick={finishPassPoll}
-                >
-                  {pollSaving ? "正在揭晓…" : "完成投票并揭晓"}
-                </button>
-              </div>
-            </div>
-          ) : activePoll.mode === "invite" &&
-            (activePoll.hasVoted || !canVoteInActivePoll) ? (
-            <div className="poll-waiting" aria-live="polite">
-              <span className="poll-waiting-mark">···</span>
-              <h4>等待大家完成投票</h4>
-              <p>答案暂时保密</p>
-              <div className="poll-progress">
-                <i
-                  style={{
-                    width: `${Math.round(
-                      (activePoll.responseCount /
-                        Math.max(activePoll.expectedCount || 1, 1)) *
-                        100,
-                    )}%`,
-                  }}
-                />
-              </div>
-              <small>
-                已提交 {activePoll.responseCount}/{activePoll.expectedCount}
-              </small>
-            </div>
-          ) : (
-            <div className="poll-voting">
-              <p>匿名选择</p>
-              <div className="poll-choice-row">
-                <button
-                  className={`poll-choice yes ${pollChoice === true ? "selected" : ""}`}
-                  onClick={() => setPollChoice(true)}
-                >
-                  YES
-                </button>
-                <button
-                  className={`poll-choice no ${pollChoice === false ? "selected" : ""}`}
-                  onClick={() => setPollChoice(false)}
-                >
-                  NO
-                </button>
-              </div>
-              <p className="poll-secret">
-                {activePoll.mode === "pass"
-                  ? "选完后把设备交给下一位，中途不会显示票数。"
-                  : "提交后等待其他受邀成员，中途不会显示票数。"}
-              </p>
-              {activePoll.mode === "pass" ? (
-                <button
-                  className="primary poll-submit"
-                  disabled={pollChoice === null || pollSaving}
-                  onClick={submitPollVote}
-                >
-                  {pollSaving ? "正在提交…" : "提交本次选择"}
-                </button>
-              ) : (
-                <button
-                  className="primary poll-submit"
-                  disabled={pollChoice === null || pollSaving}
-                  onClick={submitPollVote}
-                >
-                  {pollSaving ? "正在提交…" : "提交我的选择"}
-                </button>
-              )}
-            </div>
-          )}
-          {pollMessage && <p className="poll-message">{pollMessage}</p>}
-        </div>
-      )}
-
-      {pollOpen && (
-        <div className="overlay" onClick={() => setPollOpen(false)}>
-          <section className="sheet poll-sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="close" onClick={() => setPollOpen(false)}>×</button>
-            <p className="eyebrow">NEW VOTE</p>
-            <h2>发起匿名投票</h2>
-            <label>
-              想问什么？
-              <input
-                value={pollQuestion}
-                onChange={(e) => setPollQuestion(e.target.value)}
-                placeholder="例如：周末一起去露营吗？"
-                maxLength={200}
-              />
-            </label>
-            {audiencePicker}
-            <div className="poll-mode-picker">
-              <button
-                className={pollMode === "pass" ? "selected" : ""}
-                onClick={() => setPollMode("pass")}
-              >
-                <b>轮流作答</b><small>在同一台设备上依次匿名投票</small>
-              </button>
-              <button
-                className={pollMode === "invite" ? "selected" : ""}
-                onClick={() => setPollMode("invite")}
-              >
-                <b>邀请成员</b><small>选定成员，各自在账号内投票</small>
-              </button>
-            </div>
-            {pollMode === "invite" && (
-              <fieldset className="poll-member-picker">
-                <legend>谁可以投票？</legend>
-                {audienceMembers.map((item) => (
-                  <label key={item.email}>
-                    <input
-                      type="checkbox"
-                      checked={pollInvited.includes(item.email)}
-                      onChange={() => togglePollInvite(item.email)}
-                    />
-                    <i className={`dot ${item.color}`} />
-                    {item.display_name}
-                  </label>
-                ))}
-              </fieldset>
-            )}
-            <p className="poll-sheet-note">
-              所有人提交完成前不会显示票数，也不会公开个人选择。
-            </p>
-            <button
-              className="primary save"
-              disabled={
-                !pollQuestion.trim() ||
-                (pollMode === "invite" && !pollInvited.length) ||
-                pollSaving
-              }
-              onClick={createPoll}
-            >
-              {pollSaving ? "正在创建…" : "开始投票"}
-            </button>
-            {pollMessage && <p className="poll-message">{pollMessage}</p>}
-          </section>
-        </div>
-      )}
-    </section>
-  );
-  const expensePage = (
-    <section className="expense-page">
-      <div className="expense-page-head">
-        <div>
-          <p className="eyebrow">SHARED EXPENSES</p>
-          <h2>一起记账</h2>
-        </div>
-        {expenseView === "periods" ? (
-          <button
-            className="primary expense-new-period"
-            onClick={() => {
-              setExpensePeriodName("");
-              setAudienceGroup(member.email === JINYUAN_EMAIL ? "friends" : "besties");
-              setExpensePeriodOpen(true);
-            }}
-          >
-            ＋ 新账单
-          </button>
-        ) : (
-          <button
-            className="expense-back"
-            onClick={() => setExpenseView("periods")}
-          >
-            ‹ 所有账单
-          </button>
-        )}
-      </div>
-      {expenseView === "periods" ? (
-        <div className="expense-period-list">
-          {expensePeriods.length ? (
-            expensePeriods.map((period) => {
-              const periodItems = expenses.filter(
-                (expense) => expense.periodId === period.id,
-              );
-              const total = periodItems.reduce(
-                (sum, expense) => sum + expense.amount,
-                0,
-              );
-              return (
-                <div className="expense-period-wrap" key={period.id}>
-                <button
-                  className="expense-period-row"
-                  onClick={() => openExpensePeriod(period)}
-                >
-                  <span className="expense-period-icon">¥</span>
-                  <span className="expense-period-copy">
-                    <b>{period.name}</b>
-                    <small>
-                      {periodItems.length} 笔记录 ·{" "}
-                      {periodItems.length
-                        ? Array.from(
-                            new Set(
-                              periodItems.flatMap(
-                                (expense) => expense.splitWith,
-                              ),
-                            ),
-                          )
-                            .map(expenseName)
-                            .join("、")
-                        : "暂无参与成员"}
-                    </small>
-                  </span>
-                  <span className="expense-period-total">
-                    <strong>{formatExpenseMoney(total)}</strong>
-                    <small>
-                      {periodItems.length ? "可以结算" : "等待记录"}
-                    </small>
-                  </span>
-                  <i>›</i>
-                </button>
-                <button className="expense-period-delete" aria-label={`删除账单 ${period.name}`} onClick={() => deleteExpensePeriod(period)}>×</button>
-                </div>
-              );
-            })
-          ) : (
-            <div className="expense-empty">
-              <span>¥</span>
-              <h3>还没有账单</h3>
-              <p>新建一个账单，四个人就可以开始记录付款。</p>
-              <button
-                className="primary"
-                onClick={() => {
-                  setAudienceGroup(member.email === JINYUAN_EMAIL ? "friends" : "besties");
-                  setExpensePeriodOpen(true);
-                }}
-              >
-                新建第一个账单
-              </button>
-            </div>
-          )}
-        </div>
-      ) : expenseView === "ledger" && activeExpensePeriod ? (
-        <>
-          <div className="expense-ledger-head">
-            <div>
-              <h3>{activeExpensePeriod.name}</h3>
-              <p>&nbsp;</p>
-            </div>
-            <div>
-              <button
-                className="secondary"
-                onClick={() => {
-                  setExpenseMessage("已经保存");
-                  window.setTimeout(() => setExpenseMessage(""), 1400);
-                }}
-              >
-                {expenseMessage || "保存"}
-              </button>
-              <button
-                className="primary"
-                disabled={!activePeriodExpenses.length}
-                onClick={openExpenseSettlement}
-              >
-                结算
-              </button>
-            </div>
-          </div>
-          <div className="expense-summary">
-            <div>
-              <span>总支出</span>
-              <strong>
-                {formatExpenseMoney(activeExpenseSettlement.total)}
-              </strong>
-            </div>
-            <div>
-              <span>消费记录</span>
-              <strong>{activePeriodExpenses.length} 笔</strong>
-            </div>
-            <div>
-              <span>参与成员</span>
-              <strong>
-                {new Set(
-                  activePeriodExpenses.flatMap((expense) => expense.splitWith),
-                ).size || members.length}{" "}
-                人
-              </strong>
-            </div>
-          </div>
-          <div className="expense-records">
-            {activePeriodExpenses.length ? (
-              activePeriodExpenses.map((expense) => (
-                <button
-                  key={expense.id}
-                  className={`expense-record ${expense.creatorUserId === user?.id ? "editable" : "readonly"}`}
-                  onClick={() => openExpenseEditor(expense)}
-                >
-                  <span>
-                    <b>{expense.item}</b>
-                    <small>
-                      {expenseName(expense.payer)} 付款 ·{" "}
-                      {expense.splitWith.map(expenseName).join("、")}
-                    </small>
-                    {expense.note && <em>{expense.note}</em>}
-                  </span>
-                  <span className="expense-record-people">
-                    {expense.splitWith.map((email) => (
-                      <i key={email} className={`dot ${expenseColor(email)}`}>
-                        {expenseName(email).slice(0, 1)}
-                      </i>
-                    ))}
-                  </span>
-                  <strong>{formatExpenseMoney(expense.amount)}</strong>
-                  {expense.creatorUserId === user?.id && (
-                    <small className="expense-edit-hint">编辑 ›</small>
-                  )}
-                </button>
-              ))
-            ) : (
-              <div className="expense-empty compact">
-                <p>这个周期还没有消费记录。</p>
-              </div>
-            )}
-          </div>
-          <button className="expense-add-record" onClick={openNewExpense}>
-            ＋ 添加一笔消费
-          </button>
-        </>
-      ) : activeExpensePeriod ? (
-        <>{expensePrinting ? <div className="expense-printing" aria-live="polite"><div className="expense-printer"><div className="expense-receipt"><span/><span/><span/><strong>{formatExpenseMoney(activeExpenseSettlement.total)}</strong></div></div><p>正在打印结算单…</p></div> : <div className="expense-settlement-content">
-          <div className="expense-settlement-head">
-            <div>
-              <p className="eyebrow">SETTLEMENT</p>
-              <h3>{activeExpensePeriod.name} · 结算单</h3>
-              <p>每笔费用只在被勾选的成员之间分摊。</p>
-            </div>
-            <button
-              className="secondary"
-              onClick={() => setExpenseView("ledger")}
-            >
-              返回账本
-            </button>
-          </div>
-          <div className="expense-settlement-total">
-            <span>本账单共同支出</span>
-            <strong>{formatExpenseMoney(activeExpenseSettlement.total)}</strong>
-            <small>{activePeriodExpenses.length} 笔消费</small>
-          </div>
-          <h4 className="expense-subtitle">每个人应该付多少</h4>
-          <div className="expense-balances">
-            {activeExpenseSettlement.balances.map((balance) => (
-              <div key={balance.email}>
-                <span>
-                  <i className={`dot ${expenseColor(balance.email)}`} />
-                  {expenseName(balance.email)}
-                </span>
-                <strong>{formatExpenseMoney(balance.owed / 100)}</strong>
-                <small>已经支付 {formatExpenseMoney(balance.paid / 100)}</small>
-              </div>
-            ))}
-          </div>
-          <h4 className="expense-subtitle">谁应该给谁转多少钱</h4>
-          <div className="expense-transfers">
-            {activeExpenseSettlement.transfers.length ? (
-              activeExpenseSettlement.transfers.map((transfer, index) => (
-                <div key={index}>
-                  <span>
-                    <i className={`dot ${expenseColor(transfer.from)}`} />
-                    {expenseName(transfer.from)}
-                  </span>
-                  <b>→</b>
-                  <span>
-                    <i className={`dot ${expenseColor(transfer.to)}`} />
-                    {expenseName(transfer.to)}
-                  </span>
-                  <strong>{formatExpenseMoney(transfer.amount)}</strong>
-                </div>
-              ))
-            ) : (
-              <p className="expense-all-set">已经结清，不需要再转账。</p>
-            )}
-          </div>
-          <button
-            className="primary expense-finish"
-            onClick={() => setExpenseView("periods")}
-          >
-            保存结算单
-          </button>
-        </div>}
-        </>
-      ) : null}
-      {expensePeriodOpen && (
-        <div
-          className="overlay"
-          onMouseDown={(event) => {
+              title: `${item.d…5518 tokens truncated… => {
             if (event.target === event.currentTarget)
               setExpensePeriodOpen(false);
           }}
@@ -4159,7 +3601,7 @@ export default function Home() {
       {section === "bag" && wishPage}
       {["wishes", "lucky", "expenses", "polls"].includes(section) && <div className="bag-tool">{section === "wishes" && wishPage}{section === "lucky" && luckyPage}{section === "expenses" && expensePage}{section === "polls" && pollPage}</div>}
       {section === "moments" && (
-        <MomentsPage user={user} member={member} members={members} events={events} onOpenEvent={setEventDetail} />
+        <MomentsPage user={user} member={member} members={members} events={events} onOpenEvent={openEventSheet} />
       )}
       {section === "photos" && (
         <AlbumsPage user={user} member={member} members={members} />
@@ -4286,7 +3728,7 @@ export default function Home() {
                             onClick={(x) => {
                               x.stopPropagation();
                               if (!e.birthday && e.id > 0)
-                                setEventDetail(events.find((item) => item.id === e.id)!);
+                                openEventSheet(events.find((item) => item.id === e.id)!);
                             }}
                           >
                             {!e.allDay && !e.continuesFromPrevious && (
@@ -4344,7 +3786,7 @@ export default function Home() {
                             style={eventStyle(e)}
                             onClick={() => {
                               if (!e.birthday && e.id > 0)
-                                setEventDetail(events.find((item) => item.id === e.id)!);
+                                openEventSheet(events.find((item) => item.id === e.id)!);
                             }}
                           >
                             {e.title}
@@ -4395,7 +3837,7 @@ export default function Home() {
                             }}
                             onClick={(event) => {
                               event.stopPropagation();
-                              setEventDetail(events.find((item) => item.id === e.id)!);
+                              openEventSheet(events.find((item) => item.id === e.id)!);
                             }}
                           >
                             <b>
@@ -4884,16 +4326,6 @@ export default function Home() {
           </section>
         </div>
       )}
-      {eventDetail && (
-        <div className="overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setEventDetail(null); }}>
-          <section className="sheet event-detail-sheet">
-            <div className="sheet-head"><div><p className="eyebrow">EVENT</p><h2>{eventDetail.title}</h2></div><button onClick={() => setEventDetail(null)}>×</button></div>
-            <div className="event-detail-meta"><p><b>{eventDetail.allDay ? "全天" : `${eventDetail.time}–${eventDetail.endTime}`}</b><span>{eventDetail.date}{eventDetail.endDate !== eventDetail.date ? ` 至 ${eventDetail.endDate}` : ""}</span></p>{eventDetail.location && <p><b>地点</b><span>{eventDetail.location}</span></p>}{eventDetail.note && <p><b>备注</b><span>{eventDetail.note}</span></p>}</div>
-            <EventMediaPanel event={eventDetail} user={user} member={member} members={members}/>
-            {eventDetail.canEdit !== false && <button className="primary event-detail-edit" onClick={() => { const original = eventDetail; setEventDetail(null); startEdit(original); }}>编辑行程</button>}
-          </section>
-        </div>
-      )}
       {monthAgendaDate && (
         <div
           className="overlay"
@@ -4930,7 +4362,7 @@ export default function Home() {
                       );
                       if (original) {
                         setMonthAgendaDate(null);
-                        setEventDetail(original);
+                        openEventSheet(original);
                       }
                     }}
                   >
@@ -4962,16 +4394,29 @@ export default function Home() {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="sheet">
+          <div className={`sheet ${editing ? "event-detail-sheet" : ""}`}>
             <div className="sheet-head">
               <div>
                 <p className="eyebrow">
-                  {editing ? "EDIT EVENT" : "NEW EVENT"}
+                  {editing ? "EVENT" : "NEW EVENT"}
                 </p>
-                <h2>{editing ? "编辑行程" : "添加新行程"}</h2>
+                <h2>{editing ? editing.title : "添加新行程"}</h2>
               </div>
               <button onClick={() => setOpen(false)}>×</button>
             </div>
+            {editing && (
+              <div className="event-detail-tabs" role="tablist">
+                <button type="button" className={eventSheetTab === "photos" ? "active" : ""} onClick={() => setEventSheetTab("photos")}>活动照片</button>
+                {editing.canEdit !== false && <button type="button" className={eventSheetTab === "edit" ? "active" : ""} onClick={() => setEventSheetTab("edit")}>编辑</button>}
+              </div>
+            )}
+            {editing && eventSheetTab === "photos" ? (
+              <>
+                <div className="event-detail-meta"><p><b>{editing.allDay ? "全天" : `${editing.time}–${editing.endTime}`}</b><span>{editing.date}{editing.endDate !== editing.date ? ` 至 ${editing.endDate}` : ""}</span></p>{editing.location && <p><b>地点</b><span>{editing.location}</span></p>}{editing.note && <p><b>备注</b><span>{editing.note}</span></p>}</div>
+                <EventMediaPanel event={editing} user={user} member={member} members={members}/>
+              </>
+            ) : (
+              <>
             <label>
               行程名称
               <input
@@ -5141,10 +4586,12 @@ export default function Home() {
             >
               保存到 Shared Calendar
             </button>
-            {editing && (
+            {editing && editing.canEdit !== false && (
               <button className="delete" onClick={remove}>
                 删除行程
               </button>
+            )}
+              </>
             )}
           </div>
         </div>

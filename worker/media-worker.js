@@ -51,6 +51,7 @@ async function currentUser(request) {
 }
 
 function canUseGroup(email, group) {
+  if (group === "both") return email === "elainezhang1110@gmail.com";
   return group === "besties"
     ? BESTIES.has(email)
     : group === "friends"
