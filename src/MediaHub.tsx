@@ -275,10 +275,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   }
   async function deleteMoment(momentId: number) {
     const target = moments.find((item) => item.id === momentId);
-    const warning = target?.event_id
-      ? "确定删除这条动态吗？关联活动中的照片和首次发布的心情也会移除，原图仍保留在相册中。"
-      : "确定删除这条动态吗？照片仍会保留在相册中。";
-    if (!window.confirm(warning)) return;
+    if (!target?.event_id && !window.confirm("确定删除这条动态吗？照片仍会保留在相册中。")) return;
     const { error } = await supabase.from("shared_calendar_moments").delete().eq("id", momentId);
     if (error) { setMessage("动态删除失败"); return; }
     await load();
