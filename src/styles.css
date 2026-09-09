@@ -5370,11 +5370,11 @@ select option {
 }
 
 .event-moment-option {
-  display: flex;
+  display: inline-flex !important;
   align-items: center;
-  gap: 1em;
-  width: 100%;
-  margin-top: 12px;
+  gap: 1.25em;
+  width: auto;
+  margin: 0 !important;
   padding: 0;
   border: 0;
   background: transparent;
@@ -5382,8 +5382,15 @@ select option {
 }
 
 .event-moment-option b { color: var(--ink); font-size: 12px; }
-.event-moment-option small {
-  margin-left: auto;
+.event-moment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 12px;
+}
+.event-moment-row > small {
+  margin-left: 16px;
   color: var(--muted);
   font-size: 10px;
   font-weight: 500;

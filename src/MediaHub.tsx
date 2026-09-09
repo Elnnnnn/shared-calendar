@@ -200,7 +200,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     <label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label>
     {eventMoment
       ? <p className="event-moment-compact">已发布动态 · 新心情会同步为评论</p>
-      : <label className="event-moment-option"><input type="checkbox" checked={shareToMoment} onChange={(input)=>setShareToMoment(input.target.checked)}/><b>发布到动态</b><small>可选</small></label>}
+      : <div className="event-moment-row"><label className="event-moment-option"><input type="checkbox" checked={shareToMoment} onChange={(input)=>setShareToMoment(input.target.checked)}/><b>发布到动态</b></label><small>可选</small></div>}
     <div className="event-mood-actions single"><button className="primary" type="button" disabled={busy || uploadingPhoto} onClick={saveActivityMedia}>{busy?(publishing?"正在保存并发布…":"正在保存…"):shareToMoment?"保存并发布":"保存"}</button></div>
     {message&&<p className={message.startsWith("已保存") ? "media-success" : "media-error"}>{message}</p>}
   </section>;
