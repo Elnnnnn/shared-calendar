@@ -5423,3 +5423,204 @@ select option {
   cursor: not-allowed;
   opacity: 1;
 }
+
+/* Calendar form standard
+   Calendar owns this density layer so generic sheet styles cannot enlarge it. */
+.calendar-sheet {
+  --calendar-control-height: 34px;
+  --calendar-control-font: 12px;
+  --calendar-label-font: 10px;
+  --calendar-placeholder-font: 11px;
+  width: min(430px, calc(100vw - 28px));
+  padding: 18px 20px;
+  font-size: 12px;
+}
+
+.calendar-sheet:not(.event-detail-sheet) .sheet-head h2 {
+  font-size: 24px;
+}
+
+.calendar-sheet label {
+  margin-top: 9px;
+  font-size: var(--calendar-label-font);
+  line-height: 1.35;
+}
+
+.calendar-sheet input:not([type="checkbox"]),
+.calendar-sheet select,
+.calendar-sheet textarea {
+  min-height: var(--calendar-control-height);
+  margin-top: 4px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-size: var(--calendar-control-font);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.calendar-sheet input::placeholder,
+.calendar-sheet textarea::placeholder {
+  color: #938b7e;
+  font-size: var(--calendar-placeholder-font);
+  font-weight: 400;
+  opacity: 1;
+}
+
+.calendar-sheet textarea {
+  min-height: 58px;
+}
+
+.calendar-sheet select {
+  height: var(--calendar-control-height);
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 30px !important;
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50% !important;
+}
+
+.calendar-sheet .event-options {
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.calendar-sheet .option-toggle {
+  gap: 6px;
+  font-size: 11px;
+}
+
+.calendar-sheet input[type="checkbox"],
+.calendar-sheet .participant-picker input[type="checkbox"],
+.calendar-sheet .event-media-panel input[type="checkbox"],
+.calendar-sheet .event-group-menu input[type="checkbox"] {
+  box-sizing: border-box;
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 3px;
+  aspect-ratio: 1;
+  flex: 0 0 14px;
+  accent-color: var(--deep);
+}
+
+.calendar-sheet .audience-picker,
+.calendar-sheet .participant-picker {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.calendar-sheet .audience-picker button {
+  min-height: 40px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.calendar-sheet .audience-picker button b,
+.calendar-sheet .audience-picker button strong {
+  font-size: 11px;
+}
+
+.calendar-sheet .participant-picker label {
+  gap: 6px;
+  margin-top: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.calendar-sheet .datetime-row {
+  grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.calendar-sheet .datetime-row > strong,
+.calendar-sheet .owner-line,
+.calendar-sheet .timezone-help {
+  font-size: 10px;
+}
+
+.calendar-sheet .primary,
+.calendar-sheet .delete,
+.calendar-sheet button.save {
+  min-height: 36px;
+  font-size: 11px;
+}
+
+.calendar-sheet.event-detail-sheet {
+  width: min(620px, calc(100vw - 28px));
+  padding: 19px 21px;
+  font-size: 11px;
+}
+
+.calendar-sheet.event-detail-sheet .sheet-head h2 {
+  font-size: 26px;
+}
+
+.calendar-sheet .event-detail-tabs button {
+  min-height: 31px;
+  padding: 0 13px;
+  font-size: 10px;
+}
+
+.calendar-sheet .event-media-heading h3 {
+  font-size: 16px;
+}
+
+.calendar-sheet .event-media-heading p,
+.calendar-sheet .event-moment-compact,
+.calendar-sheet .event-moment-option b {
+  font-size: 10px;
+}
+
+.calendar-sheet .event-group-picker > button {
+  min-height: 29px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.calendar-sheet .event-group-menu {
+  min-width: 112px;
+  padding: 4px;
+}
+
+.calendar-sheet .event-group-menu label {
+  gap: 6px;
+  padding: 6px;
+  font-size: 10px;
+}
+
+.calendar-sheet .event-photo-actions .media-file-picker,
+.calendar-sheet .event-photo-actions > button {
+  min-height: 40px;
+  padding: 7px 10px;
+  font-size: 10px;
+}
+
+.calendar-sheet .event-mood-field textarea {
+  min-height: 56px;
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .calendar-sheet,
+  .calendar-sheet.event-detail-sheet {
+    width: min(100%, calc(100vw - 20px));
+    padding: 15px 13px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .calendar-sheet:not(.event-detail-sheet) .sheet-head h2 {
+    font-size: 22px;
+  }
+
+  .calendar-sheet.event-detail-sheet .sheet-head h2 {
+    font-size: 24px;
+  }
+
+  .calendar-sheet input:not([type="checkbox"]),
+  .calendar-sheet select {
+    min-height: 36px;
+  }
+}

@@ -4977,7 +4977,7 @@ export default function Home() {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className={`sheet ${editing ? "event-detail-sheet" : ""}`}>
+          <div className={`sheet calendar-sheet ${editing ? "event-detail-sheet" : ""}`}>
             <div className="sheet-head">
               <div>
                 <p className="eyebrow">
