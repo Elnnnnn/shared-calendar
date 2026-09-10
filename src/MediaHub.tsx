@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
@@ -46,21 +47,48 @@ async function uploadPhoto(file: File, group: GroupKey, eventId?: number | null)
   return result as Photo;
 }
 
+const photoUrlCache = new Map<string, string>();
+const photoRequestCache = new Map<string, Promise<string>>();
+
+async function loadPhotoUrl(photoId: string) {
+  const cached = photoUrlCache.get(photoId);
+  if (cached) return cached;
+  const pending = photoRequestCache.get(photoId);
+  if (pending) return pending;
+  const request = (async () => {
+    const accessToken = await token();
+    const response = await fetch(`${MEDIA_API}/photos/${photoId}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!response.ok) throw new Error("照片载入失败");
+    const objectUrl = URL.createObjectURL(await response.blob());
+    photoUrlCache.set(photoId, objectUrl);
+    return objectUrl;
+  })().finally(() => photoRequestCache.delete(photoId));
+  photoRequestCache.set(photoId, request);
+  return request;
+}
+
 function ProtectedPhoto({ photo, alt = "共享照片" }: { photo: Photo; alt?: string }) {
-  const [src, setSrc] = useState("");
+  const [src, setSrc] = useState(() => photoUrlCache.get(photo.id) || "");
+  const placeholderRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    let objectUrl = "";
     let cancelled = false;
-    void (async () => {
-      const accessToken = await token();
-      const response = await fetch(`${MEDIA_API}/photos/${photo.id}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      if (!response.ok || cancelled) return;
-      objectUrl = URL.createObjectURL(await response.blob());
-      if (!cancelled) setSrc(objectUrl);
-    })();
-    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+    const cached = photoUrlCache.get(photo.id);
+    if (cached) { setSrc(cached); return; }
+    const load = () => { void loadPhotoUrl(photo.id).then((url) => { if (!cancelled) setSrc(url); }).catch(() => undefined); };
+    const target = placeholderRef.current;
+    if (!target || !("IntersectionObserver" in window)) load();
+    else {
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        load();
+      }, { rootMargin: "240px" });
+      observer.observe(target);
+      return () => { cancelled = true; observer.disconnect(); };
+    }
+    return () => { cancelled = true; };
   }, [photo.id]);
-  return src ? <img src={src} alt={alt} loading="lazy" /> : <span className="media-photo-loading">照片载入中…</span>;
+  return src ? <img src={src} alt={alt} loading="lazy" decoding="async" /> : <span ref={placeholderRef} className="media-photo-loading">照片载入中…</span>;
 }
 
 function GroupSelect({ value, onChange, email, options }: { value: GroupKey; onChange: (group: GroupKey) => void; email: string; options?: GroupKey[] }) {
