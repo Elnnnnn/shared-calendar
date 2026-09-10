@@ -1977,6 +1977,156 @@ select option {
   }
 }
 
+/* Shared Calendar form standard
+   One final source of truth for every feature's fields and selectors. */
+:root {
+  --ui-control-height: 34px;
+  --ui-control-font: 12px;
+  --ui-label-font: 10px;
+  --ui-placeholder-font: 11px;
+  --ui-check-size: 14px;
+  --ui-control-radius: 8px;
+}
+
+body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body select,
+body textarea {
+  font-size: var(--ui-control-font);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body select {
+  min-height: var(--ui-control-height);
+  border-radius: var(--ui-control-radius);
+}
+
+body input::placeholder,
+body textarea::placeholder {
+  color: #938b7e;
+  font-size: var(--ui-placeholder-font);
+  font-weight: 400;
+  opacity: 1;
+}
+
+body input[type="checkbox"] {
+  box-sizing: border-box;
+  width: var(--ui-check-size) !important;
+  height: var(--ui-check-size) !important;
+  min-width: var(--ui-check-size) !important;
+  min-height: var(--ui-check-size) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 3px;
+  aspect-ratio: 1;
+  flex: 0 0 var(--ui-check-size);
+  accent-color: var(--deep);
+}
+
+.sheet label,
+.media-page label,
+.media-composer label,
+.profile-detail label,
+.security-content label,
+.admin-sheet label {
+  font-size: var(--ui-label-font);
+  line-height: 1.35;
+}
+
+.sheet input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.sheet select,
+.media-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.media-page select,
+.profile-detail input:not([type="checkbox"]),
+.security-content input:not([type="checkbox"]) {
+  min-height: var(--ui-control-height);
+  padding: 7px 9px;
+  border-radius: var(--ui-control-radius);
+}
+
+.sheet select,
+.media-page select {
+  height: var(--ui-control-height);
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 30px !important;
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50% !important;
+}
+
+.themed-dropdown {
+  min-width: 116px;
+}
+
+.themed-dropdown > button,
+.event-group-picker > button {
+  min-height: 32px;
+  padding: 0 9px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.themed-dropdown-menu,
+.event-group-menu,
+.nav-dropdown-menu {
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.themed-dropdown-menu button,
+.section-tabs .nav-dropdown-menu button {
+  min-height: 31px;
+  height: 31px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.audience-picker,
+.participant-picker,
+.poll-member-picker {
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.audience-picker button,
+.special-type-picker button,
+.poll-mode-picker button {
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.participant-picker label,
+.poll-member-picker label {
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.event-moment-option {
+  gap: 7px;
+}
+
+.event-moment-row > small {
+  margin-left: 10px;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ui-control-height: 36px;
+  }
+
+  .sheet,
+  .special-sheet,
+  .wish-sheet,
+  .admin-sheet,
+  .security-sheet {
+    padding: 15px 13px calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Shared Calendar compact density
    Keep the whole product visually consistent as new tools are added. */
 @media (min-width: 701px) {
@@ -5624,3 +5774,109 @@ select option {
     min-height: 36px;
   }
 }
+
+/* Final global density guard. Keep this block at the end of the stylesheet. */
+body .sheet label,
+body .media-page label,
+body .media-composer label,
+body .profile-detail label,
+body .security-content label,
+body .admin-sheet label { font-size: var(--ui-label-font); line-height: 1.35; }
+
+body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body select,
+body textarea,
+body .sheet input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body .sheet select,
+body .sheet textarea,
+body .media-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body .media-page select,
+body .media-page textarea {
+  font-size: var(--ui-control-font);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+body input::placeholder,
+body textarea::placeholder,
+body .sheet input::placeholder,
+body .sheet textarea::placeholder,
+body .media-page input::placeholder,
+body .media-page textarea::placeholder {
+  color: #938b7e;
+  font-size: var(--ui-placeholder-font);
+  font-weight: 400;
+  opacity: 1;
+}
+
+body input[type="checkbox"],
+body .sheet input[type="checkbox"],
+body .event-media-panel input[type="checkbox"],
+body .event-group-menu input[type="checkbox"] {
+  box-sizing: border-box;
+  width: var(--ui-check-size) !important;
+  height: var(--ui-check-size) !important;
+  min-width: var(--ui-check-size) !important;
+  min-height: var(--ui-check-size) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 3px;
+  aspect-ratio: 1;
+  flex: 0 0 var(--ui-check-size);
+  accent-color: var(--deep);
+}
+
+body .sheet input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body .sheet select,
+body .media-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body .media-page select,
+body .profile-detail input:not([type="checkbox"]),
+body .security-content input:not([type="checkbox"]) {
+  min-height: var(--ui-control-height);
+  padding: 7px 9px;
+  border-radius: var(--ui-control-radius);
+}
+
+body .sheet select,
+body .media-page select {
+  height: var(--ui-control-height);
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 30px !important;
+}
+
+body .themed-dropdown > button,
+body .event-group-picker > button {
+  min-height: 32px;
+  padding: 0 9px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+body .themed-dropdown-menu button,
+body .section-tabs .nav-dropdown-menu button {
+  min-height: 31px;
+  height: 31px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+body .audience-picker button,
+body .special-type-picker button,
+body .poll-mode-picker button {
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+body .participant-picker label,
+body .poll-member-picker label {
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+body .event-moment-option { gap: 7px; }
+body .event-moment-row > small { margin-left: 10px; }
