@@ -1,3 +1,4 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -661,22 +662,24 @@ export default function Home() {
     ] = await Promise.all([
       supabase.rpc("get_shared_calendar_events"),
       supabase.rpc("get_shared_calendar_special_days"),
-      supabase.rpc("get_shared_calendar_wishes"),
-      supabase
+      ["bag", "wishes", "lucky"].includes(section)
+        ? supabase.rpc("get_shared_calendar_wishes")
+        : Promise.resolve({ data: null }),
+      section === "lucky" ? supabase
         .from("shared_calendar_lucky_sets")
         .select("id,name,options,owner_user_id,owner_email")
-        .order("updated_at", { ascending: false }),
-      supabase
+        .order("updated_at", { ascending: false }) : Promise.resolve({ data: null }),
+      section === "expenses" ? supabase
         .from("shared_calendar_expense_periods")
         .select("id,name,owner_user_id,owner_email,created_at")
-        .order("updated_at", { ascending: false }),
-      supabase
+        .order("updated_at", { ascending: false }) : Promise.resolve({ data: null }),
+      section === "expenses" ? supabase
         .from("shared_calendar_expenses")
         .select(
           "id,period_id,item,amount,payer_email,split_with,note,creator_user_id,creator_email,created_at",
         )
-        .order("created_at", { ascending: false }),
-      supabase.rpc("get_shared_calendar_polls"),
+        .order("created_at", { ascending: false }) : Promise.resolve({ data: null }),
+      section === "polls" ? supabase.rpc("get_shared_calendar_polls") : Promise.resolve({ data: null }),
       supabase.from("shared_calendar_events").select("id,audience_group"),
     ]);
     const eventAudience = new Map(
@@ -721,7 +724,7 @@ export default function Home() {
         canEdit: d.can_edit,
       })),
     );
-    setWishes(
+    if (wishData !== null) setWishes(
       (wishData || []).map((w: any) => ({
         id: w.id,
         title: w.title,
@@ -738,7 +741,7 @@ export default function Home() {
         participants: w.participant_emails || [],
       })),
     );
-    setSavedLuckySets(
+    if (luckySetData !== null) setSavedLuckySets(
       (luckySetData || []).map((set: any) => ({
         id: set.id,
         name: set.name,
@@ -747,7 +750,7 @@ export default function Home() {
         owner: set.owner_email,
       })),
     );
-    setExpensePeriods(
+    if (expensePeriodData !== null) setExpensePeriods(
       (expensePeriodData || []).map((period: any) => ({
         id: period.id,
         name: period.name,
@@ -756,7 +759,7 @@ export default function Home() {
         createdAt: period.created_at,
       })),
     );
-    setExpenses(
+    if (expenseData !== null) setExpenses(
       (expenseData || []).map((expense: any) => ({
         id: expense.id,
         periodId: expense.period_id,
@@ -770,7 +773,7 @@ export default function Home() {
         createdAt: expense.created_at,
       })),
     );
-    setPolls(mapPollRows(pollData || []));
+    if (pollData !== null) setPolls(mapPollRows(pollData || []));
     setMemberLoading(false);
   }
   function mapPollRows(rows: any[]): Poll[] {
@@ -838,6 +841,10 @@ export default function Home() {
       data.subscription.unsubscribe();
     };
   }, []);
+  useEffect(() => {
+    if (!user || !member || !["bag", "wishes", "lucky", "expenses"].includes(section)) return;
+    void load(user);
+  }, [section]);
   useEffect(() => {
     if (section !== "polls" || !user || !member) return;
     refreshPolls();
