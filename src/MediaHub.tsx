@@ -221,6 +221,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [previewSrc, setPreviewSrc] = useState("");
 
   async function load() {
     const [m, p, mp, l, c, em] = await Promise.all([
@@ -234,6 +235,12 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     setMoments((m.data || []) as Moment[]); setPhotos((p.data || []) as Photo[]); setLinks((mp.data || []) as MomentPhoto[]); setLikes((l.data || []) as Like[]); setComments((c.data || []) as Comment[]); setEventMoods((em.data || []) as EventMood[]);
   }
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    if (!previewSrc) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setPreviewSrc(""); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [previewSrc]);
 
   async function publish() {
     if (!caption.trim() && !files.length) return;
@@ -295,13 +302,14 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
         return <article className="moment-post" key={moment.id}>
           <header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div>{isAuthor&&<button className="moment-delete" onClick={()=>deleteMoment(moment.id)}>删除</button>}</header>
           {moment.caption && <p className="moment-caption">{moment.caption}</p>}
-          {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><div className="moment-photo" key={photo.id}><ProtectedPhoto photo={photo}/></div>)}</div>}
+          {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><button type="button" className="moment-photo" key={photo.id} aria-label="放大查看照片" onClick={(event)=>{const image=event.currentTarget.querySelector("img");if(image)setPreviewSrc(image.src)}}><ProtectedPhoto photo={photo}/></button>)}</div>}
           <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length ? `${momentLikes.length} 人赞` : "赞"}</button><button className="moment-action-button" onClick={()=>document.getElementById(`moment-comment-${moment.id}`)?.focus()}>◯ 评论{momentComments.length + syncedMoods.length ? ` ${momentComments.length + syncedMoods.length}` : ""}</button></div>
           <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><span><b>{displayName(entry.author_email,members)}</b> {entry.body}</span>{entry.author_user_id===user.id&&<button type="button" className="moment-comment-delete" onClick={()=>deleteSyncedMood(entry)}>删除</button>}</p>)}{momentComments.map((comment)=><p key={comment.id}><span><b>{displayName(comment.author_email,members)}</b> {comment.body}</span>{comment.author_user_id===user.id&&<button type="button" className="moment-comment-delete" onClick={()=>deleteComment(comment)}>删除</button>}</p>)}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
       {!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}
     </div>
+    {previewSrc && <div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="照片预览" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreviewSrc("")}}><button type="button" className="moment-photo-preview-close" aria-label="关闭照片预览" onClick={()=>setPreviewSrc("")}>×</button><img src={previewSrc} alt="动态照片预览"/></div>}
   </section>;
 }
 
