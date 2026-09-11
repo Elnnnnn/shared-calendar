@@ -1,3 +1,4 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
@@ -267,6 +268,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const [loadingMore, setLoadingMore] = useState(false);
   const [newMomentCount, setNewMomentCount] = useState(0);
   const latestMomentCreatedAt = useRef<string | null>(null);
+  const loadRequestId = useRef(0);
   const [notifications, setNotifications] = useState<MomentNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -275,12 +277,22 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const previewTouchStart = useRef<number | null>(null);
 
   async function loadPage(offset = 0, replace = false) {
+    const requestId = ++loadRequestId.current;
     if (offset) setLoadingMore(true);
     const { data: momentRows, error } = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").in("group_key",[group,"both"]).order("created_at", { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
-    if (error) { setMessage("动态读取失败"); setLoadingMore(false); return; }
+    if (requestId !== loadRequestId.current) return;
+    if (error) { setMessage("动态读取失败，请重试"); setLoadingMore(false); return; }
     const pageMoments = (momentRows || []) as Moment[];
     const ids = pageMoments.map((item) => item.id);
-    if (!ids.length) { setHasMore(false); setLoadingMore(false); return; }
+    setMoments((current)=>replace?pageMoments:[...current,...pageMoments]);
+    setHasMore(pageMoments.length===PAGE_SIZE);
+    setLoadingMore(false);
+    if(replace){
+      setLinks([]); setPhotos([]); setComments([]); setEventMoods([]); setStats({});
+      latestMomentCreatedAt.current=pageMoments[0]?.created_at||null;
+      setNewMomentCount(0);
+    }
+    if (!ids.length) return;
     const eventIds = pageMoments.map((item)=>item.event_id).filter((id):id is number=>id!==null);
     const [linkResult, previewResult, statsResult, moodResult] = await Promise.all([
       supabase.from("shared_calendar_moment_photos").select("moment_id,photo_id,position").in("moment_id", ids),
@@ -291,15 +303,13 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     const pageLinks = (linkResult.data || []) as MomentPhoto[];
     const photoIds = [...new Set(pageLinks.map((item)=>item.photo_id))];
     const photoResult = photoIds.length ? await supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").in("id",photoIds) : {data:[],error:null};
+    if (requestId !== loadRequestId.current) return;
     const pageComments = (previewResult.data || []) as Comment[];
-    setMoments((current)=>replace?pageMoments:[...current,...pageMoments]);
     setLinks((current)=>replace?pageLinks:[...current,...pageLinks]);
     setPhotos((current)=>{const merged=replace?[]:[...current];(photoResult.data||[]).forEach((photo)=>{if(!merged.some((item)=>item.id===photo.id))merged.push(photo as Photo)});return merged});
     setComments((current)=>replace?pageComments:[...current,...pageComments]);
     setEventMoods((current)=>{const merged=replace?[]:[...current];((moodResult.data||[]) as EventMood[]).forEach((mood)=>{if(!merged.some((item)=>item.id===mood.id))merged.push(mood)});return merged});
     setStats((current)=>Object.fromEntries([...Object.entries(replace?{}:current),...((statsResult.data||[]) as MomentStats[]).map((item)=>[item.moment_id,item])]));
-    setHasMore(pageMoments.length===PAGE_SIZE); setLoadingMore(false);
-    if(replace){latestMomentCreatedAt.current=pageMoments[0]?.created_at||null;setNewMomentCount(0)}
   }
   async function loadNotifications() {
     const {data:ownMoments}=await supabase.from("shared_calendar_moments").select("id").eq("author_user_id",user.id).order("created_at",{ascending:false}).limit(100);
