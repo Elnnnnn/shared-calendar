@@ -6155,6 +6155,108 @@ body .event-moment-row > small { margin-left: 10px; }
   .album-manage-bar input { flex: 1 1 100%; max-width: none; }
 }
 
+/* Album upload: keep the first level quiet and move choices into one dialog. */
+.album-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.album-upload-trigger {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--deep);
+  border-radius: 11px;
+  background: var(--deep);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.album-upload-dialog { width: min(420px, 100%); }
+
+.album-upload-dropzone {
+  display: grid;
+  place-items: center;
+  min-height: 104px;
+  margin: 16px 0;
+  padding: 15px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: #fbf7ef;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.album-upload-dropzone input { display: none; }
+.album-upload-dropzone span { margin-top: 5px; color: var(--muted); font-size: 10px; font-weight: 400; }
+
+.album-upload-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.album-upload-field .themed-dropdown,
+.album-upload-field .themed-dropdown > button,
+.album-upload-field select { width: 100%; }
+
+.album-upload-field .themed-dropdown > button,
+.album-upload-field select {
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffdf8;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+}
+
+.album-upload-field .themed-dropdown-menu { width: 100%; }
+
+.album-upload-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.album-upload-actions button {
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8f2e8;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.album-upload-actions .primary { border-color: var(--deep); background: var(--deep); color: #fff; }
+.album-upload-actions button:disabled { opacity: .5; cursor: default; }
+
+@media (max-width: 700px) {
+  .albums-page .media-page-head { align-items: flex-end; }
+  .album-head-actions { gap: 6px; }
+  .album-head-actions .themed-dropdown { min-width: 92px; }
+  .album-upload-trigger { padding: 0 10px; }
+  .album-upload-overlay { align-items: end; padding: 0; }
+  .album-upload-dialog {
+    width: 100%;
+    max-height: 82dvh;
+    padding: 18px 16px max(20px, env(safe-area-inset-bottom));
+    border-width: 1px 0 0;
+    border-radius: 18px 18px 0 0;
+  }
+  .album-upload-actions button { flex: 1; }
+}
+
 /* Moments toolbar */
 .moments-page .media-page-head {
   align-items: center;
