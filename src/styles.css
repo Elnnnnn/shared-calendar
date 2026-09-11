@@ -1980,12 +1980,14 @@ select option {
 /* Shared Calendar form standard
    One final source of truth for every feature's fields and selectors. */
 :root {
-  --ui-control-height: 34px;
+  --ui-control-height: 36px;
+  --ui-compact-height: 32px;
   --ui-control-font: 12px;
+  --ui-action-font: 11px;
   --ui-label-font: 10px;
   --ui-placeholder-font: 11px;
   --ui-check-size: 14px;
-  --ui-control-radius: 8px;
+  --ui-control-radius: 10px;
 }
 
 body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
@@ -2114,10 +2116,6 @@ body input[type="checkbox"] {
 }
 
 @media (max-width: 700px) {
-  :root {
-    --ui-control-height: 36px;
-  }
-
   .sheet,
   .special-sheet,
   .wish-sheet,
@@ -6439,4 +6437,72 @@ body .event-moment-row > small { margin-left: 10px; }
     border-radius: 16px;
     box-shadow: 0 18px 50px rgba(48, 42, 34, .24);
   }
+}
+
+/* Shared Calendar control contract
+   This final block owns field, selector, action and check dimensions site-wide.
+   Feature styles may change width or layout, but must not redefine these sizes. */
+body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+body select {
+  box-sizing: border-box;
+  height: var(--ui-control-height) !important;
+  min-height: var(--ui-control-height) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-radius: var(--ui-control-radius) !important;
+  font-size: var(--ui-control-font) !important;
+  line-height: 1.2;
+}
+
+body textarea {
+  border-radius: var(--ui-control-radius) !important;
+  font-size: var(--ui-control-font) !important;
+  font-weight: 400;
+}
+
+body input::placeholder,
+body textarea::placeholder {
+  font-size: var(--ui-placeholder-font) !important;
+  font-weight: 400 !important;
+}
+
+body input[type="checkbox"],
+body input[type="radio"] {
+  box-sizing: border-box;
+  width: var(--ui-check-size) !important;
+  height: var(--ui-check-size) !important;
+  min-width: var(--ui-check-size) !important;
+  min-height: var(--ui-check-size) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 var(--ui-check-size);
+}
+
+body .primary,
+body button.save,
+body .media-group-label,
+body .themed-dropdown > button,
+body .event-group-picker > button {
+  box-sizing: border-box;
+  height: var(--ui-control-height) !important;
+  min-height: var(--ui-control-height) !important;
+  border-radius: var(--ui-control-radius) !important;
+  font-size: var(--ui-action-font) !important;
+  line-height: 1;
+}
+
+body .themed-dropdown-menu button,
+body .event-group-menu label,
+body .section-tabs .nav-dropdown-menu button {
+  box-sizing: border-box;
+  min-height: var(--ui-compact-height) !important;
+  font-size: var(--ui-action-font) !important;
+}
+
+body .sheet label,
+body .media-page label,
+body .profile-detail label,
+body .security-content label,
+body .admin-sheet label {
+  font-size: var(--ui-label-font);
 }
