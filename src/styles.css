@@ -6162,8 +6162,13 @@ body .event-moment-row > small { margin-left: 10px; }
   gap: 8px;
 }
 
+.album-head-actions .themed-dropdown > button,
 .album-upload-trigger {
+  height: 36px;
   min-height: 36px;
+}
+
+.album-upload-trigger {
   padding: 0 14px;
   border: 1px solid var(--deep);
   border-radius: 11px;
