@@ -2554,7 +2554,29 @@ body input[type="checkbox"] {
   border-bottom: 2px solid #665b45;
   border-radius: 0;
   background: transparent;
+  content-visibility: auto;
+  contain-intrinsic-size: 520px;
 }
+
+.moment-menu { position:relative; margin-left:auto; }
+.moment-menu > button { min-width:34px; padding:4px 7px; border:0; background:transparent; color:var(--muted); letter-spacing:2px; }
+.moment-menu > div { position:absolute; z-index:4; top:30px; right:0; width:96px; padding:5px; border:1px solid var(--line); border-radius:10px; background:#fffaf2; box-shadow:0 8px 24px rgba(62,52,37,.14); }
+.moment-menu > div button { display:block; width:100%; padding:7px 8px; border:0; border-radius:7px; background:transparent; text-align:left; font-size:11px; }
+.moment-menu > div button:hover { background:#eee6d8; }
+.moment-edit { display:grid; grid-template-columns:1fr auto auto; gap:7px; margin:12px 0; }
+.moment-edit textarea { grid-column:1/-1; min-height:68px; font-size:12px; }
+.moment-edit button { padding:6px 12px; border:1px solid var(--line); border-radius:9px; }
+.moment-reply-notice { display:flex; align-items:center; gap:8px; max-width:760px; margin:12px auto; padding:9px 12px; border-radius:11px; background:#eee6d8; font-size:11px; }
+.moment-reply-notice > span { width:7px; height:7px; border-radius:50%; background:#b25f5d; }
+.moment-reply-notice button { margin-left:auto; border:0; background:transparent; }
+.moment-like-count { color:#665f48 !important; }
+.moment-like-names { margin:7px 0; padding:7px 9px; border-radius:8px; background:#eee6d8; color:#665f48; font-size:11px; }
+.moment-comments .moment-comments-toggle { min-width:0; padding:3px 0; border:0; background:transparent; color:#6d674e; font-size:10px; }
+.moment-comments .moment-comment-tools { display:flex; flex:0 0 auto; gap:5px; }
+.moment-comments .moment-comment-tools button { min-width:0; padding:2px 3px; border:0; border-radius:0; background:transparent; color:#82785e; font-size:10px; }
+.moment-comments .moment-comment-tools button:last-child { color:#a6635d; }
+.moment-comments .moment-replying { display:flex; grid-template-columns:none; justify-content:flex-start; gap:5px; margin:7px 0 4px; color:#6d674e; font-size:10px; }
+.moment-comments .moment-replying button { min-width:0; padding:0 4px; border:0; background:transparent; color:#6d674e; }
 .moment-post:last-child {
   border-bottom: 0;
 }
@@ -5927,6 +5949,11 @@ body .event-moment-row > small { margin-left: 10px; }
   font-size: 24px;
   line-height: 1;
 }
+.moment-preview-nav { position:fixed; z-index:2; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:42px; height:42px; padding:0; border:1px solid rgba(255,255,255,.4); border-radius:50%; background:rgba(255,253,248,.12); color:#fff; font-size:30px; }
+.moment-preview-nav.previous { left:18px; }
+.moment-preview-nav.next { right:18px; }
+.moment-preview-nav:disabled { opacity:.25; }
+.moment-preview-count { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); padding:5px 10px; border-radius:12px; background:rgba(0,0,0,.35); color:#fff; font-size:11px; }
 
 @media (max-width: 700px) {
   .moment-photo-preview {
@@ -5953,6 +5980,9 @@ body .event-moment-row > small { margin-left: 10px; }
     top: max(10px, env(safe-area-inset-top));
     right: 12px;
   }
+  .moment-preview-nav { width:34px; height:34px; font-size:25px; }
+  .moment-preview-nav.previous { left:8px; }
+  .moment-preview-nav.next { right:8px; }
 }
 
 /* Album organization */
