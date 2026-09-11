@@ -6154,3 +6154,103 @@ body .event-moment-row > small { margin-left: 10px; }
   .album-batch-bar { flex-wrap: wrap; }
   .album-manage-bar input { flex: 1 1 100%; max-width: none; }
 }
+
+/* Moments toolbar: one visual control group on desktop and mobile. */
+.moments-page .media-page-head {
+  align-items: center;
+}
+
+.moments-page .media-head-actions {
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #d8cdb9;
+  border-radius: 14px;
+  background: #eee6d8;
+  box-shadow: 0 4px 14px rgba(77, 67, 50, .06);
+}
+
+.moments-page .moment-notification-button,
+.moments-page .themed-dropdown > button,
+.moments-page .media-head-actions > .primary {
+  height: 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+.moments-page .moment-notification-button {
+  min-width: 48px;
+  padding: 0 10px;
+  background: transparent;
+  color: #6f6759;
+}
+
+.moments-page .moment-notification-button:hover,
+.moments-page .moment-notification-button:focus-visible {
+  background: #f8f2e8;
+  color: var(--ink);
+}
+
+.moments-page .themed-dropdown {
+  min-width: 104px;
+}
+
+.moments-page .themed-dropdown > button {
+  padding: 0 10px;
+  background: #f8f2e8;
+  color: var(--ink);
+}
+
+.moments-page .themed-dropdown-menu {
+  top: calc(100% + 9px);
+  min-width: 112px;
+  border-color: #d8cdb9;
+  background: #fffaf2;
+}
+
+.moments-page .media-head-actions > .primary {
+  min-width: 76px;
+  padding: 0 14px;
+  background: var(--deep);
+  color: #fff;
+}
+
+.moments-page .moment-notification-button i {
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-width: 1px;
+  border-color: #eee6d8;
+}
+
+@media (max-width: 700px) {
+  .moments-page .media-page-head {
+    display: block;
+  }
+
+  .moments-page .media-head-actions {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 76px;
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .moments-page .themed-dropdown {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .moments-page .themed-dropdown-menu {
+    width: 100%;
+  }
+
+  .moments-page .moment-notification-button,
+  .moments-page .media-head-actions > .primary {
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
