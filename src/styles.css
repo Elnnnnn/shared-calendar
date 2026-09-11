@@ -6155,51 +6155,65 @@ body .event-moment-row > small { margin-left: 10px; }
   .album-manage-bar input { flex: 1 1 100%; max-width: none; }
 }
 
-/* Moments toolbar: one visual control group on desktop and mobile. */
+/* Moments toolbar */
 .moments-page .media-page-head {
   align-items: center;
 }
 
 .moments-page .media-head-actions {
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid #d8cdb9;
-  border-radius: 14px;
-  background: #eee6d8;
-  box-shadow: 0 4px 14px rgba(77, 67, 50, .06);
+  gap: 8px;
 }
 
 .moments-page .moment-notification-button,
 .moments-page .themed-dropdown > button,
-.moments-page .media-head-actions > .primary {
-  height: 34px;
-  min-height: 34px;
-  border: 0;
-  border-radius: 10px;
+.moments-page .moment-create-button {
+  height: 36px;
+  min-height: 36px;
+  border-radius: 11px;
   font-size: 11px;
   box-shadow: none;
 }
 
+.moments-page .moment-notification-wrap {
+  position: relative;
+}
+
 .moments-page .moment-notification-button {
-  min-width: 48px;
-  padding: 0 10px;
-  background: transparent;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  border: 1px solid #d8cdb9;
+  background: #f8f2e8;
   color: #6f6759;
+}
+
+.moments-page .moment-notification-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .moments-page .moment-notification-button:hover,
 .moments-page .moment-notification-button:focus-visible {
-  background: #f8f2e8;
+  background: #eee6d8;
   color: var(--ink);
 }
 
 .moments-page .themed-dropdown {
-  min-width: 104px;
+  min-width: 110px;
 }
 
 .moments-page .themed-dropdown > button {
-  padding: 0 10px;
+  padding: 0 12px;
+  border: 1px solid #d8cdb9;
   background: #f8f2e8;
   color: var(--ink);
 }
@@ -6211,20 +6225,53 @@ body .event-moment-row > small { margin-left: 10px; }
   background: #fffaf2;
 }
 
-.moments-page .media-head-actions > .primary {
-  min-width: 76px;
+.moments-page .moment-create-button {
+  min-width: 78px;
   padding: 0 14px;
+  border: 1px solid var(--deep);
   background: var(--deep);
   color: #fff;
 }
 
 .moments-page .moment-notification-button i {
-  top: 5px;
-  right: 5px;
-  width: 6px;
-  height: 6px;
-  border-width: 1px;
-  border-color: #eee6d8;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fffaf2;
+  background: #a6635d;
+  color: #fff;
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.moments-page .moment-notifications {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 9px);
+  right: 0;
+  width: 260px;
+  max-height: min(360px, 60vh);
+  margin: 0;
+  overflow-y: auto;
+}
+
+.moments-page .moment-notifications > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 7px 7px;
+  border-bottom: 1px solid #e5dbc9;
+}
+
+.moments-page .moment-notifications > header button {
+  width: 24px;
+  min-width: 24px;
+  padding: 0;
+  font-size: 18px;
 }
 
 @media (max-width: 700px) {
@@ -6234,9 +6281,10 @@ body .event-moment-row > small { margin-left: 10px; }
 
   .moments-page .media-head-actions {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) 76px;
+    grid-template-columns: minmax(0, 1fr) 36px 78px;
+    gap: 7px;
     width: 100%;
-    margin-top: 14px;
+    margin-top: 10px;
   }
 
   .moments-page .themed-dropdown {
@@ -6249,8 +6297,21 @@ body .event-moment-row > small { margin-left: 10px; }
   }
 
   .moments-page .moment-notification-button,
-  .moments-page .media-head-actions > .primary {
+  .moments-page .moment-create-button {
     min-width: 0;
-    padding: 0 8px;
+  }
+
+  .moments-page .moment-notifications {
+    position: fixed;
+    z-index: 40;
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: min(420px, 66vh);
+    padding: 8px;
+    border-radius: 16px;
+    box-shadow: 0 18px 50px rgba(48, 42, 34, .24);
   }
 }
