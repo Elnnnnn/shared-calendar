@@ -11,8 +11,9 @@ type Album = { id: number; name: string; group_key: GroupKey; owner_email: strin
 type Moment = { id: number; group_key: GroupKey; author_email: string; caption: string; event_id: number | null; source_event_mood_id: number | null; source_event_photo_id: string | null; created_at: string };
 type MomentPhoto = { moment_id: number; photo_id: string; position: number };
 type Like = { moment_id: number; user_id: string; user_email: string };
-type Comment = { id: number; moment_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
+type Comment = { id: number; moment_id: number; author_user_id: string; author_email: string; body: string; created_at: string; reply_to_comment_id: number | null; reply_to_event_mood_id: number | null; reply_to_user_id: string | null; reply_to_email: string | null; reply_read_at: string | null };
 type EventMood = { id: number; event_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
+type ReplyTarget = { momentId: number; kind: "comment" | "mood"; id: number; email: string };
 type CalendarEvent = { id: number; title: string; date: string; owner: string; participants: string[]; audienceGroup?: GroupKey };
 type EventPhotoLink = { event_id: number; photo_id: string };
 
@@ -246,65 +247,91 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const [caption, setCaption] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
+  const [expandedComments, setExpandedComments] = useState<number[]>([]);
+  const [expandedLikes, setExpandedLikes] = useState<number[]>([]);
+  const [menuMomentId, setMenuMomentId] = useState<number | null>(null);
+  const [editingMomentId, setEditingMomentId] = useState<number | null>(null);
+  const [editingCaption, setEditingCaption] = useState("");
+  const [unreadReplies, setUnreadReplies] = useState<Comment[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [previewSrc, setPreviewSrc] = useState("");
+  const [preview, setPreview] = useState<{ photos: Photo[]; index: number } | null>(null);
+  const previewTouchStart = useRef<number | null>(null);
 
   async function load() {
     const [m, p, mp, l, c, em] = await Promise.all([
-      supabase.from("shared_calendar_moments").select("*").order("created_at", { ascending: false }),
+      supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").order("created_at", { ascending: false }),
       supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").order("created_at", { ascending: false }),
-      supabase.from("shared_calendar_moment_photos").select("*"),
-      supabase.from("shared_calendar_moment_likes").select("*"),
-      supabase.from("shared_calendar_moment_comments").select("*").order("created_at"),
+      supabase.from("shared_calendar_moment_photos").select("moment_id,photo_id,position"),
+      supabase.from("shared_calendar_moment_likes").select("moment_id,user_id,user_email"),
+      supabase.from("shared_calendar_moment_comments").select("id,moment_id,author_user_id,author_email,body,created_at,reply_to_comment_id,reply_to_event_mood_id,reply_to_user_id,reply_to_email,reply_read_at").order("created_at"),
       supabase.from("shared_calendar_event_moods").select("id,event_id,author_user_id,author_email,body,created_at").order("created_at"),
     ]);
-    setMoments((m.data || []) as Moment[]); setPhotos((p.data || []) as Photo[]); setLinks((mp.data || []) as MomentPhoto[]); setLikes((l.data || []) as Like[]); setComments((c.data || []) as Comment[]); setEventMoods((em.data || []) as EventMood[]);
+    const loadedComments = (c.data || []) as Comment[];
+    setMoments((m.data || []) as Moment[]); setPhotos((p.data || []) as Photo[]); setLinks((mp.data || []) as MomentPhoto[]); setLikes((l.data || []) as Like[]); setComments(loadedComments); setEventMoods((em.data || []) as EventMood[]);
+    const unread = loadedComments.filter((item) => item.reply_to_user_id === user.id && !item.reply_read_at);
+    if (unread.length) {
+      setUnreadReplies(unread);
+      void supabase.rpc("mark_shared_calendar_replies_read");
+    }
   }
   useEffect(() => { void load(); }, []);
   useEffect(() => {
-    if (!previewSrc) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setPreviewSrc(""); };
+    if (!preview) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setPreview(null); };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [previewSrc]);
+  }, [preview]);
 
   async function publish() {
     if (!caption.trim() && !files.length) return;
     setBusy(true); setMessage("");
     try {
-      const uploaded: Photo[] = [];
-      for (const file of files.slice(0, 3)) uploaded.push(await uploadPhoto(file, group));
+      const uploaded = await Promise.all(files.slice(0, 3).map((file) => uploadPhoto(file, group)));
       const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: null }).select().single();
       if (error) throw error;
       if (uploaded.length) {
         const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert(uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position })));
         if (linkError) throw linkError;
       }
-      setCaption(""); setFiles([]); setComposer(false); await load();
+      const newLinks = uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position }));
+      setMoments((current) => [data as Moment, ...current]); setPhotos((current) => [...uploaded, ...current]); setLinks((current) => [...current, ...newLinks]);
+      setCaption(""); setFiles([]); setComposer(false);
     } catch (error) { setMessage(error instanceof Error ? error.message : "发布失败"); }
     finally { setBusy(false); }
   }
   async function toggleLike(momentId: number) {
     const own = likes.find((like) => like.moment_id === momentId && like.user_id === user.id);
-    if (own) await supabase.from("shared_calendar_moment_likes").delete().eq("moment_id", momentId).eq("user_id", user.id);
-    else await supabase.from("shared_calendar_moment_likes").insert({ moment_id: momentId, user_id: user.id, user_email: member.email });
-    await load();
+    if (own) {
+      setLikes((current) => current.filter((like) => like !== own));
+      const { error } = await supabase.from("shared_calendar_moment_likes").delete().eq("moment_id", momentId).eq("user_id", user.id);
+      if (error) setLikes((current) => [...current, own]);
+    } else {
+      const next = { moment_id: momentId, user_id: user.id, user_email: member.email };
+      setLikes((current) => [...current, next]);
+      const { error } = await supabase.from("shared_calendar_moment_likes").insert(next);
+      if (error) setLikes((current) => current.filter((like) => !(like.moment_id === momentId && like.user_id === user.id)));
+    }
   }
   async function addComment(momentId: number) {
     const body = commentDrafts[momentId]?.trim(); if (!body) return;
-    await supabase.from("shared_calendar_moment_comments").insert({ moment_id: momentId, author_user_id: user.id, author_email: member.email, body });
-    setCommentDrafts((value) => ({ ...value, [momentId]: "" })); await load();
+    const reply = replyTarget?.momentId === momentId ? replyTarget : null;
+    const { data, error } = await supabase.from("shared_calendar_moment_comments").insert({ moment_id: momentId, author_user_id: user.id, author_email: member.email, body, reply_to_comment_id: reply?.kind === "comment" ? reply.id : null, reply_to_event_mood_id: reply?.kind === "mood" ? reply.id : null }).select("id,moment_id,author_user_id,author_email,body,created_at,reply_to_comment_id,reply_to_event_mood_id,reply_to_user_id,reply_to_email,reply_read_at").single();
+    if (error) { setMessage("评论发送失败"); return; }
+    setComments((current) => [...current, data as Comment]);
+    setCommentDrafts((value) => ({ ...value, [momentId]: "" })); setReplyTarget(null);
   }
   async function deleteComment(comment: Comment) {
     const { error } = await supabase.from("shared_calendar_moment_comments").delete().eq("id", comment.id).eq("author_user_id", user.id);
     if (error) { setMessage("评论删除失败"); return; }
-    setComments((current) => current.filter((item) => item.id !== comment.id));
+    setComments((current) => current.filter((item) => item.id !== comment.id).map((item) => item.reply_to_comment_id === comment.id ? { ...item, reply_to_comment_id: null, reply_to_user_id: null, reply_to_email: null } : item));
   }
   async function deleteSyncedMood(entry: EventMood) {
     const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
     if (error) { setMessage("评论删除失败"); return; }
     setEventMoods((current) => current.filter((item) => item.id !== entry.id));
+    setComments((current) => current.map((item) => item.reply_to_event_mood_id === entry.id ? { ...item, reply_to_event_mood_id: null, reply_to_user_id: null, reply_to_email: null } : item));
     setMoments((current) => current.map((item) => item.source_event_mood_id === entry.id ? { ...item, caption: "", source_event_mood_id: null } : item));
   }
   async function deleteMoment(momentId: number) {
@@ -312,31 +339,48 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     if (!target?.event_id && !window.confirm("确定删除这条动态吗？照片仍会保留在相册中。")) return;
     const { error } = await supabase.from("shared_calendar_moments").delete().eq("id", momentId);
     if (error) { setMessage("动态删除失败"); return; }
-    await load();
+    setMoments((current) => current.filter((item) => item.id !== momentId));
+    setLinks((current) => current.filter((item) => item.moment_id !== momentId));
+    setLikes((current) => current.filter((item) => item.moment_id !== momentId));
+    setComments((current) => current.filter((item) => item.moment_id !== momentId));
   }
-  const visible = moments.filter((moment) => moment.group_key === group || moment.group_key === "both");
+  async function saveMomentCaption(momentId: number) {
+    const { data, error } = await supabase.from("shared_calendar_moments").update({ caption: editingCaption.trim() }).eq("id", momentId).eq("author_email", member.email).select("id,caption").single();
+    if (error) { setMessage("动态修改失败"); return; }
+    setMoments((current) => current.map((item) => item.id === momentId ? { ...item, caption: data.caption } : item)); setEditingMomentId(null);
+  }
+  const photoById = useMemo(() => new Map(photos.map((photo) => [photo.id, photo])), [photos]);
+  const linksByMoment = useMemo(() => { const map = new Map<number, MomentPhoto[]>(); links.forEach((link) => map.set(link.moment_id, [...(map.get(link.moment_id) || []), link])); return map; }, [links]);
+  const likesByMoment = useMemo(() => { const map = new Map<number, Like[]>(); likes.forEach((like) => map.set(like.moment_id, [...(map.get(like.moment_id) || []), like])); return map; }, [likes]);
+  const commentsByMoment = useMemo(() => { const map = new Map<number, Comment[]>(); comments.forEach((comment) => map.set(comment.moment_id, [...(map.get(comment.moment_id) || []), comment])); return map; }, [comments]);
+  const moodsByEvent = useMemo(() => { const map = new Map<number, EventMood[]>(); eventMoods.forEach((mood) => map.set(mood.event_id, [...(map.get(mood.event_id) || []), mood])); return map; }, [eventMoods]);
+  const visible = useMemo(() => moments.filter((moment) => moment.group_key === group || moment.group_key === "both"), [moments, group]);
   return <section className="media-page moments-page">
     <header className="media-page-head"><div><p className="eyebrow">MOMENTS</p><h2>动态</h2></div><div className="media-head-actions"><GroupSelect value={group} onChange={setGroup} email={member.email}/><button className="primary" onClick={() => setComposer(true)}>＋ 发布</button></div></header>
+    {!!unreadReplies.length && <div className="moment-reply-notice"><span></span><b>{displayName(unreadReplies[0].author_email, members)} 回复了你{unreadReplies.length > 1 ? `等 ${unreadReplies.length} 条` : ""}</b><button onClick={()=>setUnreadReplies([])}>×</button></div>}
     {composer && <div className="media-composer"><div className="media-composer-head"><h3>发布到 {groupLabel(group)}</h3><button onClick={() => setComposer(false)}>×</button></div><GroupSelect value={group} onChange={setGroup} email={member.email}/><textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="说点什么……"/><label className="media-file-picker">选择照片（最多 3 张）<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 3))}/><span>{files.length ? `已选择 ${files.length} 张` : "从设备上传"}</span></label>{message && <p className="media-error">{message}</p>}<button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : "发布动态"}</button></div>}
     <div className="moment-feed">
       {visible.map((moment) => {
-        const momentPhotos = links.filter((link) => link.moment_id === moment.id).sort((a,b) => a.position-b.position).map((link) => photos.find((photo) => photo.id === link.photo_id)).filter(Boolean) as Photo[];
-        const momentLikes = likes.filter((like) => like.moment_id === moment.id);
-        const momentComments = comments.filter((item) => item.moment_id === moment.id);
-        const syncedMoods = moment.event_id ? eventMoods.filter((item) => item.event_id === moment.event_id && item.id !== moment.source_event_mood_id) : [];
+        const momentPhotos = (linksByMoment.get(moment.id) || []).sort((a,b) => a.position-b.position).map((link) => photoById.get(link.photo_id)).filter(Boolean) as Photo[];
+        const momentLikes = likesByMoment.get(moment.id) || [];
+        const momentComments = commentsByMoment.get(moment.id) || [];
+        const syncedMoods = moment.event_id ? (moodsByEvent.get(moment.event_id) || []).filter((item) => item.id !== moment.source_event_mood_id) : [];
+        const entries = [...syncedMoods.map((item)=>({kind:"mood" as const,item,date:item.created_at})), ...momentComments.map((item)=>({kind:"comment" as const,item,date:item.created_at}))].sort((a,b)=>a.date.localeCompare(b.date));
+        const shownEntries = expandedComments.includes(moment.id) ? entries : entries.slice(-3);
         const isAuthor = moment.author_email.toLowerCase() === member.email.toLowerCase();
         const authorColor = members.find((item) => item.email.toLowerCase() === moment.author_email.toLowerCase())?.color || "stone";
         return <article className="moment-post" key={moment.id}>
-          <header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div>{isAuthor&&<button className="moment-delete" onClick={()=>deleteMoment(moment.id)}>删除</button>}</header>
-          {moment.caption && <p className="moment-caption">{moment.caption}</p>}
-          {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo)=><button type="button" className="moment-photo" key={photo.id} aria-label="放大查看照片" onClick={(event)=>{const image=event.currentTarget.querySelector("img");if(image)setPreviewSrc(image.src)}}><ProtectedPhoto photo={photo}/></button>)}</div>}
-          <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>toggleLike(moment.id)}>♡ {momentLikes.length ? `${momentLikes.length} 人赞` : "赞"}</button><button className="moment-action-button" onClick={()=>document.getElementById(`moment-comment-${moment.id}`)?.focus()}>◯ 评论{momentComments.length + syncedMoods.length ? ` ${momentComments.length + syncedMoods.length}` : ""}</button></div>
-          <div className="moment-comments">{syncedMoods.map((entry)=><p key={`mood-${entry.id}`}><span><b>{displayName(entry.author_email,members)}</b> {entry.body}</span>{entry.author_user_id===user.id&&<button type="button" className="moment-comment-delete" onClick={()=>deleteSyncedMood(entry)}>删除</button>}</p>)}{momentComments.map((comment)=><p key={comment.id}><span><b>{displayName(comment.author_email,members)}</b> {comment.body}</span>{comment.author_user_id===user.id&&<button type="button" className="moment-comment-delete" onClick={()=>deleteComment(comment)}>删除</button>}</p>)}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder="写评论……" onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>addComment(moment.id)}>发送</button></div></div>
+          <header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} · {groupLabel(moment.group_key)}</small></div>{isAuthor&&<div className="moment-menu"><button onClick={()=>setMenuMomentId(menuMomentId===moment.id?null:moment.id)}>•••</button>{menuMomentId===moment.id&&<div><button onClick={()=>{setEditingMomentId(moment.id);setEditingCaption(moment.caption);setMenuMomentId(null)}}>编辑文字</button><button onClick={()=>void deleteMoment(moment.id)}>删除动态</button></div>}</div>}</header>
+          {editingMomentId===moment.id?<div className="moment-edit"><textarea value={editingCaption} onChange={(e)=>setEditingCaption(e.target.value)}/><button onClick={()=>setEditingMomentId(null)}>取消</button><button className="primary" onClick={()=>void saveMomentCaption(moment.id)}>保存</button></div>:moment.caption&&<p className="moment-caption">{moment.caption}</p>}
+          {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo,index)=><button type="button" className="moment-photo" key={photo.id} aria-label="放大查看照片" onClick={()=>setPreview({photos:momentPhotos,index})}><ProtectedPhoto photo={photo}/></button>)}</div>}
+          <div className="moment-actions"><button className={`moment-action-button ${momentLikes.some((like)=>like.user_id===user.id)?"liked":""}`} onClick={()=>void toggleLike(moment.id)}>♡ {momentLikes.some((like)=>like.user_id===user.id)?"已赞":"赞"}</button>{!!momentLikes.length&&<button className="moment-like-count" onClick={()=>setExpandedLikes((current)=>current.includes(moment.id)?current.filter((id)=>id!==moment.id):[...current,moment.id])}>{momentLikes.length} 人赞</button>}<button className="moment-action-button" onClick={()=>document.getElementById(`moment-comment-${moment.id}`)?.focus()}>◯ 评论{entries.length ? ` ${entries.length}` : ""}</button></div>
+          {expandedLikes.includes(moment.id)&&<p className="moment-like-names">♡ {momentLikes.map((like)=>displayName(like.user_email,members)).join("、")}</p>}
+          <div className="moment-comments">{entries.length>3&&<button className="moment-comments-toggle" onClick={()=>setExpandedComments((current)=>current.includes(moment.id)?current.filter((id)=>id!==moment.id):[...current,moment.id])}>{expandedComments.includes(moment.id)?"收起评论":`展开全部 ${entries.length} 条评论`}</button>}{shownEntries.map(({kind,item})=><p key={`${kind}-${item.id}`}><span><b>{displayName(item.author_email,members)}</b>{kind==="comment"&&item.reply_to_email&&<> 回复 <b>@{displayName(item.reply_to_email,members)}</b></>}：{item.body}</span><span className="moment-comment-tools"><button onClick={()=>{setReplyTarget({momentId:moment.id,kind,id:item.id,email:item.author_email});document.getElementById(`moment-comment-${moment.id}`)?.focus()}}>回复</button>{item.author_user_id===user.id&&<button onClick={()=>kind==="comment"?void deleteComment(item):void deleteSyncedMood(item)}>删除</button>}</span></p>)}{replyTarget?.momentId===moment.id&&<div className="moment-replying">回复 @{displayName(replyTarget.email,members)}<button onClick={()=>setReplyTarget(null)}>×</button></div>}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder={replyTarget?.momentId===moment.id?`回复 @${displayName(replyTarget.email,members)}……`:"写评论……"} onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>void addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
       {!visible.length && <div className="media-empty"><h3>还没有动态</h3><p>在 {groupLabel(group)} 分享第一张照片吧。</p></div>}
     </div>
-    {previewSrc && <div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="照片预览" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreviewSrc("")}}><button type="button" className="moment-photo-preview-close" aria-label="关闭照片预览" onClick={()=>setPreviewSrc("")}>×</button><img src={previewSrc} alt="动态照片预览"/></div>}
+    {preview && <div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="照片预览" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreview(null)}} onTouchStart={(event)=>{previewTouchStart.current=event.touches[0]?.clientX??null}} onTouchEnd={(event)=>{if(previewTouchStart.current===null)return;const delta=(event.changedTouches[0]?.clientX??previewTouchStart.current)-previewTouchStart.current;if(Math.abs(delta)>40)setPreview((current)=>current?{...current,index:Math.max(0,Math.min(current.photos.length-1,current.index+(delta<0?1:-1)))}:null);previewTouchStart.current=null}}><button type="button" className="moment-photo-preview-close" aria-label="关闭照片预览" onClick={()=>setPreview(null)}>×</button>{preview.photos.length>1&&<button className="moment-preview-nav previous" disabled={preview.index===0} onClick={()=>setPreview({...preview,index:preview.index-1})}>‹</button>}<ProtectedPhoto photo={preview.photos[preview.index]} alt="动态照片预览"/>{preview.photos.length>1&&<><span className="moment-preview-count">{preview.index+1} / {preview.photos.length}</span><button className="moment-preview-nav next" disabled={preview.index===preview.photos.length-1} onClick={()=>setPreview({...preview,index:preview.index+1})}>›</button></>}</div>}
   </section>;
 }
 
