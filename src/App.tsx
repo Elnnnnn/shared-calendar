@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
-import { AlbumsPage, EventMediaPanel, MomentsPage } from "./MediaHub";
+const MomentsPage = lazy(() => import("./MediaHub").then((module) => ({ default: module.MomentsPage })));
+const AlbumsPage = lazy(() => import("./MediaHub").then((module) => ({ default: module.AlbumsPage })));
+const EventMediaPanel = lazy(() => import("./MediaHub").then((module) => ({ default: module.EventMediaPanel })));
+type Section = "calendar" | "special" | "bag" | "wishes" | "lucky" | "expenses" | "polls" | "moments" | "photos";
+const SECTIONS: Section[] = ["calendar", "special", "bag", "wishes", "lucky", "expenses", "polls", "moments", "photos"];
+function initialSection(): Section {
+  const requested = new URLSearchParams(window.location.search).get("view") as Section | null;
+  if (requested && SECTIONS.includes(requested)) return requested;
+  const saved = window.sessionStorage.getItem("shared-calendar-section") as Section | null;
+  return saved && SECTIONS.includes(saved) ? saved : "calendar";
+}
 type Member = {
   email: string;
   display_name: string;
@@ -284,6 +294,47 @@ function durationMinutes(start: string, end: string) {
 function durationHeight(start: string, end: string) {
   return Math.max(40, (durationMinutes(start, end) / 60) * HOUR_HEIGHT - 4);
 }
+function overlappingEventLayout(dayEvents: CalendarEvent[]) {
+  const result = new Map<CalendarEvent, { column: number; columnCount: number }>();
+  const sorted = [...dayEvents].sort((a, b) =>
+    minutes(a.time) - minutes(b.time) ||
+    durationMinutes(a.time, a.endTime) - durationMinutes(b.time, b.endTime),
+  );
+  let cluster: CalendarEvent[] = [];
+  let clusterEnd = -1;
+
+  function placeCluster() {
+    if (!cluster.length) return;
+    const columnEnds: number[] = [];
+    const columns = new Map<CalendarEvent, number>();
+    cluster.forEach((event) => {
+      const start = minutes(event.time);
+      const end = start + durationMinutes(event.time, event.endTime);
+      let column = columnEnds.findIndex((columnEnd) => columnEnd <= start);
+      if (column === -1) column = columnEnds.length;
+      columnEnds[column] = end;
+      columns.set(event, column);
+    });
+    const columnCount = Math.max(1, columnEnds.length);
+    cluster.forEach((event) =>
+      result.set(event, { column: columns.get(event) || 0, columnCount }),
+    );
+  }
+
+  sorted.forEach((event) => {
+    const start = minutes(event.time);
+    const end = start + durationMinutes(event.time, event.endTime);
+    if (cluster.length && start >= clusterEnd) {
+      placeCluster();
+      cluster = [];
+      clusterEnd = -1;
+    }
+    cluster.push(event);
+    clusterEnd = Math.max(clusterEnd, end);
+  });
+  placeCluster();
+  return result;
+}
 function zonedParts(value: Date, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
@@ -417,17 +468,7 @@ export default function Home() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-  const [section, setSection] = useState<
-    | "calendar"
-    | "special"
-    | "bag"
-    | "wishes"
-    | "lucky"
-    | "expenses"
-    | "polls"
-    | "moments"
-    | "photos"
-  >("calendar");
+  const [section, setSection] = useState<Section>(initialSection);
   const [navMenu, setNavMenu] = useState<"calendar" | "bag" | null>(null);
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(new Date());
@@ -558,6 +599,26 @@ export default function Home() {
   const [pollMessage, setPollMessage] = useState("");
   const [audienceGroup, setAudienceGroup] =
     useState<AudienceGroup>("besties");
+  useEffect(() => {
+    window.sessionStorage.setItem("shared-calendar-section", section);
+  }, [section]);
+  useEffect(() => {
+    const restoreSection = () => {
+      const requested = new URLSearchParams(window.location.search).get("view") as Section | null;
+      setSection(requested && SECTIONS.includes(requested) ? requested : "calendar");
+    };
+    window.addEventListener("popstate", restoreSection);
+    return () => window.removeEventListener("popstate", restoreSection);
+  }, []);
+  function navigateSection(next: Section) {
+    if (next === section) return;
+    const url = new URL(window.location.href);
+    if (next === "calendar") url.searchParams.delete("view");
+    else url.searchParams.set("view", next);
+    window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    setSection(next);
+  }
+
   async function loadMemberAccess(currentEmail: string) {
     const retryDelays = [0, 450, 1000];
     let lastResult: any = null;
@@ -571,8 +632,8 @@ export default function Home() {
       lastResult = result;
       console.warn("[member-check] attempt failed", {
         attempt: attempt + 1,
-        code: result.error.code,
-        message: result.error.message,
+        code: result.error?.code || "incomplete-member-list",
+        message: result.error?.message || "Member list was incomplete",
       });
     }
 
@@ -649,6 +710,8 @@ export default function Home() {
       setMemberLoading(false);
       return;
     }
+    const needsEvents = section === "calendar";
+    const needsSpecialDays = section === "calendar" || section === "special";
     const [
       { data },
       { data: specialData },
@@ -659,8 +722,8 @@ export default function Home() {
       { data: pollData },
       { data: eventAudienceData },
     ] = await Promise.all([
-      supabase.rpc("get_shared_calendar_events"),
-      supabase.rpc("get_shared_calendar_special_days"),
+      needsEvents ? supabase.rpc("get_shared_calendar_events") : Promise.resolve({ data: null }),
+      needsSpecialDays ? supabase.rpc("get_shared_calendar_special_days") : Promise.resolve({ data: null }),
       ["bag", "wishes", "lucky"].includes(section)
         ? supabase.rpc("get_shared_calendar_wishes")
         : Promise.resolve({ data: null }),
@@ -679,7 +742,7 @@ export default function Home() {
         )
         .order("created_at", { ascending: false }) : Promise.resolve({ data: null }),
       section === "polls" ? supabase.rpc("get_shared_calendar_polls") : Promise.resolve({ data: null }),
-      supabase.from("shared_calendar_events").select("id,audience_group"),
+      needsEvents ? supabase.from("shared_calendar_events").select("id,audience_group") : Promise.resolve({ data: null }),
     ]);
     const eventAudience = new Map(
       (eventAudienceData || []).map((row: any) => [
@@ -687,7 +750,7 @@ export default function Home() {
         (row.audience_group || "both") as AudienceGroup,
       ]),
     );
-    setEvents(
+    if (data !== null) setEvents(
       (data || []).map((e: any) => ({
         id: e.id,
         title: e.title,
@@ -705,7 +768,7 @@ export default function Home() {
         canEdit: e.can_edit,
       })),
     );
-    setSpecialDays(
+    if (specialData !== null) setSpecialDays(
       (specialData || []).map((d: any) => ({
         id: d.id,
         title: d.title,
@@ -841,14 +904,16 @@ export default function Home() {
     };
   }, []);
   useEffect(() => {
-    if (!user || !member || !["bag", "wishes", "lucky", "expenses"].includes(section)) return;
+    if (!user || !member || !["calendar", "special", "bag", "wishes", "lucky", "expenses"].includes(section)) return;
     void load(user);
   }, [section]);
   useEffect(() => {
     if (section !== "polls" || !user || !member) return;
-    refreshPolls();
-    const timer = window.setInterval(refreshPolls, 5000);
-    return () => window.clearInterval(timer);
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") void refreshPolls(); };
+    refreshWhenVisible();
+    const timer = window.setInterval(refreshWhenVisible, 20000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", refreshWhenVisible); };
   }, [section, user?.id, member?.email]);
   useEffect(() => {
     const control = luckySelectAllRef.current;
@@ -4162,7 +4227,7 @@ export default function Home() {
           >
             日历 <span className="nav-chevron">⌄</span>
           </button>
-          {navMenu === "calendar" && <div className="nav-dropdown-menu"><button className={section === "calendar" ? "selected" : ""} onClick={() => { setSection("calendar"); setNavMenu(null); }}>日历</button><button className={section === "special" ? "selected" : ""} onClick={() => { setSection("special"); setNavMenu(null); }}>纪念日</button></div>}
+          {navMenu === "calendar" && <div className="nav-dropdown-menu"><button className={section === "calendar" ? "selected" : ""} onClick={() => { navigateSection("calendar"); setNavMenu(null); }}>日历</button><button className={section === "special" ? "selected" : ""} onClick={() => { navigateSection("special"); setNavMenu(null); }}>纪念日</button></div>}
         </div>
         <div className="nav-dropdown">
           <button
@@ -4172,17 +4237,17 @@ export default function Home() {
           >
             百宝袋 <span className="nav-chevron">⌄</span>
           </button>
-          {navMenu === "bag" && <div className="nav-dropdown-menu bag-nav-menu"><button className={section === "wishes" ? "selected" : ""} onClick={() => { setSection("wishes"); setNavMenu(null); }}>愿望清单</button><button className={section === "lucky" ? "selected" : ""} onClick={() => { setSection("lucky"); setNavMenu(null); }}>好运抽选机</button><button className={section === "expenses" ? "selected" : ""} onClick={() => { setSection("expenses"); setNavMenu(null); }}>一起记账</button><button className={section === "polls" ? "selected" : ""} onClick={() => { setSection("polls"); setNavMenu(null); }}>No Push</button></div>}
+          {navMenu === "bag" && <div className="nav-dropdown-menu bag-nav-menu"><button className={section === "wishes" ? "selected" : ""} onClick={() => { navigateSection("wishes"); setNavMenu(null); }}>愿望清单</button><button className={section === "lucky" ? "selected" : ""} onClick={() => { navigateSection("lucky"); setNavMenu(null); }}>好运抽选机</button><button className={section === "expenses" ? "selected" : ""} onClick={() => { navigateSection("expenses"); setNavMenu(null); }}>一起记账</button><button className={section === "polls" ? "selected" : ""} onClick={() => { navigateSection("polls"); setNavMenu(null); }}>No Push</button></div>}
         </div>
         <button
           className={section === "moments" ? "active" : ""}
-          onClick={() => setSection("moments")}
+          onClick={() => navigateSection("moments")}
         >
           动态
         </button>
         <button
           className={section === "photos" ? "active" : ""}
-          onClick={() => setSection("photos")}
+          onClick={() => navigateSection("photos")}
         >
           相册
         </button>
@@ -4190,10 +4255,10 @@ export default function Home() {
       {section === "bag" && wishPage}
       {["wishes", "lucky", "expenses", "polls"].includes(section) && <div className="bag-tool">{section === "wishes" && wishPage}{section === "lucky" && luckyPage}{section === "expenses" && expensePage}{section === "polls" && pollPage}</div>}
       {section === "moments" && (
-        <MomentsPage user={user} member={member} members={members} />
+        <Suspense fallback={<div className="module-loading"><span />正在打开动态…</div>}><MomentsPage user={user} member={member} members={members} /></Suspense>
       )}
       {section === "photos" && (
-        <AlbumsPage user={user} member={member} members={members} />
+        <Suspense fallback={<div className="module-loading"><span />正在打开相册…</div>}><AlbumsPage user={user} member={member} members={members} /></Suspense>
       )}
       {section === "calendar" && (
         <>
@@ -4398,6 +4463,7 @@ export default function Home() {
                     const dayEvents = displayEvents.filter(
                       (e) => !e.allDay && e.date === key && matchesFilter(e),
                     );
+                    const eventLayouts = overlappingEventLayout(dayEvents);
                     return (
                       <div
                         className={`week-column ${key === dateKey(new Date()) ? "today-column" : ""}`}
@@ -4415,26 +4481,32 @@ export default function Home() {
                           if (event.key === "Enter") startAdd(key);
                         }}
                       >
-                        {dayEvents.map((e) => (
-                          <button
-                            key={`${e.id}-${e.date}-${e.time}`}
-                            className="week-event"
-                            style={{
-                              ...eventStyle(e),
-                              top: timeTop(e.time),
-                              height: durationHeight(e.time, e.endTime),
-                            }}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              openEventSheet(events.find((item) => item.id === e.id)!);
-                            }}
-                          >
-                            <b>
-                              {e.time}–{e.endTime}
-                            </b>
-                            <span>{e.title}</span>
-                          </button>
-                        ))}
+                        {dayEvents.map((e) => {
+                          const layout = eventLayouts.get(e) || { column: 0, columnCount: 1 };
+                          const columnWidth = 100 / layout.columnCount;
+                          return (
+                            <button
+                              key={`${e.id}-${e.date}-${e.time}`}
+                              className={`week-event ${layout.columnCount > 1 ? "overlapping" : ""}`}
+                              title={`${e.time}–${e.endTime} ${e.title}`}
+                              style={{
+                                ...eventStyle(e),
+                                top: timeTop(e.time),
+                                height: durationHeight(e.time, e.endTime),
+                                left: `calc(${layout.column * columnWidth}% + 3px)`,
+                                right: "auto",
+                                width: `calc(${columnWidth}% - 6px)`,
+                              }}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openEventSheet(events.find((item) => item.id === e.id)!);
+                              }}
+                            >
+                              <b>{e.time}–{e.endTime}</b>
+                              <span>{e.title}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -5002,7 +5074,7 @@ export default function Home() {
             {editing && eventSheetTab === "photos" ? (
               <>
                 <div className="event-detail-meta"><p><b>{editing.allDay ? "全天" : `${editing.time}–${editing.endTime}`}</b><span>{editing.date}{editing.endDate !== editing.date ? ` 至 ${editing.endDate}` : ""}</span></p>{editing.location && <p><b>地点</b><span>{editing.location}</span></p>}{editing.note && <p><b>备注</b><span>{editing.note}</span></p>}</div>
-                <EventMediaPanel event={editing} user={user} member={member} members={members}/>
+                <Suspense fallback={<div className="module-loading"><span />正在读取活动照片…</div>}><EventMediaPanel event={editing} user={user} member={member} members={members}/></Suspense>
               </>
             ) : editing && eventSheetTab === "details" ? (
               <div className="event-detail-meta"><p><b>{editing.allDay ? "全天" : `${editing.time}–${editing.endTime}`}</b><span>{editing.date}{editing.endDate !== editing.date ? ` 至 ${editing.endDate}` : ""}</span></p>{editing.location && <p><b>地点</b><span>{editing.location}</span></p>}{editing.note && <p><b>备注</b><span>{editing.note}</span></p>}</div>
