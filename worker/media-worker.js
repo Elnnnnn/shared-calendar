@@ -1,167 +1,126 @@
-const SUPABASE_URL = "https://yytyntrgqkddfsliooke.supabase.co";
-const SUPABASE_KEY = "sb_publishable_r82IW91PSRwRa_dye0g1Cw_qU0zLeDW";
-const BESTIES = new Set([
-  "elainezhang1110@gmail.com",
-  "zxu1115@icloud.com",
-  "1914660774@qq.com",
-  "mqianw00@163.com",
-]);
-const FRIENDS = new Set(["elainezhang1110@gmail.com", "test@test.com"]);
-const ALLOWED_ORIGINS = new Set([
-  "https://elnnnnn.github.io",
-  "http://localhost:3000",
-  "http://localhost:5173",
-]);
-const EXTENSIONS = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/heic": "heic",
-  "image/heif": "heif",
-};
+şŠmş&yºŞÃòân¶«Ëñè™æë{Ü™ßì…éez{ì†X§{_?n)ÿ¦Ã©z¶­Š‰ç¢Ú^®h­µçXÛÛœİÕTPTÑWÕT“HšÎ‹ËŞ^][™ÜZÙœÛ[ÛÚÙKœİ\X˜\ÙK˜ÛÈÂ˜ÛÛœİÕTPTÑWÒÑVHHœØ—ÜX›\ÚX›WÜ’UÎLTÔÔ˜WÙYLÌPİ×ÜUL“QÈÂ˜ÛÛœİ‘TÕQTÈH™]ÈÙ]
+Âˆ™[Z[™^š[™ÌLLLÛXZ[˜ÛÛH‹ˆLLLMPXÛİY˜ÛÛH‹ˆŒNLMŒÍÍ\K˜ÛÛH‹ˆ›\ZX[ÌMŒË˜ÛÛH‹—JNÂ˜ÛÛœİ”’QS‘ÈH™]ÈÙ]
+È™[Z[™^š[™ÌLLLÛXZ[˜ÛÛH‹\İ\İ˜ÛÛH—JNÂ˜ÛÛœİSÕÑQÓÔ’QÒS”ÈH™]ÈÙ]
+ÂˆšÎ‹ËÙ[››››‹™Ú]X‹š[È‹ˆš‹ËÛØØ[ÜİŒÌ‹ˆš‹ËÛØØ[ÜİLMÌÈ‹—JNÂ˜ÛÛœİVS”ÒSÓ”ÈHÂˆš[XYÙKÚœYÈˆšœÈ‹ˆš[XYÙKÜ™Èˆœ™È‹ˆš[XYÙKİÙXœˆÙXœ‹ˆš[XYÙKÚZXÈˆšZXÈ‹ˆš[XYÙKÚZYˆˆšZYˆ‹ŸNÂ‚™[˜İ[ÛˆÛÜœÊ™\]Y\İ
+HÂˆÛÛœİÜšYÚ[ˆH™\]Y\İšXY\œË™Ù]
+“ÜšYÚ[ˆŠHˆÂˆ™]\›ˆÂˆXØÙ\ÜËPÛÛ›ÛP[İËSÜšYÚ[ˆˆSÕÑQÓÔ’QÒS”Ëš\ÊÜšYÚ[ŠBˆÈÜšYÚ[‚ˆˆšÎ‹ËÙ[››››‹™Ú]X‹š[È‹ˆXØÙ\ÜËPÛÛ›ÛP[İËRXY\œÈˆ]]Üš^˜][Û‹ÛÛ[U\KQš[KS˜[YKQš[KTÚ^™H‹ˆXØÙ\ÜËPÛÛ›ÛP[İËSY]ÙÈˆ‘ÑUÔÕSUKÔSÓ”È‹ˆXØÙ\ÜËPÛÛ›ÛQ^ÜÙKRXY\œÈˆ‘UYËSYYXKU˜\šX[‹ˆXØÙ\ÜËPÛÛ›ÛSX^PYÙHˆ‹ˆ˜\Nˆ“ÜšYÚ[ˆ‹ˆNÂŸB‚™[˜İ[ÛˆœÛÛŠ™\]Y\İ˜[YKİ]\ÈHŒ
+HÂˆ™]\›ˆ™]È™\ÜÛœÙJ”ÓÓ‹œİš[™ÚYJ˜[YJKÂˆİ]\ËˆXY\œÎˆÈ‹‹˜ÛÜœÊ™\]Y\İ
+KÛÛ[U\Hˆ˜\XØ][Û‹ÚœÛÛˆˆKˆJNÂŸB‚˜\Ş[˜È[˜İ[Ûˆİ\œ™[\Ù\Š™\]Y\İ
+HÂˆÛÛœİ]]Üš^˜][ÛˆH™\]Y\İšXY\œË™Ù]
+]]Üš^˜][ÛˆŠNÂˆYˆ
+X]]Üš^˜][ÛËœİ\ÕÚ]
+™X\™\ˆŠJH™]\›ˆ[ÂˆÛÛœİ™\ÜÛœÙHH]ØZ]™]Ú
+	ÔÕTPTÑWÕT“KØ]]İŒKİ\Ù\˜ÂˆXY\œÎˆÈ\ZÙ^NˆÕTPTÑWÒÑVK]]Üš^˜][Ûˆ]]Üš^˜][ÛˆKˆJNÂˆYˆ
+\™\ÜÛœÙK›ÚÊH™]\›ˆ[ÂˆÛÛœİ\Ù\ˆH]ØZ]™\ÜÛœÙKšœÛÛŠ
+NÂˆ™]\›ˆÈ‹‹\Ù\‹]]Üš^˜][Û‹[XZ[ˆİš[™Ê\Ù\‹™[XZ[ˆŠKÓİÙ\Ø\ÙJ
+HNÂŸB‚™[˜İ[ÛˆØ[•\ÙQÜ›İ\
+[XZ[Ü›İ\
+HÂˆYˆ
+Ü›İ\OOH˜›İŠH™]\›ˆ[XZ[OOH™[Z[™^š[™ÌLLLÛXZ[˜ÛÛHÂˆ™]\›ˆÜ›İ\OOH˜™\İY\È‚ˆÈ‘TÕQTËš\Ê[XZ[
+BˆˆÜ›İ\OOH™œšY[™È‚ˆÈ”’QS‘Ëš\Ê[XZ[
+Bˆˆ˜[ÙNÂŸB‚˜\Ş[˜È[˜İ[Ûˆİ\X˜\ÙT™\]Y\İ
+\Ù\‹][š]HßJHÂˆ™]\›ˆ™]Ú
+	ÔÕTPTÑWÕT“KÜ™\İİŒKÉÜ]XÂˆ‹‹š[š]ˆXY\œÎˆÂˆ\ZÙ^NˆÕTPTÑWÒÑVKˆ]]Üš^˜][Ûˆ\Ù\‹˜]]Üš^˜][Û‹ˆ‹‹Š[š]šXY\œÈßJKˆKˆJNÂŸB‚˜\Ş[˜È[˜İ[Ûˆ\ØYİÊ™\]Y\İ[‹\Ù\ŠHÂˆÛÛœİ\›H™]ÈT“
+™\]Y\İ\›
+NÂˆÛÛœİÜ›İ\H\›œÙX\˜Ú\˜[\Ë™Ù]
+™Ü›İ\ŠHˆÂˆÛÛœİ]™[YH\›œÙX\˜Ú\˜[\Ë™Ù]
+™]™[ÚYŠNÂˆÛÛœİZ[YHH
+™\]Y\İšXY\œË™Ù]
+ÛÛ[U\HŠHˆŠKœÜ]
+ÈŠVÌNÂˆÛÛœİÚ^™HH[X™\Šˆ™\]Y\İšXY\œË™Ù]
+–Qš[KTÚ^™HŠHˆ™\]Y\İšXY\œË™Ù]
+ÛÛ[S[™İŠHˆˆ
+NÂˆYˆ
+XØ[•\ÙQÜ›İ\
+\Ù\‹™[XZ[Ü›İ\
+JH™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹¥è9§`ù."¹/(9b,:/æy.*¹îáˆKÊNÂˆYˆ
+QVS”ÒSÓ”ÖÛZ[YWJH™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹æë¹bcycê¹¥+ù£ H”øà T‘øà UÙX”9d£RPÈ9áiùâaÈˆKMJNÂˆYˆ
+\™\]Y\İ˜›ÙH\Ú^™HÚ^™HˆL
+ˆL
+ˆL
+Bˆ™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹ceyo(9áiùâaúg 9l#ù.£ˆLPˆˆKLÊNÂ‚ˆÛÛœİYHÜ\Ëœ˜[™ÛUURQ
 
-function cors(request) {
-  const origin = request.headers.get("Origin") || "";
-  return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.has(origin)
-      ? origin
-      : "https://elnnnnn.github.io",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-File-Name, X-File-Size",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    Vary: "Origin",
-  };
-}
-
-function json(request, value, status = 200) {
-  return new Response(JSON.stringify(value), {
-    status,
-    headers: { ...cors(request), "Content-Type": "application/json" },
-  });
-}
-
-async function currentUser(request) {
-  const authorization = request.headers.get("Authorization");
-  if (!authorization?.startsWith("Bearer ")) return null;
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: authorization },
-  });
-  if (!response.ok) return null;
-  const user = await response.json();
-  return { ...user, authorization, email: String(user.email || "").toLowerCase() };
-}
-
-function canUseGroup(email, group) {
-  if (group === "both") return email === "elainezhang1110@gmail.com";
-  return group === "besties"
-    ? BESTIES.has(email)
-    : group === "friends"
-      ? FRIENDS.has(email)
-      : false;
-}
-
-async function supabaseRequest(user, path, init = {}) {
-  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: user.authorization,
-      ...(init.headers || {}),
-    },
-  });
-}
-
-async function uploadPhoto(request, env, user) {
-  const url = new URL(request.url);
-  const group = url.searchParams.get("group") || "";
-  const eventId = url.searchParams.get("event_id");
-  const mime = (request.headers.get("Content-Type") || "").split(";")[0];
-  const size = Number(
-    request.headers.get("X-File-Size") ||
-      request.headers.get("Content-Length") ||
-      0,
-  );
-  if (!canUseGroup(user.email, group)) return json(request, { error: "æ— æƒä¸Šä¼ åˆ°è¿™ä¸ªç»„" }, 403);
-  if (!EXTENSIONS[mime]) return json(request, { error: "ç›®å‰åªæ”¯æŒ JPGã€PNGã€WebP å’Œ HEIC ç…§ç‰‡" }, 415);
-  if (!request.body || !size || size > 10 * 1024 * 1024)
-    return json(request, { error: "å•å¼ ç…§ç‰‡éœ€å°äº 10MB" }, 413);
-
-  const id = crypto.randomUUID();
-  const key = `${group}/${user.id}/${id}.${EXTENSIONS[mime]}`;
-  await env.PHOTOS.put(key, request.body, {
-    httpMetadata: { contentType: mime },
-    customMetadata: { owner: user.id, group },
-  });
-  const fileName = decodeURIComponent(request.headers.get("X-File-Name") || "photo");
-  const created = await supabaseRequest(user, "shared_calendar_photos?select=*", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Prefer: "return=representation" },
-    body: JSON.stringify({
-      id,
-      object_key: key,
-      group_key: group,
-      uploader_user_id: user.id,
-      uploader_email: user.email,
-      event_id: eventId ? Number(eventId) : null,
-      file_name: fileName.slice(0, 200),
-      mime_type: mime,
-      size_bytes: size,
-    }),
-  });
-  if (!created.ok) {
-    await env.PHOTOS.delete(key);
-    return json(request, { error: "ç…§ç‰‡èµ„æ–™ä¿å­˜å¤±è´¥" }, 400);
-  }
-  const rows = await created.json();
-  return json(request, rows[0], 201);
-}
-
-async function getPhoto(request, env, user, id) {
-  const found = await supabaseRequest(
-    user,
-    `shared_calendar_photos?id=eq.${encodeURIComponent(id)}&select=object_key,mime_type`,
-  );
-  if (!found.ok) return json(request, { error: "è¯»å–ç…§ç‰‡èµ„æ–™å¤±è´¥" }, 400);
-  const rows = await found.json();
-  if (!rows.length) return json(request, { error: "ç…§ç‰‡ä¸å­˜åœ¨æˆ–æ— æƒæŸ¥çœ‹" }, 404);
-  const object = await env.PHOTOS.get(rows[0].object_key);
-  if (!object) return json(request, { error: "ç…§ç‰‡æ–‡ä»¶ä¸å­˜åœ¨" }, 404);
-  const headers = new Headers(cors(request));
-  object.writeHttpMetadata(headers);
-  headers.set("ETag", object.httpEtag);
-  headers.set("Cache-Control", "private, max-age=300");
-  return new Response(object.body, { headers });
-}
-
-async function deletePhoto(request, env, user, id) {
-  const deleted = await supabaseRequest(
-    user,
-    `shared_calendar_photos?id=eq.${encodeURIComponent(id)}&select=object_key`,
-    { method: "DELETE", headers: { Prefer: "return=representation" } },
-  );
-  if (!deleted.ok) return json(request, { error: "åˆ é™¤å¤±è´¥" }, 400);
-  const rows = await deleted.json();
-  if (!rows.length) return json(request, { error: "åªèƒ½åˆ é™¤è‡ªå·±ä¸Šä¼ çš„ç…§ç‰‡" }, 403);
-  await env.PHOTOS.delete(rows[0].object_key);
-  return json(request, { success: true });
-}
-
-export default {
-  async fetch(request, env) {
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(request) });
-    const url = new URL(request.url);
-    if (url.pathname === "/health") return json(request, { ok: true });
-    const user = await currentUser(request);
-    if (!user) return json(request, { error: "è¯·å…ˆç™»å½•" }, 401);
-    try {
-      if (url.pathname === "/photos" && request.method === "POST")
-        return await uploadPhoto(request, env, user);
-      const match = url.pathname.match(/^\/photos\/([0-9a-f-]+)$/i);
-      if (match && request.method === "GET") return await getPhoto(request, env, user, match[1]);
-      if (match && request.method === "DELETE") return await deletePhoto(request, env, user, match[1]);
-      return json(request, { error: "Not found" }, 404);
-    } catch (error) {
-      console.error(JSON.stringify({ route: url.pathname, error: String(error) }));
-      return json(request, { error: "ç…§ç‰‡æœåŠ¡æš‚æ—¶ä¸å¯ç”¨" }, 500);
-    }
-  },
-};
+NÂˆÛÛœİÙ^HH	ÙÜ›İ\KÉİ\Ù\‹šYKÉÚYK‰ÑVS”ÒSÓ”ÖÛZ[YW_XÂˆ]ØZ][‹”ÕÔËœ]
+Ù^K™\]Y\İ˜›ÙKÂˆY]Y]NˆÈÛÛ[\NˆZ[YHKˆİ\İÛSY]Y]NˆÈİÛ™\ˆ\Ù\‹šYÜ›İ\KˆJNÂˆÛÛœİš[S˜[YHHXÛÙUT’PÛÛ\Û™[
+™\]Y\İšXY\œË™Ù]
+–Qš[KS˜[YHŠHœİÈŠNÂˆÛÛœİÜ™X]YH]ØZ]İ\X˜\ÙT™\]Y\İ
+\Ù\‹œÚ\™YØØ[[™\—ÜİÜÏÜÙ[XİJˆ‹ÂˆY]Ùˆ”ÔÕ‹ˆXY\œÎˆÈÛÛ[U\Hˆ˜\XØ][Û‹ÚœÛÛˆ‹™Y™\ˆœ™]\›\™\™\Ù[][ÛˆˆKˆ›ÙNˆ”ÓÓ‹œİš[™ÚYJÂˆYˆØš™XİÚÙ^NˆÙ^KˆÜ›İ\ÚÙ^NˆÜ›İ\ˆ\ØY\—İ\Ù\—ÚYˆ\Ù\‹šYˆ\ØY\—Ù[XZ[ˆ\Ù\‹™[XZ[ˆ]™[ÚYˆ]™[YÈ[X™\Š]™[Y
+Hˆ[ˆš[WÛ˜[YNˆš[S˜[YKœÛXÙJŒ
+KˆZ[YWİ\NˆZ[YKˆÚ^™WØ]\ÎˆÚ^™KˆJKˆJNÂˆYˆ
+XÜ™X]Y›ÚÊHÂˆ]ØZ][‹”ÕÔË™[]JÙ^JNÂˆ™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹áiùâaú-a9¥¦y/çykf9i,z-)HˆK
+NÂˆBˆÛÛœİ›İÜÈH]ØZ]Ü™X]YšœÛÛŠ
+NÂˆ™]\›ˆœÛÛŠ™\]Y\İ›İÜÖÌKŒJNÂŸB‚˜\Ş[˜È[˜İ[ÛˆÙ]İÊ™\]Y\İ[‹\Ù\‹Y
+HÂˆÛÛœİ›İ[™H]ØZ]İ\X˜\ÙT™\]Y\İ
+ˆ\Ù\‹ˆÚ\™YØØ[[™\—ÜİÜÏÚYY\K‰Ù[˜ÛÙUT’PÛÛ\Û™[
+Y
+_IœÙ[Xİ[Øš™XİÚÙ^KZ[YWİ\Xˆ
+NÂˆYˆ
+Y›İ[™›ÚÊH™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆº+îùcå¹áiùâaú-a9¥¦yi,z-)HˆK
+NÂˆÛÛœİ›İÜÈH]ØZ]›İ[™šœÛÛŠ
+NÂˆYˆ
+\›İÜË›[™İ
+H™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹áiùâaù.#ykf9g*9¢%¹¥è9§`ù§éyç"ÈˆK
+NÂˆÛÛœİØ[Ñ\Ü^HH™]ÈT“
+™\]Y\İ\›
+KœÙX\˜Ú\˜[\Ë™Ù]
+˜\šX[ŠHOOH™\Ü^HÂˆÛÛœİ\Ü^RÙ^HH	Ü›İÜÖÌK›Øš™XİÚÙ^_K™\Ü^KÙXœÂˆ]Øš™XİHØ[Ñ\Ü^HÈ]ØZ][‹”ÕÔË™Ù]
+\Ü^RÙ^JHˆ[ÂˆÛÛœİ˜\šX[HØš™XİÈ™\Ü^Hˆˆ›ÜšYÚ[˜[ÂˆYˆ
+[Øš™Xİ
+HØš™XİH]ØZ][‹”ÕÔË™Ù]
+›İÜÖÌK›Øš™XİÚÙ^JNÂˆYˆ
+[Øš™Xİ
+H™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹áiùâaù¥¡ù.í¹.#ykf9g*ˆK
+NÂˆÛÛœİXY\œÈH™]ÈXY\œÊÛÜœÊ™\]Y\İ
+JNÂˆØš™XİÜš]RY]Y]JXY\œÊNÂˆXY\œËœÙ]
+‘UYÈ‹Øš™Xİš]YÊNÂˆXY\œËœÙ]
+ØXÚKPÛÛ›Û‹œš]˜]KX^XYÙONŠNÂˆXY\œËœÙ]
+–SYYXKU˜\šX[‹˜\šX[
+NÂˆ™]\›ˆ™]È™\ÜÛœÙJØš™Xİ˜›ÙKÈXY\œÈJNÂŸB‚˜\Ş[˜È[˜İ[Ûˆ\ØY\Ü^TİÊ™\]Y\İ[‹\Ù\‹Y
+HÂˆÛÛœİZ[YHH
+™\]Y\İšXY\œË™Ù]
+ÛÛ[U\HŠHˆŠKœÜ]
+ÈŠVÌNÂˆÛÛœİÚ^™HH[X™\Š™\]Y\İšXY\œË™Ù]
+ÛÛ[S[™İŠH
+NÂˆYˆ
+Z[YHOOHš[XYÙKİÙXœˆ\™\]Y\İ˜›ÙH\Ú^™HÚ^™HˆL
+ˆL
+Bˆ™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹leyé.¹fï¹¨/9o#ù¢%¹i)ùl#ù.#y«hùèkˆˆKMJNÂˆÛÛœİ›İ[™H]ØZ]İ\X˜\ÙT™\]Y\İ
+ˆ\Ù\‹ˆÚ\™YØØ[[™\—ÜİÜÏÚYY\K‰Ù[˜ÛÙUT’PÛÛ\Û™[
+Y
+_IœÙ[Xİ[Øš™XİÚÙ^Xˆ
+NÂˆYˆ
+Y›İ[™›ÚÊH™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆº+îùcå¹áiùâaú-a9¥¦yi,z-)HˆK
+NÂˆÛÛœİ›İÜÈH]ØZ]›İ[™šœÛÛŠ
+NÂˆYˆ
+\›İÜË›[™İ
+H™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹áiùâaù.#ykf9g*9¢%¹¥è9§`ù§éyç"ÈˆK
+NÂˆ]ØZ][‹”ÕÔËœ]
+	Ü›İÜÖÌK›Øš™XİÚÙ^_K™\Ü^KÙXœ™\]Y\İ˜›ÙKÂˆY]Y]NˆÈÛÛ[\Nˆš[XYÙKİÙXœˆKˆİ\İÛSY]Y]NˆÈÙ[™\˜]YNˆ\Ù\‹šYKˆJNÂˆ™]\›ˆœÛÛŠ™\]Y\İÈİXØÙ\ÜÎˆYHKŒJNÂŸB‚˜\Ş[˜È[˜İ[Ûˆ[]TİÊ™\]Y\İ[‹\Ù\‹Y
+HÂˆÛÛœİ[]YH]ØZ]İ\X˜\ÙT™\]Y\İ
+ˆ\Ù\‹ˆÚ\™YØØ[[™\—ÜİÜÏÚYY\K‰Ù[˜ÛÙUT’PÛÛ\Û™[
+Y
+_IœÙ[Xİ[Øš™XİÚÙ^XˆÈY]Ùˆ‘SUH‹XY\œÎˆÈ™Y™\ˆœ™]\›\™\™\Ù[][ÛˆˆHKˆ
+NÂˆYˆ
+Y[]Y›ÚÊH™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹b(:fi9i,z-)HˆK
+NÂˆÛÛœİ›İÜÈH]ØZ][]YšœÛÛŠ
+NÂˆYˆ
+\›İÜË›[™İ
+H™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹cêº ïyb(:fi:!ê¹mìy."¹/(9æ¡9áiùâaÈˆKÊNÂˆ]ØZ][‹”ÕÔË™[]J›İÜÖÌK›Øš™XİÚÙ^JNÂˆ]ØZ][‹”ÕÔË™[]J	Ü›İÜÖÌK›Øš™XİÚÙ^_K™\Ü^KÙXœ
+NÂˆ™]\›ˆœÛÛŠ™\]Y\İÈİXØÙ\ÜÎˆYHJNÂŸB‚™^ÜY˜][Âˆ\Ş[˜È™]Ú
+™\]Y\İ[ŠHÂˆYˆ
+™\]Y\İ›Y]ÙOOH“ÔSÓ”ÈŠH™]\›ˆ™]È™\ÜÛœÙJ[Èİ]\ÎˆŒXY\œÎˆÛÜœÊ™\]Y\İ
+HJNÂˆÛÛœİ\›H™]ÈT“
+™\]Y\İ\›
+NÂˆYˆ
+\›œ]˜[YHOOH‹ÚX[ŠH™]\›ˆœÛÛŠ™\]Y\İÈÚÎˆYHJNÂˆÛÛœİ\Ù\ˆH]ØZ]İ\œ™[\Ù\Š™\]Y\İ
+NÂˆYˆ
+]\Ù\ŠH™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆº+íùab9ænùoeHˆKJNÂˆHÂˆYˆ
+\›œ]˜[YHOOH‹ÜİÜÈˆ	‰ˆ™\]Y\İ›Y]ÙOOH”ÔÕŠBˆ™]\›ˆ]ØZ]\ØYİÊ™\]Y\İ[‹\Ù\ŠNÂˆÛÛœİX]ÚH\›œ]˜[YK›X]Ú
+×—ÜİÜ×ÊÌNXKY‹WJÊIÚJNÂˆYˆ
+X]Ú	‰ˆ™\]Y\İ›Y]ÙOOH‘ÑUŠH™]\›ˆ]ØZ]Ù]İÊ™\]Y\İ[‹\Ù\‹X]ÚÌWJNÂˆYˆ
+X]Ú	‰ˆ™\]Y\İ›Y]ÙOOH‘SUHŠH™]\›ˆ]ØZ][]TİÊ™\]Y\İ[‹\Ù\‹X]ÚÌWJNÂˆÛÛœİ\Ü^SX]ÚH\›œ]˜[YK›X]Ú
+×—ÜİÜ×ÊÌNXKY‹WJÊWÙ\Ü^IÚJNÂˆYˆ
+\Ü^SX]Ú	‰ˆ™\]Y\İ›Y]ÙOOH”ÔÕŠBˆ™]\›ˆ]ØZ]\ØY\Ü^TİÊ™\]Y\İ[‹\Ù\‹\Ü^SX]ÚÌWJNÂˆ™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ“›İ›İ[™ˆK
+NÂˆHØ]Ú
+\œ›ÜŠHÂˆÛÛœÛÛK™\œ›ÜŠ”ÓÓ‹œİš[™ÚYJÈ›İ]Nˆ\›œ]˜[YK\œ›Üˆİš[™Ê\œ›ÜŠHJJNÂˆ™]\›ˆœÛÛŠ™\]Y\İÈ\œ›Üˆ¹áiùâaù§#yb¨y¦ ¹¥í¹.#ycëùå*ˆKL
+NÂˆBˆKŸNÂ

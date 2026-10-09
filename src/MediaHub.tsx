@@ -1,533 +1,1159 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+şŠmş&yºŞÃòân¶«Ëñè™æë{Ü™ßì…éez{ì†X§{_?n)ÿ¦Ã©z¶­Š‰ç¢Ú^®h­µçZ[\ÜÈ\ÙQY™™Xİ\ÙSY[[Ë\ÙT™Y‹\ÙTİ]K\HÚ[™ÙQ]™[Hœ›ÛHœ™XXİÂš[\Ü\HÈ\Ù\ˆHœ›ÛHİ\X˜\ÙKÜİ\X˜\ÙKZœÈÂš[\ÜÈİ\X˜\ÙHHœ›ÛH‹‹Üİ\X˜\ÙHÂ‚˜ÛÛœİQQPWĞTHHšÎ‹ËÜÚ\™YXØ[[™\‹[YYXK™[Z[™K\Ú\™YXØ[[™\‹ÛÜšÙ\œË™]ˆÂ˜ÛÛœİSRS‘WÑSPRSH™[Z[™^š[™ÌLLLÛXZ[˜ÛÛHÂ\HÜ›İ\Ù^HH˜™\İY\Èˆ™œšY[™Èˆ˜›İÂ\HY[X™\ˆHÈ[XZ[ˆİš[™ÎÈ\Ü^WÛ˜[YNˆİš[™ÎÈÛÛÜˆİš[™ÈNÂ\HİÈHÈYˆİš[™ÎÈÜ›İ\ÚÙ^NˆÜ›İ\Ù^NÈ\ØY\—Ù[XZ[ˆİš[™ÎÈ]™[ÚYˆ[X™\ˆ[Èš[WÛ˜[YNˆİš[™ÎÈÜ™X]YØ]ˆİš[™ÈNÂ\H[[HHÈYˆ[X™\È˜[YNˆİš[™ÎÈÜ›İ\ÚÙ^NˆÜ›İ\Ù^NÈİÛ™\—Ù[XZ[ˆİš[™ÎÈÛİ™\—Üİ×ÚYˆİš[™È[ÈÜ™X]YØ]ˆİš[™ÈNÂ\H[ÛY[HÈYˆ[X™\ÈÜ›İ\ÚÙ^NˆÜ›İ\Ù^NÈ]]Ü—Ù[XZ[ˆİš[™ÎÈØ\[Ûˆİš[™ÎÈ]™[ÚYˆ[X™\ˆ[ÈÛİ\˜ÙWÙ]™[Û[ÛÙÚYˆ[X™\ˆ[ÈÛİ\˜ÙWÙ]™[Üİ×ÚYˆİš[™È[ÈÜ™X]YØ]ˆİš[™ÈNÂ\H[ÛY[İÈHÈ[ÛY[ÚYˆ[X™\Èİ×ÚYˆİš[™ÎÈÜÚ][Ûˆ[X™\ˆNÂ\HZÙHHÈ[ÛY[ÚYˆ[X™\È\Ù\—ÚYˆİš[™ÎÈ\Ù\—Ù[XZ[ˆİš[™ÎÈÜ™X]YØ]Îˆİš[™ÎÈ™XYØ]Îˆİš[™È[NÂ\HÛÛ[Y[HÈYˆ[X™\È[ÛY[ÚYˆ[X™\È]]Ü—İ\Ù\—ÚYˆİš[™ÎÈ]]Ü—Ù[XZ[ˆİš[™ÎÈ›ÙNˆİš[™ÎÈÜ™X]YØ]ˆİš[™ÎÈ™\Wİ×ØÛÛ[Y[ÚYˆ[X™\ˆ[È™\Wİ×Ù]™[Û[ÛÙÚYˆ[X™\ˆ[È™\Wİ×İ\Ù\—ÚYˆİš[™È[È™\Wİ×Ù[XZ[ˆİš[™È[È™\WÜ™XYØ]ˆİš[™È[NÂ\H]™[[ÛÙHÈYˆ[X™\È]™[ÚYˆ[X™\È]]Ü—İ\Ù\—ÚYˆİš[™ÎÈ]]Ü—Ù[XZ[ˆİš[™ÎÈ›ÙNˆİš[™ÎÈÜ™X]YØ]ˆİš[™ÈNÂ\H™\U\™Ù]HÈ[ÛY[Yˆ[X™\ÈÚ[™ˆ˜ÛÛ[Y[ˆ›[ÛÙÈYˆ[X™\È[XZ[ˆİš[™ÈNÂ\H[ÛY[İ]ÈHÈ[ÛY[ÚYˆ[X™\ÈZÙWØÛİ[ˆ[X™\ÈÛÛ[Y[ØÛİ[ˆ[X™\ÈZÙYØWÛYNˆ›ÛÛX[ˆNÂ\H[ÛY[›İYšXØ][ÛˆHÈÙ^Nˆİš[™ÎÈ[ÛY[Yˆ[X™\ÈXİÜ‘[XZ[ˆİš[™ÎÈÚ[™ˆ›ZÙHˆœ™\HÈÜ™X]Y]ˆİš[™ÎÈ[œ™XYˆ›ÛÛX[ˆNÂ\HØ[[™\‘]™[HÈYˆ[X™\È]Nˆİš[™ÎÈ]Nˆİš[™ÎÈİÛ™\ˆİš[™ÎÈ\XÚ\[Îˆİš[™Ö×NÈ]YY[˜ÙQÜ›İ\ÎˆÜ›İ\Ù^HNÂ\H]™[İÓ[šÈHÈ]™[ÚYˆ[X™\Èİ×ÚYˆİš[™ÈNÂ˜ÛÛœİ[ÛY[Ñ™YYØXÚHH™]ÈX\İš[™ËÈ[ÛY[Îˆ[ÛY[×NÈØ]™Y]ˆ[X™\ˆOŠ
+NÂ‚™[˜İ[ÛˆÜ›İ\X™[
+Ü›İ\ˆÜ›İ\Ù^JHÈ™]\›ˆÜ›İ\OOH˜™\İY\ÈˆÈºeîº''9îáˆˆÜ›İ\OOH™œšY[™ÈˆÈ¹§"ùcâùîáˆˆ¹.)9.*¹îáÈB™[˜İ[Ûˆ[İÙYÜ›İ\Ê[XZ[ˆİš[™ÊNˆÜ›İ\Ù^V×HÂˆ™]\›ˆ[XZ[ÓİÙ\Ø\ÙJ
+HOOHSRS‘WÑSPRSÈÈ˜™\İY\È‹™œšY[™È—Hˆ[XZ[ÓİÙ\Ø\ÙJ
+HOOH\İ\İ˜ÛÛHˆÈÈ™œšY[™È—HˆÈ˜™\İY\È—NÂŸB™[˜İ[Ûˆ\Ü^S˜[YJ[XZ[ˆİš[™ËY[X™\œÎˆY[X™\–×JHÈ™]\›ˆY[X™\œË™š[™
 
-const MEDIA_API = "https://yytyntrgqkddfsliooke.supabase.co/functions/v1/shared-calendar-media-proxy";
-const ELAINE_EMAIL = "elainezhang1110@gmail.com";
-type GroupKey = "besties" | "friends" | "both";
-type Member = { email: string; display_name: string; color: string };
-type Photo = { id: string; group_key: GroupKey; uploader_email: string; event_id: number | null; file_name: string; created_at: string };
-type Album = { id: number; name: string; group_key: GroupKey; owner_email: string; cover_photo_id: string | null; created_at: string };
-type Moment = { id: number; group_key: GroupKey; author_email: string; caption: string; event_id: number | null; source_event_mood_id: number | null; source_event_photo_id: string | null; created_at: string };
-type MomentPhoto = { moment_id: number; photo_id: string; position: number };
-type Like = { moment_id: number; user_id: string; user_email: string; created_at?: string; read_at?: string | null };
-type Comment = { id: number; moment_id: number; author_user_id: string; author_email: string; body: string; created_at: string; reply_to_comment_id: number | null; reply_to_event_mood_id: number | null; reply_to_user_id: string | null; reply_to_email: string | null; reply_read_at: string | null };
-type EventMood = { id: number; event_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
-type ReplyTarget = { momentId: number; kind: "comment" | "mood"; id: number; email: string };
-type MomentStats = { moment_id: number; like_count: number; comment_count: number; liked_by_me: boolean };
-type MomentNotification = { key: string; momentId: number; actorEmail: string; kind: "like" | "reply"; createdAt: string; unread: boolean };
-type CalendarEvent = { id: number; title: string; date: string; owner: string; participants: string[]; audienceGroup?: GroupKey };
-type EventPhotoLink = { event_id: number; photo_id: string };
+JHOˆK™[XZ[ÓİÙ\Ø\ÙJ
+HOOH[XZ[ÓİÙ\Ø\ÙJ
+JOË™\Ü^WÛ˜[YH[XZ[œÜ]
+ŠVÌNÈB™[˜İ[Ûˆš[RÙ^Jš[Nˆš[JHÈ™]\›ˆ	Ùš[K›˜[Y_N‰Ùš[KœÚ^™_N‰Ùš[K›\İ[ÙYšYYXÈB‚˜\Ş[˜È[˜İ[ÛˆÚÙ[Š
+HÂˆÛÛœİÈ]HHH]ØZ]İ\X˜\ÙK˜]]™Ù]Ù\ÜÚ[ÛŠ
+NÂˆ™]\›ˆ]KœÙ\ÜÚ[ÛË˜XØÙ\Ü×İÚÙ[ˆˆÂŸB‚˜\Ş[˜È[˜İ[Ûˆ\ØYİÊš[Nˆš[KÜ›İ\ˆÜ›İ\Ù^K]™[YÎˆ[X™\ˆ[
+HÂˆÛÛœİXØÙ\ÜÕÚÙ[ˆH]ØZ]ÚÙ[Š
+NÂˆÛÛœİ]Y\HH™]ÈT“ÙX\˜Ú\˜[\ÊÈÜ›İ\JNÂˆYˆ
+]™[Y
+H]Y\KœÙ]
+™]™[ÚY‹İš[™Ê]™[Y
+JNÂˆÛÛœİ™\ÜÛœÙHH]ØZ]™]Ú
+	ÓQQPWĞT_KÜİÜÏÉÜ]Y\_XÂˆY]Ùˆ”ÔÕ‹ˆXY\œÎˆÂˆ]]Üš^˜][Ûˆ™X\™\ˆ	ØXØÙ\ÜÕÚÙ[ŸXˆÛÛ[U\Hˆš[K\Kˆ–Qš[KS˜[YHˆ[˜ÛÙUT’PÛÛ\Û™[
+š[K›˜[YJKˆ–Qš[KTÚ^™Hˆİš[™Êš[KœÚ^™JKˆKˆ›ÙNˆš[KˆJNÂˆÛÛœİ™\İ[H]ØZ]™\ÜÛœÙKšœÛÛŠ
+NÂˆYˆ
+\™\ÜÛœÙK›ÚÊH›İÈ™]È\œ›ÜŠ™\İ[™\œ›Üˆ¹."¹/(9i,z-)HŠNÂˆ›ÚYÜ™X]Q\Ü^P›ØŠš[JBˆ[Š
+\Ü^JHOˆ\ØY\Ü^TİÊ™\İ[šY\Ü^KXØÙ\ÜÕÚÙ[ŠJBˆ˜Ø]Ú
 
-function groupLabel(group: GroupKey) { return group === "besties" ? "é—ºèœœç»„" : group === "friends" ? "æœ‹å‹ç»„" : "ä¸¤ä¸ªç»„"; }
-function allowedGroups(email: string): GroupKey[] {
-  return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === "test@test.com" ? ["friends"] : ["besties"];
-}
-function displayName(email: string, members: Member[]) { return members.find((m) => m.email.toLowerCase() === email.toLowerCase())?.display_name || email.split("@")[0]; }
-function fileKey(file: File) { return `${file.name}:${file.size}:${file.lastModified}`; }
 
-async function token() {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token || "";
-}
+HOˆ[™Yš[™Y
+NÂˆ™]\›ˆ™\İ[\ÈİÎÂŸB‚˜ÛÛœİTÔVWÓPVÑQÑHHLŒÂ˜ÛÛœİTÔVWÔUPSUHHÂ‚˜\Ş[˜È[˜İ[ÛˆÜ™X]Q\Ü^P›ØŠÛİ\˜ÙNˆ›ØŠHÂˆÛÛœİš]X\H]ØZ]Ü™X]R[XYÙPš]X\
+Ûİ\˜ÙJNÂˆÛÛœİØØ[HHX]›Z[ŠKTÔVWÓPVÑQÑHÈX]›X^
+š]X\ÚYš]X\šZYÚ
+JNÂˆÛÛœİÚYHX]›X^
+KX]œ›İ[™
+š]X\ÚY
+ˆØØ[JJNÂˆÛÛœİZYÚHX]›X^
+KX]œ›İ[™
+š]X\šZYÚ
+ˆØØ[JJNÂˆÛÛœİØ[˜\ÈHØİ[Y[˜Ü™X]Q[[Y[
+˜Ø[˜\ÈŠNÂˆØ[˜\ËÚYHÚYÂˆØ[˜\ËšZYÚHZYÚÂˆÛÛœİÛÛ^HØ[˜\Ë™Ù]ÛÛ^
+Œ™ŠNÂˆYˆ
+XÛÛ^
+H›İÈ™]È\œ›ÜŠ¹¥è9¬åyå'ù¢$9áiùâaùleyé.¹fïˆŠNÂˆÛÛ^™˜]Ò[XYÙJš]X\ÚYZYÚ
+NÂˆš]X\˜ÛÜÙJ
+NÂˆÛÛœİ\Ü^HH]ØZ]™]È›ÛZ\ÙO›Øˆ[Š
+™\ÛÛ™JHOˆØ[˜\ËĞ›ØŠ™\ÛÛ™Kš[XYÙKİÙXœ‹TÔVWÔUPSUJJNÂˆYˆ
+Y\Ü^JH›İÈ™]È\œ›ÜŠ¹¥è9¬åyå'ù¢$9áiùâaùleyé.¹fïˆŠNÂˆ™]\›ˆ\Ü^NÂŸB‚˜\Ş[˜È[˜İ[Ûˆ\ØY\Ü^TİÊİÒYˆİš[™Ë\Ü^Nˆ›Ø‹XØÙ\ÜÕÚÙ[Îˆİš[™ÊHÂˆÛÛœİ]]ÚÙ[ˆHXØÙ\ÜÕÚÙ[ˆ]ØZ]ÚÙ[Š
+NÂˆÛÛœİ™\ÜÛœÙHH]ØZ]™]Ú
+	ÓQQPWĞT_KÜİÜËÉÜİÒYKÙ\Ü^XÂˆY]Ùˆ”ÔÕ‹ˆXY\œÎˆÈ]]Üš^˜][Ûˆ™X\™\ˆ	Ø]]ÚÙ[ŸXÛÛ[U\Hˆš[XYÙKİÙXœˆKˆ›ÙNˆ\Ü^KˆJNÂˆYˆ
+\™\ÜÛœÙK›ÚÊH›İÈ™]È\œ›ÜŠ¹leyé.¹fï¹/çykf9i,z-)HŠNÂŸB‚˜ÛÛœİİÕ\›ØXÚHH™]ÈX\İš[™Ëİš[™ÏŠ
+NÂ˜ÛÛœİİÔ™\]Y\İØXÚHH™]ÈX\İš[™Ë›ÛZ\ÙOİš[™ÏŠ
+NÂ˜ÛÛœİİĞ˜XÚÙš[ØXÚHH™]ÈÙ]İš[™ÏŠ
+NÂ˜ÛÛœİÕ×ÕT“ĞĞPÒWÓSRUHÂ‚™[˜İ[Ûˆ™[Y[X™\”İÕ\›
+İÒYˆİš[™Ë\›ˆİš[™ÊHÂˆÛÛœİ™]š[İ\ÈHİÕ\›ØXÚK™Ù]
+İÒY
+NÂˆYˆ
+™]š[İ\È	‰ˆ™]š[İ\ÈOOH\›
+HT“œ™]›ÚÙSØš™XİT“
+™]š[İ\ÊNÂˆİÕ\›ØXÚK™[]JİÒY
+NÂˆİÕ\›ØXÚKœÙ]
+İÒY\›
+NÂˆÚ[H
+İÕ\›ØXÚKœÚ^™HˆÕ×ÕT“ĞĞPÒWÓSRU
+HÂˆÛÛœİÛ\İHİÕ\›ØXÚK™[šY\Ê
+K›™^
 
-async function uploadPhoto(file: File, group: GroupKey, eventId?: number | null) {
-  const accessToken = await token();
-  const query = new URLSearchParams({ group });
-  if (eventId) query.set("event_id", String(eventId));
-  const response = await fetch(`${MEDIA_API}/photos?${query}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": file.type,
-      "X-File-Name": encodeURIComponent(file.name),
-      "X-File-Size": String(file.size),
-    },
-    body: file,
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "ä¸Šä¼ å¤±è´¥");
-  return result as Photo;
-}
+K˜[YH\ÈÜİš[™Ëİš[™×H[™Yš[™YÂˆYˆ
+[Û\İ
+Hœ™XZÎÂˆİÕ\›ØXÚK™[]JÛ\İÌJNÂˆT“œ™]›ÚÙSØš™XİT“
+Û\İÌWJNÂˆBŸB‚˜\Ş[˜È[˜İ[ÛˆÚ]™]OŠ\ÚÎˆ
 
-const photoUrlCache = new Map<string, string>();
-const photoRequestCache = new Map<string, Promise<string>>();
+HOˆ›ÛZ\ÙO‹][\ÈHÊHÂˆ]\İ\œ›Üˆ[šÛ›İÛÂˆ›Üˆ
+]][\HÈ][\][\ÎÈ][\
+ÏHJHÂˆHÈ™]\›ˆ]ØZ]\ÚÊ
+NÈBˆØ]Ú
+\œ›ÜŠHÂˆ\İ\œ›ÜˆH\œ›ÜÂˆYˆ
+][\][\ÈHJH]ØZ]™]È›ÛZ\ÙJ
+™\ÛÛ™JHOˆÚ[™İËœÙ][Y[İ]
+™\ÛÛ™KÍL
+ˆ
+][\
+ÈJJJNÂˆBˆBˆ›İÈ\İ\œ›ÜÂŸB‚˜\Ş[˜È[˜İ[ÛˆØYİÕ\›
+İÒYˆİš[™ÊHÂˆÛÛœİØXÚYHİÕ\›ØXÚK™Ù]
+İÒY
+NÂˆYˆ
+ØXÚY
+H™]\›ˆØXÚYÂˆÛÛœİ[™[™ÈHİÔ™\]Y\İØXÚK™Ù]
+İÒY
+NÂˆYˆ
+[™[™ÊH™]\›ˆ[™[™ÎÂˆÛÛœİ™\]Y\İH
+\Ş[˜È
 
-async function loadPhotoUrl(photoId: string) {
-  const cached = photoUrlCache.get(photoId);
-  if (cached) return cached;
-  const pending = photoRequestCache.get(photoId);
-  if (pending) return pending;
-  const request = (async () => {
-    const accessToken = await token();
-    const response = await fetch(`${MEDIA_API}/photos/${photoId}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!response.ok) throw new Error("ç…§ç‰‡è½½å…¥å¤±è´¥");
-    const objectUrl = URL.createObjectURL(await response.blob());
-    photoUrlCache.set(photoId, objectUrl);
-    return objectUrl;
-  })().finally(() => photoRequestCache.delete(photoId));
-  photoRequestCache.set(photoId, request);
-  return request;
-}
+HOˆÂˆÛÛœİXØÙ\ÜÕÚÙ[ˆH]ØZ]ÚÙ[Š
+NÂˆÛÛœİ™\ÜÛœÙHH]ØZ]™]Ú
+	ÓQQPWĞT_KÜİÜËÉÜİÒYOİ˜\šX[Y\Ü^XÈXY\œÎˆÈ]]Üš^˜][Ûˆ™X\™\ˆ	ØXØÙ\ÜÕÚÙ[ŸXHJNÂˆYˆ
+\™\ÜÛœÙK›ÚÊH›İÈ™]È\œ›ÜŠ¹áiùâaú/oyaiyi,z-)HŠNÂˆÛÛœİÛİ\˜ÙHH]ØZ]™\ÜÛœÙK˜›ØŠ
+NÂˆ]\Ü^HHÛİ\˜ÙNÂˆYˆ
+™\ÜÛœÙKšXY\œË™Ù]
+–SYYXKU˜\šX[ŠHOOH›ÜšYÚ[˜[ˆ	‰ˆ\İĞ˜XÚÙš[ØXÚKš\ÊİÒY
+JHÂˆİĞ˜XÚÙš[ØXÚK˜Y
+İÒY
+NÂˆHÂˆ\Ü^HH]ØZ]Ü™X]Q\Ü^P›ØŠÛİ\˜ÙJNÂˆ›ÚY\ØY\Ü^TİÊİÒY\Ü^KXØÙ\ÜÕÚÙ[ŠK˜Ø]Ú
 
-function ProtectedPhoto({ photo, alt = "å…±äº«ç…§ç‰‡" }: { photo: Photo; alt?: string }) {
-  const [src, setSrc] = useState(() => photoUrlCache.get(photo.id) || "");
-  const placeholderRef = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const cached = photoUrlCache.get(photo.id);
-    if (cached) { setSrc(cached); return; }
-    const load = () => { void loadPhotoUrl(photo.id).then((url) => { if (!cancelled) setSrc(url); }).catch(() => undefined); };
-    const target = placeholderRef.current;
-    if (!target || !("IntersectionObserver" in window)) load();
-    else {
-      const observer = new IntersectionObserver((entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        observer.disconnect();
-        load();
-      }, { rootMargin: "240px" });
-      observer.observe(target);
-      return () => { cancelled = true; observer.disconnect(); };
-    }
-    return () => { cancelled = true; };
-  }, [photo.id]);
-  return src ? <img src={src} alt={alt} loading="lazy" decoding="async" /> : <span ref={placeholderRef} className="media-photo-loading">ç…§ç‰‡è½½å…¥ä¸­â€¦</span>;
-}
 
-function GroupSelect({ value, onChange, email, options }: { value: GroupKey; onChange: (group: GroupKey) => void; email: string; options?: GroupKey[] }) {
-  const groups = options || allowedGroups(email);
-  const [open, setOpen] = useState(false);
-  if (groups.length === 1) return <span className="media-group-label">{groupLabel(groups[0])}</span>;
-  return <div className="themed-dropdown"><button type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>{groupLabel(value)}<span>âŒ„</span></button>{open && <div className="themed-dropdown-menu">{groups.map((group) => <button type="button" className={value === group ? "selected" : ""} key={group} onClick={() => { onChange(group); setOpen(false); }}>{groupLabel(group)}</button>)}</div>}</div>;
-}
+HOˆİĞ˜XÚÙš[ØXÚK™[]JİÒY
+JNÂˆHØ]ÚÂˆİĞ˜XÚÙš[ØXÚK™[]JİÒY
+NÂˆBˆBˆÛÛœİØš™Xİ\›HT“˜Ü™X]SØš™XİT“
+\Ü^JNÂˆ™[Y[X™\”İÕ\›
+İÒYØš™Xİ\›
+NÂˆ™]\›ˆØš™Xİ\›ÂˆJJ
+K™š[˜[J
 
-export function EventMediaPanel({ event, user, member, members }: { event: CalendarEvent; user: User; member: Member; members: Member[] }) {
-  const groups: GroupKey[] = event.audienceGroup === "besties"
-    ? ["besties"]
-    : event.audienceGroup === "friends"
-      ? ["friends"]
-      : member.email.toLowerCase() === ELAINE_EMAIL
-        ? ["besties", "friends", "both"]
-        : allowedGroups(member.email);
-  const [group, setGroup] = useState<GroupKey>(groups[0]);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [eventLinks, setEventLinks] = useState<EventPhotoLink[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const [mood, setMood] = useState("");
-  const [publishing, setPublishing] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
-  const [moods, setMoods] = useState<EventMood[]>([]);
-  const [eventMoment, setEventMoment] = useState<Moment | null>(null);
-  const [shareToMoment, setShareToMoment] = useState(false);
-  const [pendingPhotoId, setPendingPhotoId] = useState<string | null | undefined>(undefined);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [groupMenuOpen, setGroupMenuOpen] = useState(false);
-  async function load() {
-    const [photoResult, linkResult, moodResult, momentResult] = await Promise.all([
-      supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").order("created_at", { ascending: false }),
-      supabase.from("shared_calendar_event_photos").select("event_id,photo_id").eq("event_id", event.id),
-      supabase.from("shared_calendar_event_moods").select("id,event_id,author_user_id,author_email,body,created_at").eq("event_id", event.id).order("created_at"),
-      supabase.from("shared_calendar_moments").select("*").eq("event_id", event.id).maybeSingle(),
-    ]);
-    if (photoResult.error || linkResult.error || moodResult.error || momentResult.error) setMessage("æ´»åŠ¨å†…å®¹è¯»å–å¤±è´¥");
-    else {
-      const existingMoment = momentResult.data as Moment | null;
-      setPhotos((photoResult.data || []) as Photo[]);
-      setEventLinks((linkResult.data || []) as EventPhotoLink[]);
-      setMoods((moodResult.data || []) as EventMood[]);
-      setEventMoment(existingMoment);
-      if (existingMoment) setShareToMoment(false);
-    }
-  }
-  useEffect(() => { setPendingPhotoId(undefined); setMood(""); setShareToMoment(false); void load(); }, [event.id]);
-  useEffect(() => { setGroup(groups[0]); }, [event.id, event.audienceGroup]);
-  async function add(eventInput: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(eventInput.target.files || []);
-    if (!files.length) return;
-    if (eventPhoto) { setMessage("æ¯ä¸ªæ´»åŠ¨åªèƒ½æ·»åŠ ä¸€å¼ ç…§ç‰‡ï¼Œè¯·å…ˆç§»é™¤åŸç…§ç‰‡å†æ›´æ¢ã€‚"); eventInput.target.value = ""; return; }
-    setUploadingPhoto(true); setMessage("");
-    try {
-      const photo = await uploadPhoto(files[0], group);
-      setPhotos((current) => [photo, ...current.filter((item) => item.id !== photo.id)]);
-      setPendingPhotoId(photo.id);
-    }
-    catch (error) { setMessage(error instanceof Error ? error.message : "ä¸Šä¼ å¤±è´¥"); }
-    finally { setUploadingPhoto(false); eventInput.target.value = ""; }
-  }
-  function remove() {
-    setMessage("");
-    setPendingPhotoId(null);
-  }
-  async function chooseExisting(photo: Photo) {
-    setMessage("");
-    setPendingPhotoId(photo.id);
-    setLibraryOpen(false);
-  }
-  async function deleteMood(entry: EventMood) {
-    setMessage("");
-    const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
-    if (error) { setMessage("è¯„è®ºåˆ é™¤å¤±è´¥"); return; }
-    setMoods((current) => current.filter((item) => item.id !== entry.id));
-    setEventMoment((current) => current?.source_event_mood_id === entry.id ? { ...current, caption: "", source_event_mood_id: null } : current);
-  }
-  const savedPhotoId = eventLinks[0]?.photo_id;
-  const selectedPhotoId = pendingPhotoId === undefined ? savedPhotoId : pendingPhotoId;
-  const eventPhoto = photos.find((photo) => photo.id === selectedPhotoId);
-  const libraryPhotos = photos.filter((photo) => photo.id !== selectedPhotoId && photo.group_key === group);
-  const hasDraft = pendingPhotoId !== undefined || Boolean(mood.trim()) || shareToMoment;
-  async function saveActivityMedia() {
-    if (!hasDraft) { setMessage("å·²ä¿å­˜"); return; }
-    setBusy(true); setPublishing(shareToMoment); setMessage("");
-    try {
-      if (pendingPhotoId !== undefined) {
-        if (savedPhotoId) {
-          const { error } = await supabase.from("shared_calendar_event_photos").delete().eq("event_id", event.id).eq("photo_id", savedPhotoId);
-          if (error) throw error;
-        }
-        if (pendingPhotoId) {
-          const { error } = await supabase.from("shared_calendar_event_photos").insert({ event_id: event.id, photo_id: pendingPhotoId, linked_by_user_id: user.id, linked_by_email: member.email });
-          if (error) throw error;
-        }
-      }
-      if (mood.trim()) {
-        const { data: savedMood, error } = await supabase.from("shared_calendar_event_moods").insert({ event_id: event.id, author_user_id: user.id, author_email: member.email, body: mood.trim() }).select("id").single();
-        if (error) throw error;
-        if (shareToMoment && !eventMoment) {
-          const momentGroup: GroupKey = allowedGroups(member.email).includes("besties") ? "besties" : group;
-          const { data, error: momentError } = await supabase.from("shared_calendar_moments").insert({ group_key: momentGroup, author_user_id: user.id, author_email: member.email, caption: mood.trim(), event_id: event.id, source_event_mood_id: savedMood.id, source_event_photo_id: selectedPhotoId || null }).select().single();
-          if (momentError) throw momentError;
-          if (selectedPhotoId) {
-            const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert({ moment_id: data.id, photo_id: selectedPhotoId, position: 0 });
-            if (linkError) throw linkError;
-          }
-        }
-      } else if (shareToMoment && !eventMoment) {
-        const momentGroup: GroupKey = allowedGroups(member.email).includes("besties") ? "besties" : group;
-        const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: momentGroup, author_user_id: user.id, author_email: member.email, caption: "", event_id: event.id, source_event_mood_id: null, source_event_photo_id: selectedPhotoId || null }).select().single();
-        if (error) throw error;
-        if (selectedPhotoId) {
-          const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert({ moment_id: data.id, photo_id: selectedPhotoId, position: 0 });
-          if (linkError) throw linkError;
-        }
-      }
-      setPendingPhotoId(undefined); setMood(""); setShareToMoment(false); setMessage(shareToMoment ? "å·²ä¿å­˜å¹¶å‘å¸ƒåˆ°åŠ¨æ€" : "å·²ä¿å­˜"); await load();
-    } catch (error) { setMessage((error as { code?: string })?.code === "23505" ? "è¿™ä¸ªæ´»åŠ¨å·²ç»å‘å¸ƒè¿‡åŠ¨æ€äº†" : error instanceof Error ? error.message : "ä¿å­˜å¤±è´¥"); }
-    finally { setBusy(false); setPublishing(false); }
-  }
-  const selectedGroups = group === "both" ? ["besties", "friends"] : [group];
-  function toggleGroup(next: "besties" | "friends") {
-    const has = selectedGroups.includes(next);
-    if (has && selectedGroups.length === 1) return;
-    const nextGroups = has ? selectedGroups.filter((item) => item !== next) : [...selectedGroups, next];
-    setGroup(nextGroups.length === 2 ? "both" : nextGroups[0] as GroupKey);
-  }
-  return <section className="event-media-panel">
-    <div className="event-media-heading"><div><h3>æ´»åŠ¨ç…§ç‰‡</h3><p>{eventPhoto ? "1 å¼ ç…§ç‰‡" : "ä¸ºè¿™æ¬¡æ´»åŠ¨ç•™ä¸‹ä¸€å¼ ç…§ç‰‡"}</p></div>{groups.length === 1 ? <span className="media-group-label">{groupLabel(groups[0])}</span> : <div className="event-group-picker"><button type="button" aria-expanded={groupMenuOpen} onClick={()=>setGroupMenuOpen((open)=>!open)}>åˆ†ç»„ <small>{selectedGroups.length} ä¸ª</small><span>âŒ„</span></button>{groupMenuOpen&&<div className="event-group-menu"><label><input type="checkbox" checked={selectedGroups.includes("besties")} onChange={()=>toggleGroup("besties")}/><span>é—ºèœœç»„</span></label><label><input type="checkbox" checked={selectedGroups.includes("friends")} onChange={()=>toggleGroup("friends")}/><span>æœ‹å‹ç»„</span></label></div>}</div>}</div>
-    {eventPhoto && <div className="event-cover"><ProtectedPhoto photo={eventPhoto} alt={`${event.title} å°é¢`}/><button onClick={remove} aria-label="ç§»é™¤æ´»åŠ¨ç…§ç‰‡" title="ä¿å­˜åä»æ´»åŠ¨ç§»é™¤ï¼ŒåŸå›¾ä»ä¿ç•™åœ¨ç›¸å†Œ">Ã—</button></div>}
-    {!eventPhoto && <div className="event-photo-actions"><label className="media-file-picker">ï¼‹ ä»è®¾å¤‡ä¸Šä¼ <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{uploadingPhoto?"æ­£åœ¨ä¸Šä¼ â€¦":"é€‰æ‹©ç…§ç‰‡"}</span></label><button type="button" className="event-library-picker" onClick={()=>setLibraryOpen(true)}><span>ï¼‹ ä»ç›¸å†Œä¸Šä¼ </span><b>é€‰æ‹©ç…§ç‰‡</b></button></div>}
-    {libraryOpen && <div className="photo-picker"><div className="photo-picker-head"><b>é€‰æ‹©å·²æœ‰ç…§ç‰‡</b><button onClick={()=>setLibraryOpen(false)}>Ã—</button></div><div className="photo-library-grid">{libraryPhotos.map((photo)=><button key={photo.id} onClick={()=>chooseExisting(photo)} disabled={busy}><ProtectedPhoto photo={photo}/></button>)}</div>{!libraryPhotos.length&&<p>è¿™ä¸ªç»„çš„ç›¸å†Œé‡Œè¿˜æ²¡æœ‰å¯é€‰ç…§ç‰‡</p>}</div>}
-    <div className="event-mood-list">{moods.map((entry)=>{const color=members.find((item)=>item.email.toLowerCase()===entry.author_email.toLowerCase())?.color||"stone";const canDelete=entry.author_user_id===user.id;return <div key={entry.id}><span className={`moment-avatar ${color}`}>{displayName(entry.author_email,members).slice(0,1)}</span><p><b>{displayName(entry.author_email,members)}</b><span>{entry.body}</span>{canDelete&&<button type="button" className="event-mood-delete" onClick={()=>deleteMood(entry)}>åˆ é™¤</button>}</p></div>})}</div>
-    <label className="event-mood-field">å†™å¿ƒæƒ…<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="è®°å½•è¿™ä¸€åˆ»â€¦â€¦"/></label>
-    {eventMoment
-      ? <p className="event-moment-compact">å·²å‘å¸ƒåŠ¨æ€ Â· æ–°å¿ƒæƒ…ä¼šåŒæ­¥ä¸ºè¯„è®º</p>
-      : <div className="event-moment-row"><label className="event-moment-option"><input type="checkbox" checked={shareToMoment} onChange={(input)=>setShareToMoment(input.target.checked)}/><b>å‘å¸ƒåˆ°åŠ¨æ€</b></label><small>å¯é€‰</small></div>}
-    <div className="event-mood-actions single"><button className="primary" type="button" disabled={busy || uploadingPhoto} onClick={saveActivityMedia}>{busy?(publishing?"æ­£åœ¨ä¿å­˜å¹¶å‘å¸ƒâ€¦":"æ­£åœ¨ä¿å­˜â€¦"):shareToMoment?"ä¿å­˜å¹¶å‘å¸ƒ":"ä¿å­˜"}</button></div>
-    {message&&<p className={message.startsWith("å·²ä¿å­˜") ? "media-success" : "media-error"}>{message}</p>}
-  </section>;
-}
+HOˆİÔ™\]Y\İØXÚK™[]JİÒY
+JNÂˆİÔ™\]Y\İØXÚKœÙ]
+İÒY™\]Y\İ
+NÂˆ™]\›ˆ™\]Y\İÂŸB‚™[˜İ[Ûˆ›İXİYİÊÈİË[H¹aly.ªùáiùâaÈˆNˆÈİÎˆİÎÈ[Îˆİš[™ÈJHÂˆÛÛœİÜÜ˜ËÙ]Ü˜×HH\ÙTİ]J
 
-export function MomentsPage({ user, member, members }: { user: User; member: Member; members: Member[] }) {
-  const PAGE_SIZE = 10;
-  const groups = allowedGroups(member.email);
-  const [group, setGroup] = useState<GroupKey>(groups[0]);
-  const [moments, setMoments] = useState<Moment[]>([]);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [links, setLinks] = useState<MomentPhoto[]>([]);
-  const [likes, setLikes] = useState<Like[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [eventMoods, setEventMoods] = useState<EventMood[]>([]);
-  const [composer, setComposer] = useState(false);
-  const [caption, setCaption] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploadFailures, setUploadFailures] = useState<string[]>([]);
-  const uploadedDraftPhotos = useRef(new Map<string, Photo>());
-  const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
-  const [sendingCommentIds, setSendingCommentIds] = useState<number[]>([]);
-  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
-  const [expandedComments, setExpandedComments] = useState<number[]>([]);
-  const [expandedLikes, setExpandedLikes] = useState<number[]>([]);
-  const [menuMomentId, setMenuMomentId] = useState<number | null>(null);
-  const [editingMomentId, setEditingMomentId] = useState<number | null>(null);
-  const [editingCaption, setEditingCaption] = useState("");
-  const [stats, setStats] = useState<Record<number, MomentStats>>({});
-  const [loadedCommentMoments, setLoadedCommentMoments] = useState<number[]>([]);
-  const [loadedLikeMoments, setLoadedLikeMoments] = useState<number[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [newMomentCount, setNewMomentCount] = useState(0);
-  const latestMomentCreatedAt = useRef<string | null>(null);
-  const loadRequestId = useRef(0);
-  const [notifications, setNotifications] = useState<MomentNotification[]>([]);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const [preview, setPreview] = useState<{ photos: Photo[]; index: number } | null>(null);
-  const previewTouchStart = useRef<number | null>(null);
+HOˆİÕ\›ØXÚK™Ù]
+İËšY
+HˆŠNÂˆÛÛœİÙ˜Z[YÙ]˜Z[YHH\ÙTİ]J˜[ÙJNÂˆÛÛœİXÙZÛ\”™YˆH\ÙT™YSÜ[‘[[Y[Š[
+NÂˆ\ÙQY™™Xİ
 
-  async function loadPage(offset = 0, replace = false) {
-    const requestId = ++loadRequestId.current;
-    if (offset) setLoadingMore(true);
-    const { data: momentRows, error } = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").in("group_key",[group,"both"]).order("created_at", { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
-    if (requestId !== loadRequestId.current) return;
-    if (error) { setMessage("åŠ¨æ€è¯»å–å¤±è´¥ï¼Œè¯·é‡è¯•"); setLoadingMore(false); return; }
-    const pageMoments = (momentRows || []) as Moment[];
-    const ids = pageMoments.map((item) => item.id);
-    setMoments((current)=>replace?pageMoments:[...current,...pageMoments]);
-    setHasMore(pageMoments.length===PAGE_SIZE);
-    setLoadingMore(false);
-    if(replace){
-      setLinks([]); setPhotos([]); setComments([]); setEventMoods([]); setStats({});
-      latestMomentCreatedAt.current=pageMoments[0]?.created_at||null;
-      setNewMomentCount(0);
-    }
-    if (!ids.length) return;
-    const eventIds = pageMoments.map((item)=>item.event_id).filter((id):id is number=>id!==null);
-    const [linkResult, previewResult, statsResult, moodResult] = await Promise.all([
-      supabase.from("shared_calendar_moment_photos").select("moment_id,photo_id,position").in("moment_id", ids),
-      supabase.rpc("get_shared_calendar_moment_comment_preview", { p_moment_ids: ids, p_limit: 3 }),
-      supabase.rpc("get_shared_calendar_moment_stats", { p_moment_ids: ids }),
-      eventIds.length ? supabase.from("shared_calendar_event_moods").select("id,event_id,author_user_id,author_email,body,created_at").in("event_id", eventIds).order("created_at") : Promise.resolve({data:[],error:null}),
-    ]);
-    const pageLinks = (linkResult.data || []) as MomentPhoto[];
-    const photoIds = [...new Set(pageLinks.map((item)=>item.photo_id))];
-    const photoResult = photoIds.length ? await supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").in("id",photoIds) : {data:[],error:null};
-    if (requestId !== loadRequestId.current) return;
-    const pageComments = (previewResult.data || []) as Comment[];
-    setLinks((current)=>replace?pageLinks:[...current,...pageLinks]);
-    setPhotos((current)=>{const merged=replace?[]:[...current];(photoResult.data||[]).forEach((photo)=>{if(!merged.some((item)=>item.id===photo.id))merged.push(photo as Photo)});return merged});
-    setComments((current)=>replace?pageComments:[...current,...pageComments]);
-    setEventMoods((current)=>{const merged=replace?[]:[...current];((moodResult.data||[]) as EventMood[]).forEach((mood)=>{if(!merged.some((item)=>item.id===mood.id))merged.push(mood)});return merged});
-    setStats((current)=>Object.fromEntries([...Object.entries(replace?{}:current),...((statsResult.data||[]) as MomentStats[]).map((item)=>[item.moment_id,item])]));
-  }
-  async function loadNotifications() {
-    const {data:ownMoments}=await supabase.from("shared_calendar_moments").select("id").eq("author_user_id",user.id).order("created_at",{ascending:false}).limit(100);
-    const ownIds = (ownMoments||[]).map((item)=>item.id);
-    const [replyResult, likeResult] = await Promise.all([
-      supabase.from("shared_calendar_moment_comments").select("id,moment_id,author_email,created_at,reply_read_at").eq("reply_to_user_id",user.id).order("created_at",{ascending:false}).limit(20),
-      ownIds.length?supabase.from("shared_calendar_moment_likes").select("moment_id,user_id,user_email,created_at,read_at").in("moment_id",ownIds).neq("user_id",user.id).order("created_at",{ascending:false}).limit(20):Promise.resolve({data:[],error:null}),
-    ]);
-    const replyItems=(replyResult.data||[]).map((item)=>({key:`reply-${item.id}`,momentId:item.moment_id,actorEmail:item.author_email,kind:"reply" as const,createdAt:item.created_at,unread:!item.reply_read_at}));
-    const likeItems=(likeResult.data||[]).map((item)=>({key:`like-${item.moment_id}-${item.user_id}`,momentId:item.moment_id,actorEmail:item.user_email,kind:"like" as const,createdAt:item.created_at,unread:!item.read_at}));
-    setNotifications([...replyItems,...likeItems].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,30));
-  }
-  useEffect(() => { setHasMore(true); setLikes([]); setLoadedCommentMoments([]); setLoadedLikeMoments([]); setExpandedComments([]); setExpandedLikes([]); void loadPage(0,true); }, [group]);
-  useEffect(()=>{if(moments.length)void loadNotifications()},[moments.length]);
-  useEffect(()=>{const timer=window.setInterval(()=>{const since=latestMomentCreatedAt.current;if(!since)return;void supabase.from("shared_calendar_moments").select("id",{count:"exact",head:true}).in("group_key",[group,"both"]).gt("created_at",since).then(({count})=>setNewMomentCount(count||0))},30000);return()=>window.clearInterval(timer)},[group]);
-  useEffect(() => {
-    if (!preview) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setPreview(null); };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [preview]);
-  const composerPreviews = useMemo(()=>files.map((file)=>({file,url:URL.createObjectURL(file)})),[files]);
-  useEffect(()=>()=>composerPreviews.forEach((item)=>URL.revokeObjectURL(item.url)),[composerPreviews]);
 
-  async function publish() {
-    if (!caption.trim() && !files.length) return;
-    setBusy(true); setMessage("");
-    try {
-      setUploadFailures([]);
-      const results = await Promise.all(files.slice(0,3).map(async(file)=>{const key=fileKey(file);const cached=uploadedDraftPhotos.current.get(key);if(cached)return {file,photo:cached};try{const photo=await uploadPhoto(file,group);uploadedDraftPhotos.current.set(key,photo);return {file,photo}}catch{return {file,photo:null}}}));
-      const failed=results.filter((item)=>!item.photo).map((item)=>fileKey(item.file));
-      if(failed.length){setUploadFailures(failed);setMessage(`${failed.length} å¼ ç…§ç‰‡ä¸Šä¼ å¤±è´¥ï¼Œå¯å•ç‹¬é‡è¯•`);return}
-      const uploaded=results.map((item)=>item.photo) as Photo[];
-      const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: null }).select().single();
-      if (error) throw error;
-      if (uploaded.length) {
-        const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert(uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position })));
-        if (linkError) throw linkError;
-      }
-      const newLinks = uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position }));
-      setMoments((current) => [data as Moment, ...current]); setPhotos((current) => [...uploaded, ...current]); setLinks((current) => [...current, ...newLinks]);
-      setCaption(""); setFiles([]); setComposer(false); uploadedDraftPhotos.current.clear(); setUploadFailures([]);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "å‘å¸ƒå¤±è´¥"); }
-    finally { setBusy(false); }
-  }
-  async function toggleLike(momentId: number) {
-    const liked = stats[momentId]?.liked_by_me || likes.some((like)=>like.moment_id===momentId&&like.user_id===user.id);
-    const previous=stats[momentId];
-    setStats((current)=>({...current,[momentId]:{...(previous||{moment_id:momentId,like_count:0,comment_count:0,liked_by_me:false}),liked_by_me:!liked,like_count:Math.max(0,(previous?.like_count||0)+(liked?-1:1))}}));
-    if (liked) {
-      const own = likes.find((like) => like.moment_id === momentId && like.user_id === user.id);
-      setLikes((current) => current.filter((like) => !(like.moment_id===momentId&&like.user_id===user.id)));
-      const { error } = await supabase.from("shared_calendar_moment_likes").delete().eq("moment_id", momentId).eq("user_id", user.id);
-      if (error) {setStats((current)=>({...current,[momentId]:previous}));if(own)setLikes((current)=>[...current,own]);setMessage("ç‚¹èµå¤±è´¥ï¼Œè¯·é‡è¯•")}
-    } else {
-      const next = { moment_id: momentId, user_id: user.id, user_email: member.email };
-      setLikes((current) => [...current, next]);
-      const { error } = await supabase.from("shared_calendar_moment_likes").insert(next);
-      if (error) {setStats((current)=>({...current,[momentId]:previous}));setLikes((current) => current.filter((like) => !(like.moment_id === momentId && like.user_id === user.id)));setMessage("ç‚¹èµå¤±è´¥ï¼Œè¯·é‡è¯•")}
-    }
-  }
-  async function addComment(momentId: number) {
-    const body = commentDrafts[momentId]?.trim(); if (!body || sendingCommentIds.includes(momentId)) return;
-    setSendingCommentIds((current)=>[...current,momentId]);
-    const reply = replyTarget?.momentId === momentId ? replyTarget : null;
-    const { data, error } = await supabase.from("shared_calendar_moment_comments").insert({ moment_id: momentId, author_user_id: user.id, author_email: member.email, body, reply_to_comment_id: reply?.kind === "comment" ? reply.id : null, reply_to_event_mood_id: reply?.kind === "mood" ? reply.id : null }).select("id,moment_id,author_user_id,author_email,body,created_at,reply_to_comment_id,reply_to_event_mood_id,reply_to_user_id,reply_to_email,reply_read_at").single();
-    if (error) { setMessage("è¯„è®ºå‘é€å¤±è´¥ï¼Œå†…å®¹å·²ä¿ç•™ï¼Œè¯·é‡è¯•"); setSendingCommentIds((current)=>current.filter((id)=>id!==momentId)); return; }
-    setComments((current) => [...current, data as Comment]);
-    setStats((current)=>({...current,[momentId]:{...(current[momentId]||{moment_id:momentId,like_count:0,comment_count:0,liked_by_me:false}),comment_count:(current[momentId]?.comment_count||0)+1}}));
-    setCommentDrafts((value) => ({ ...value, [momentId]: "" })); setReplyTarget(null); setSendingCommentIds((current)=>current.filter((id)=>id!==momentId));
-  }
-  async function deleteComment(comment: Comment) {
-    const { error } = await supabase.from("shared_calendar_moment_comments").delete().eq("id", comment.id).eq("author_user_id", user.id);
-    if (error) { setMessage("è¯„è®ºåˆ é™¤å¤±è´¥"); return; }
-    setComments((current) => current.filter((item) => item.id !== comment.id).map((item) => item.reply_to_comment_id === comment.id ? { ...item, reply_to_comment_id: null, reply_to_user_id: null, reply_to_email: null } : item));
-    setStats((current)=>({...current,[comment.moment_id]:{...current[comment.moment_id],comment_count:Math.max(0,(current[comment.moment_id]?.comment_count||1)-1)}}));
-  }
-  async function deleteSyncedMood(entry: EventMood) {
-    const { error } = await supabase.from("shared_calendar_event_moods").delete().eq("id", entry.id).eq("author_user_id", user.id);
-    if (error) { setMessage("è¯„è®ºåˆ é™¤å¤±è´¥"); return; }
-    setEventMoods((current) => current.filter((item) => item.id !== entry.id));
-    setComments((current) => current.map((item) => item.reply_to_event_mood_id === entry.id ? { ...item, reply_to_event_mood_id: null, reply_to_user_id: null, reply_to_email: null } : item));
-    setMoments((current) => current.map((item) => item.source_event_mood_id === entry.id ? { ...item, caption: "", source_event_mood_id: null } : item));
-  }
-  async function deleteMoment(momentId: number) {
-    const target = moments.find((item) => item.id === momentId);
-    if (!target?.event_id && !window.confirm("ç¡®å®šåˆ é™¤è¿™æ¡åŠ¨æ€å—ï¼Ÿç…§ç‰‡ä»ä¼šä¿ç•™åœ¨ç›¸å†Œä¸­ã€‚")) return;
-    const { error } = await supabase.from("shared_calendar_moments").delete().eq("id", momentId);
-    if (error) { setMessage("åŠ¨æ€åˆ é™¤å¤±è´¥"); return; }
-    setMoments((current) => current.filter((item) => item.id !== momentId));
-    setLinks((current) => current.filter((item) => item.moment_id !== momentId));
-    setLikes((current) => current.filter((item) => item.moment_id !== momentId));
-    setComments((current) => current.filter((item) => item.moment_id !== momentId));
-  }
-  async function saveMomentCaption(momentId: number) {
-    const { data, error } = await supabase.from("shared_calendar_moments").update({ caption: editingCaption.trim() }).eq("id", momentId).eq("author_email", member.email).select("id,caption").single();
-    if (error) { setMessage("åŠ¨æ€ä¿®æ”¹å¤±è´¥"); return; }
-    setMoments((current) => current.map((item) => item.id === momentId ? { ...item, caption: data.caption } : item)); setEditingMomentId(null);
-  }
-  async function loadAllComments(momentId:number){
-    if(loadedCommentMoments.includes(momentId))return;
-    const {data,error}=await supabase.from("shared_calendar_moment_comments").select("id,moment_id,author_user_id,author_email,body,created_at,reply_to_comment_id,reply_to_event_mood_id,reply_to_user_id,reply_to_email,reply_read_at").eq("moment_id",momentId).order("created_at");
-    if(error)return;setComments((current)=>[...current.filter((item)=>item.moment_id!==momentId),...(data||[]) as Comment[]]);setLoadedCommentMoments((current)=>[...current,momentId]);
-  }
-  async function loadLikeNames(momentId:number){
-    if(loadedLikeMoments.includes(momentId))return;
-    const {data,error}=await supabase.from("shared_calendar_moment_likes").select("moment_id,user_id,user_email,created_at,read_at").eq("moment_id",momentId).order("created_at");
-    if(error)return;setLikes((current)=>[...current.filter((item)=>item.moment_id!==momentId),...(data||[]) as Like[]]);setLoadedLikeMoments((current)=>[...current,momentId]);
-  }
-  const photoById = useMemo(() => new Map(photos.map((photo) => [photo.id, photo])), [photos]);
-  const linksByMoment = useMemo(() => { const map = new Map<number, MomentPhoto[]>(); links.forEach((link) => map.set(link.moment_id, [...(map.get(link.moment_id) || []), link])); return map; }, [links]);
-  const likesByMoment = useMemo(() => { const map = new Map<number, Like[]>(); likes.forEach((like) => map.set(like.moment_id, [...(map.get(like.moment_id) || []), like])); return map; }, [likes]);
-  const commentsByMoment = useMemo(() => { const map = new Map<number, Comment[]>(); comments.forEach((comment) => map.set(comment.moment_id, [...(map.get(comment.moment_id) || []), comment])); return map; }, [comments]);
-  const moodsByEvent = useMemo(() => { const map = new Map<number, EventMood[]>(); eventMoods.forEach((mood) => map.set(mood.event_id, [...(map.get(mood.event_id) || []), mood])); return map; }, [eventMoods]);
-  const visible = useMemo(() => moments.filter((moment) => moment.group_key === group || moment.group_key === "both"), [moments, group]);
-  const unreadNotificationCount = notifications.filter((item) => item.unread).length;
-  return <section className="media-page moments-page">
-    <header className="media-page-head">
-      <div><p className="eyebrow">MOMENTS</p><h2>åŠ¨æ€</h2></div>
-      <div className="media-head-actions">
-        <GroupSelect value={group} onChange={setGroup} email={member.email}/>
-        <div className="moment-notification-wrap">
-          <button className="moment-notification-button" type="button" aria-label="æŸ¥çœ‹é€šçŸ¥" title="é€šçŸ¥" aria-expanded={notificationsOpen} onClick={()=>{setNotificationsOpen((open)=>!open);void supabase.rpc("mark_shared_calendar_moment_notifications_read");setNotifications((current)=>current.map((item)=>({...item,unread:false})))}}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
-            {unreadNotificationCount>0&&<i>{unreadNotificationCount>9?"9+":unreadNotificationCount}</i>}
-          </button>
-          {notificationsOpen&&<div className="moment-notifications"><header><b>é€šçŸ¥</b><button type="button" aria-label="å…³é—­é€šçŸ¥" onClick={()=>setNotificationsOpen(false)}>Ã—</button></header>{notifications.map((item)=><button key={item.key} onClick={()=>{document.getElementById(`moment-${item.momentId}`)?.scrollIntoView({behavior:"smooth",block:"center"});setNotificationsOpen(false)}}><span className={item.unread?"unread":""}/><b>{displayName(item.actorEmail,members)}</b>{item.kind==="like"?"èµäº†ä½ çš„åŠ¨æ€":"å›å¤äº†ä½ "}</button>)}{!notifications.length&&<p>æš‚æ—¶æ²¡æœ‰é€šçŸ¥</p>}</div>}
-        </div>
-        <button className="primary moment-create-button" onClick={() => setComposer(true)}>ï¼‹ å‘å¸ƒ</button>
-      </div>
-    </header>
-    {!!newMomentCount&&<button className="moment-new-posts" onClick={()=>void loadPage(0,true)}>æœ‰ {newMomentCount} æ¡æ–°åŠ¨æ€ï¼Œç‚¹å‡»æŸ¥çœ‹</button>}
-    {composer && <div className="media-composer"><div className="media-composer-head"><h3>å‘å¸ƒåˆ° {groupLabel(group)}</h3><button onClick={() => setComposer(false)}>Ã—</button></div><GroupSelect value={group} onChange={setGroup} email={member.email}/><textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="è¯´ç‚¹ä»€ä¹ˆâ€¦â€¦"/><div className="moment-draft-photos">{composerPreviews.map(({file,url},index)=><div className={uploadFailures.includes(fileKey(file))?"failed":""} key={fileKey(file)}><img src={url}/><button onClick={()=>setFiles((current)=>current.filter((_,i)=>i!==index))}>Ã—</button><span>{uploadFailures.includes(fileKey(file))?"ä¸Šä¼ å¤±è´¥":""}</span>{index>0&&<button className="move previous" onClick={()=>setFiles((current)=>{const next=[...current];[next[index-1],next[index]]=[next[index],next[index-1]];return next})}>â€¹</button>}{index<files.length-1&&<button className="move next" onClick={()=>setFiles((current)=>{const next=[...current];[next[index],next[index+1]]=[next[index+1],next[index]];return next})}>â€º</button>}</div>)}</div><label className="media-file-picker">é€‰æ‹©ç…§ç‰‡ï¼ˆæœ€å¤š 3 å¼ ï¼‰<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => {setFiles(Array.from(e.target.files || []).slice(0, 3));setUploadFailures([]);uploadedDraftPhotos.current.clear()}}/><span>{files.length ? `å·²é€‰æ‹© ${files.length} å¼ ` : "ä»è®¾å¤‡ä¸Šä¼ "}</span></label>{message && <p className="media-error">{message}</p>}<button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "æ­£åœ¨å‘å¸ƒâ€¦" : uploadFailures.length?"é‡è¯•å¤±è´¥ç…§ç‰‡":"å‘å¸ƒåŠ¨æ€"}</button></div>}
-    <div className="moment-feed">
-      {visible.map((moment) => {
-        const momentPhotos = (linksByMoment.get(moment.id) || []).sort((a,b) => a.position-b.position).map((link) => photoById.get(link.photo_id)).filter(Boolean) as Photo[];
-        const momentLikes = likesByMoment.get(moment.id) || [];
-        const momentComments = commentsByMoment.get(moment.id) || [];
-        const syncedMoods = moment.event_id ? (moodsByEvent.get(moment.event_id) || []).filter((item) => item.id !== moment.source_event_mood_id) : [];
-        const entries = [...syncedMoods.map((item)=>({kind:"mood" as const,item,date:item.created_at})), ...momentComments.map((item)=>({kind:"comment" as const,item,date:item.created_at}))].sort((a,b)=>a.date.localeCompare(b.date));
-        const shownEntries = expandedComments.includes(moment.id) ? entries : entries.slice(-3);
-        const momentStats=stats[moment.id]||{moment_id:moment.id,like_count:momentLikes.length,comment_count:entries.length,liked_by_me:momentLikes.some((like)=>like.user_id===user.id)};
-        const isAuthor = moment.author_email.toLowerCase() === member.email.toLowerCase();
-        const authorColor = members.find((item) => item.email.toLowerCase() === moment.author_email.toLowerCase())?.color || "stone";
-        return <article className="moment-post" id={`moment-${moment.id}`} key={moment.id}>
-          <header><span className={`moment-avatar ${authorColor}`}>{displayName(moment.author_email,members).slice(0,1)}</span><div><strong>{displayName(moment.author_email,members)}</strong><small>{new Date(moment.created_at).toLocaleDateString("zh-CN")} Â· {groupLabel(moment.group_key)}</small></div>{isAuthor&&<div className="moment-menu"><button onClick={()=>setMenuMomentId(menuMomentId===moment.id?null:moment.id)}>â€¢â€¢â€¢</button>{menuMomentId===moment.id&&<div><button onClick={()=>{setEditingMomentId(moment.id);setEditingCaption(moment.caption);setMenuMomentId(null)}}>ç¼–è¾‘æ–‡å­—</button><button onClick={()=>void deleteMoment(moment.id)}>åˆ é™¤åŠ¨æ€</button></div>}</div>}</header>
-          {editingMomentId===moment.id?<div className="moment-edit"><textarea value={editingCaption} onChange={(e)=>setEditingCaption(e.target.value)}/><button onClick={()=>{if(editingCaption!==moment.caption&&!window.confirm("ä¿®æ”¹è¿˜æ²¡æœ‰ä¿å­˜ï¼Œç¡®å®šç¦»å¼€å—ï¼Ÿ"))return;setEditingMomentId(null)}}>å–æ¶ˆ</button><button className="primary" onClick={()=>void saveMomentCaption(moment.id)}>ä¿å­˜</button></div>:moment.caption&&<p className="moment-caption">{moment.caption}</p>}
-          {!!momentPhotos.length && <div className={`moment-photo-grid count-${Math.min(momentPhotos.length,3)}`}>{momentPhotos.map((photo,index)=><button type="button" className="moment-photo" key={photo.id} aria-label="æ”¾å¤§æŸ¥çœ‹ç…§ç‰‡" onClick={()=>setPreview({photos:momentPhotos,index})}><ProtectedPhoto photo={photo}/></button>)}</div>}
-          <div className="moment-actions"><button className={`moment-action-button ${momentStats.liked_by_me?"liked":""}`} onClick={()=>void toggleLike(moment.id)}>â™¡ {momentStats.liked_by_me?"å·²èµ":"èµ"}</button>{momentStats.like_count>0&&<button className="moment-like-count" onClick={()=>{if(!expandedLikes.includes(moment.id))void loadLikeNames(moment.id);setExpandedLikes((current)=>current.includes(moment.id)?current.filter((id)=>id!==moment.id):[...current,moment.id])}}>{momentStats.like_count} äººèµ</button>}<button className="moment-action-button" onClick={()=>document.getElementById(`moment-comment-${moment.id}`)?.focus()}>â—¯ è¯„è®º{momentStats.comment_count ? ` ${momentStats.comment_count}` : ""}</button></div>
-          {expandedLikes.includes(moment.id)&&<p className="moment-like-names">â™¡ {momentLikes.map((like)=>displayName(like.user_email,members)).join("ã€")}</p>}
-          <div className="moment-comments">{momentStats.comment_count>3&&<button className="moment-comments-toggle" onClick={()=>{if(!expandedComments.includes(moment.id))void loadAllComments(moment.id);setExpandedComments((current)=>current.includes(moment.id)?current.filter((id)=>id!==moment.id):[...current,moment.id])}}>{expandedComments.includes(moment.id)?"æ”¶èµ·è¯„è®º":`å±•å¼€å…¨éƒ¨ ${momentStats.comment_count} æ¡è¯„è®º`}</button>}{shownEntries.map(({kind,item})=><p key={`${kind}-${item.id}`}><span><b>{displayName(item.author_email,members)}</b>{kind==="comment"&&item.reply_to_email&&<> å›å¤ <b>@{displayName(item.reply_to_email,members)}</b></>}ï¼š{item.body}</span><span className="moment-comment-tools"><button onClick={()=>{setReplyTarget({momentId:moment.id,kind,id:item.id,email:item.author_email});document.getElementById(`moment-comment-${moment.id}`)?.focus()}}>å›å¤</button>{item.author_user_id===user.id&&<button onClick={()=>kind==="comment"?void deleteComment(item):void deleteSyncedMood(item)}>åˆ é™¤</button>}</span></p>)}{replyTarget?.momentId===moment.id&&<div className="moment-replying">å›å¤ @{displayName(replyTarget.email,members)}<button onClick={()=>setReplyTarget(null)}>Ã—</button></div>}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder={replyTarget?.momentId===moment.id?`å›å¤ @${displayName(replyTarget.email,members)}â€¦â€¦`:"å†™è¯„è®ºâ€¦â€¦"} onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>void addComment(moment.id)}>å‘é€</button></div></div>
-        </article>;
-      })}
-      {!visible.length && <div className="media-empty"><h3>è¿˜æ²¡æœ‰åŠ¨æ€</h3><p>åœ¨ {groupLabel(group)} åˆ†äº«ç¬¬ä¸€å¼ ç…§ç‰‡å§ã€‚</p></div>}
-      {hasMore&&<button className="moment-load-more" disabled={loadingMore} onClick={()=>void loadPage(moments.length)}>{loadingMore?"æ­£åœ¨åŠ è½½â€¦":"åŠ è½½æ›´å¤š"}</button>}
-    </div>
-    {preview && <div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="ç…§ç‰‡é¢„è§ˆ" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreview(null)}} onTouchStart={(event)=>{previewTouchStart.current=event.touches[0]?.clientX??null}} onTouchEnd={(event)=>{if(previewTouchStart.current===null)return;const delta=(event.changedTouches[0]?.clientX??previewTouchStart.current)-previewTouchStart.current;if(Math.abs(delta)>40)setPreview((current)=>current?{...current,index:Math.max(0,Math.min(current.photos.length-1,current.index+(delta<0?1:-1)))}:null);previewTouchStart.current=null}}><button type="button" className="moment-photo-preview-close" aria-label="å…³é—­ç…§ç‰‡é¢„è§ˆ" onClick={()=>setPreview(null)}>Ã—</button>{preview.photos.length>1&&<button className="moment-preview-nav previous" disabled={preview.index===0} onClick={()=>setPreview({...preview,index:preview.index-1})}>â€¹</button>}<ProtectedPhoto photo={preview.photos[preview.index]} alt="åŠ¨æ€ç…§ç‰‡é¢„è§ˆ"/>{preview.photos.length>1&&<><span className="moment-preview-count">{preview.index+1} / {preview.photos.length}</span><button className="moment-preview-nav next" disabled={preview.index===preview.photos.length-1} onClick={()=>setPreview({...preview,index:preview.index+1})}>â€º</button></>}</div>}
-  </section>;
-}
+HOˆÂˆ]Ø[˜Ù[YH˜[ÙNÂˆÛÛœİØXÚYHİÕ\›ØXÚK™Ù]
+İËšY
+NÂˆYˆ
+ØXÚY
+HÈÙ]Ü˜ÊØXÚY
+NÈ™]\›ÈBˆÛÛœİØYH
 
-export function AlbumsPage({ user, member, members }: { user: User; member: Member; members: Member[] }) {
-  const groups = allowedGroups(member.email);
-  const [group, setGroup] = useState<GroupKey>(groups[0]);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [albumLinks, setAlbumLinks] = useState<{album_id:number;photo_id:string}[]>([]);
-  const [newAlbum, setNewAlbum] = useState("");
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadGroup, setUploadGroup] = useState<GroupKey>(groups[0]);
-  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-  const [selectedAlbum, setSelectedAlbum] = useState("");
-  const [albumView, setAlbumView] = useState<"all" | "unorganized" | number>("all");
-  const [selecting, setSelecting] = useState(false);
-  const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
-  const [organizerOpen, setOrganizerOpen] = useState(false);
-  const [targetAlbumIds, setTargetAlbumIds] = useState<number[]>([]);
-  const [renaming, setRenaming] = useState(false);
-  const [albumNameDraft, setAlbumNameDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  async function load() { const [p,a,l]=await Promise.all([supabase.from("shared_calendar_photos").select("id,group_key,uploader_email,event_id,file_name,created_at").order("created_at",{ascending:false}),supabase.from("shared_calendar_albums").select("*").order("created_at",{ascending:false}),supabase.from("shared_calendar_album_photos").select("album_id,photo_id")]); setPhotos((p.data||[]) as Photo[]); setAlbums((a.data||[]) as Album[]); setAlbumLinks((l.data||[]) as {album_id:number;photo_id:string}[]); }
-  useEffect(()=>{void load()},[]);
-  async function createAlbum(){if(!newAlbum.trim())return;const{error}=await supabase.from("shared_calendar_albums").insert({name:newAlbum.trim(),group_key:group,owner_user_id:user.id,owner_email:member.email});if(error)setMessage("ç›¸å†Œåˆ›å»ºå¤±è´¥");else{setNewAlbum("");await load();}}
-  function openUpload(){setUploadGroup(group);setSelectedAlbum("");setUploadFiles([]);setMessage("");setUploadOpen(true);}
-  function selectUploadFiles(event: ChangeEvent<HTMLInputElement>){setUploadFiles(Array.from(event.target.files||[]));event.target.value="";}
-  async function uploadSelectedPhotos(){if(!uploadFiles.length)return;setBusy(true);setMessage("");try{for(const file of uploadFiles){const photo=await uploadPhoto(file,uploadGroup);if(selectedAlbum){const{error}=await supabase.from("shared_calendar_album_photos").insert({album_id:Number(selectedAlbum),photo_id:photo.id,added_by_user_id:user.id});if(error)throw error;}}await load();setGroup(uploadGroup);changeView("all");setUploadOpen(false);setUploadFiles([]);setSelectedAlbum("");}catch(error){setMessage(error instanceof Error?error.message:"ä¸Šä¼ å¤±è´¥");}finally{setBusy(false);}}
-  async function removePhoto(photo: Photo){if(!window.confirm("ç¡®å®šæ°¸ä¹…åˆ é™¤è¿™å¼ ç…§ç‰‡å—ï¼Ÿæ—¥å†å’ŒåŠ¨æ€ä¸­çš„å¼•ç”¨ä¹Ÿä¼šä¸€èµ·ç§»é™¤ã€‚"))return;const accessToken=await token();const response=await fetch(`${MEDIA_API}/photos/${photo.id}`,{method:"DELETE",headers:{Authorization:`Bearer ${accessToken}`}});if(!response.ok){const result=await response.json();setMessage(result.error||"åˆ é™¤å¤±è´¥");return;}await load();}
-  function resetSelection(){setSelecting(false);setSelectedPhotoIds([]);setOrganizerOpen(false);setTargetAlbumIds([]);}
-  function changeView(next: "all" | "unorganized" | number){setAlbumView(next);setRenaming(false);resetSelection();}
-  function togglePhoto(photoId:string){setSelectedPhotoIds((current)=>current.includes(photoId)?current.filter((id)=>id!==photoId):[...current,photoId]);}
-  function openOrganizer(){if(!selectedPhotoIds.length)return;setTargetAlbumIds([]);setOrganizerOpen(true);}
-  async function addToAlbums(){if(!selectedPhotoIds.length||!targetAlbumIds.length)return;setBusy(true);setMessage("");const existing=new Set(albumLinks.map((link)=>`${link.album_id}:${link.photo_id}`));const rows=targetAlbumIds.flatMap((albumId)=>selectedPhotoIds.filter((photoId)=>!existing.has(`${albumId}:${photoId}`)).map((photoId)=>({album_id:albumId,photo_id:photoId,added_by_user_id:user.id})));if(rows.length){const{error}=await supabase.from("shared_calendar_album_photos").insert(rows);if(error){setMessage("ç…§ç‰‡æ•´ç†å¤±è´¥");setBusy(false);return;}}setBusy(false);resetSelection();await load();}
-  async function removeFromCurrentAlbum(){if(typeof albumView!=="number"||!selectedPhotoIds.length)return;setBusy(true);const{error}=await supabase.from("shared_calendar_album_photos").delete().eq("album_id",albumView).in("photo_id",selectedPhotoIds);if(error)setMessage("æ— æ³•ä»å½“å‰ç›¸å†Œç§»é™¤æ‰€é€‰ç…§ç‰‡");else{resetSelection();await load();}setBusy(false);}
-  async function renameAlbum(){if(typeof albumView!=="number"||!albumNameDraft.trim())return;const{error}=await supabase.from("shared_calendar_albums").update({name:albumNameDraft.trim()}).eq("id",albumView).eq("owner_user_id",user.id);if(error)setMessage("ç›¸å†Œé‡å‘½åå¤±è´¥");else{setRenaming(false);await load();}}
-  async function setAlbumCover(){if(typeof albumView!=="number"||selectedPhotoIds.length!==1)return;const{error}=await supabase.from("shared_calendar_albums").update({cover_photo_id:selectedPhotoIds[0]}).eq("id",albumView).eq("owner_user_id",user.id);if(error)setMessage("å°é¢è®¾ç½®å¤±è´¥");else{resetSelection();await load();}}
-  async function deleteAlbum(){if(typeof albumView!=="number")return;const current=albums.find((album)=>album.id===albumView);if(!current||!window.confirm(`åˆ é™¤ç›¸å†Œâ€œ${current.name}â€ï¼Ÿç…§ç‰‡ä¼šå›åˆ°æœªæ•´ç†ï¼Œä¸ä¼šè¢«æ°¸ä¹…åˆ é™¤ã€‚`))return;const{error}=await supabase.from("shared_calendar_albums").delete().eq("id",albumView).eq("owner_user_id",user.id);if(error)setMessage("ç›¸å†Œåˆ é™¤å¤±è´¥");else{changeView("all");await load();}}
-  const groupPhotos=photos.filter((photo)=>photo.group_key===group||photo.group_key==="both");
-  const groupAlbums=albums.filter((album)=>album.group_key===group);
-  const uploadAlbums=albums.filter((album)=>album.group_key===uploadGroup);
-  const linkedPhotoIds=new Set(albumLinks.filter((link)=>groupAlbums.some((album)=>album.id===link.album_id)).map((link)=>link.photo_id));
-  const unorganizedPhotos=groupPhotos.filter((photo)=>!linkedPhotoIds.has(photo.id));
-  const currentAlbum=typeof albumView==="number"?groupAlbums.find((album)=>album.id===albumView):undefined;
-  const currentIds=typeof albumView==="number"?new Set(albumLinks.filter((link)=>link.album_id===albumView).map((link)=>link.photo_id)):null;
-  const shownPhotos=albumView==="unorganized"?unorganizedPhotos:currentIds?groupPhotos.filter((photo)=>currentIds.has(photo.id)):groupPhotos;
-  const canManageCurrent=Boolean(currentAlbum&&currentAlbum.owner_email.toLowerCase()===member.email.toLowerCase());
-  const viewTitle=albumView==="all"?"å…¨éƒ¨ç…§ç‰‡":albumView==="unorganized"?"æœªæ•´ç†":currentAlbum?.name||"ç›¸å†Œ";
-  return <section className="media-page albums-page">
-    <header className="media-page-head"><div><p className="eyebrow">PHOTOS</p><h2>ç›¸å†Œ</h2></div><div className="album-head-actions"><GroupSelect value={group} onChange={(value)=>{setGroup(value);changeView("all")}} email={member.email}/><button className="primary album-upload-trigger" type="button" onClick={openUpload}>ï¼‹ ä¸Šä¼ ç…§ç‰‡</button></div></header>
-    {message&&<p className="media-error">{message}</p>}
-    <div className="album-create"><input value={newAlbum} onChange={(e)=>setNewAlbum(e.target.value)} placeholder="æ–°ç›¸å†Œåç§°"/><button onClick={createAlbum}>ï¼‹ æ–°å»ºç›¸å†Œ</button></div>
-    <div className="album-section"><h3>ç³»ç»Ÿç›¸å†Œ</h3><div className="album-system-list"><button className={albumView==="unorganized"?"active":""} onClick={()=>changeView("unorganized")}><b>æœªæ•´ç†</b><small>{unorganizedPhotos.length} å¼ </small></button><button className={albumView==="all"?"active":""} onClick={()=>changeView("all")}><b>å…¨éƒ¨ç…§ç‰‡</b><small>{groupPhotos.length} å¼ </small></button></div></div>
-    <div className="album-section"><h3>{groupLabel(group)}ç›¸å†Œ</h3><div className="album-list">{groupAlbums.map((album)=>{const ids=albumLinks.filter((link)=>link.album_id===album.id).map((link)=>link.photo_id);const cover=photos.find((photo)=>photo.id===(album.cover_photo_id||ids[0]));return <button className={`album-folder ${albumView===album.id?"active":""}`} key={album.id} onClick={()=>changeView(album.id)}><span>{cover?<ProtectedPhoto photo={cover}/>:"æš‚æ— ç…§ç‰‡"}</span><b>{album.name}</b><small>{ids.length} å¼  Â· {displayName(album.owner_email,members)}</small></button>})}</div></div>
-    <div className="album-section album-photo-section"><div className="album-section-head"><h3>{typeof albumView==="number"&&<button className="album-inline-back" onClick={()=>changeView("all")}>â€¹</button>}{viewTitle}</h3><div>{selecting?<><span>{selectedPhotoIds.length} å¼ å·²é€‰</span><button onClick={resetSelection}>å–æ¶ˆ</button></>:<button onClick={()=>setSelecting(true)} disabled={!shownPhotos.length}>é€‰æ‹©</button>}</div></div>
-      {currentAlbum&&canManageCurrent&&<div className="album-manage-bar">{renaming?<><input value={albumNameDraft} onChange={(event)=>setAlbumNameDraft(event.target.value)} autoFocus/><button onClick={renameAlbum}>ä¿å­˜åç§°</button><button onClick={()=>setRenaming(false)}>å–æ¶ˆ</button></>:<><button onClick={()=>{setAlbumNameDraft(currentAlbum.name);setRenaming(true)}}>é‡å‘½å</button><button disabled={!selecting||selectedPhotoIds.length!==1} onClick={setAlbumCover}>è®¾ä¸ºå°é¢</button><button className="album-danger" onClick={deleteAlbum}>åˆ é™¤ç›¸å†Œ</button></>}</div>}
-      {selecting&&selectedPhotoIds.length>0&&<div className="album-batch-bar"><button className="primary" onClick={openOrganizer}>æ”¾å…¥ç›¸å†Œ</button>{typeof albumView==="number"&&<button onClick={removeFromCurrentAlbum}>ä»å½“å‰ç›¸å†Œç§»é™¤</button>}</div>}
-      <div className={`photo-library-grid ${selecting?"selecting":""}`}>{shownPhotos.map((photo)=><div className={`library-photo ${selectedPhotoIds.includes(photo.id)?"selected":""}`} key={photo.id}>{selecting?<button type="button" className="library-photo-select" aria-label={selectedPhotoIds.includes(photo.id)?"å–æ¶ˆé€‰æ‹©ç…§ç‰‡":"é€‰æ‹©ç…§ç‰‡"} onClick={()=>togglePhoto(photo.id)}><ProtectedPhoto photo={photo}/><i>{selectedPhotoIds.includes(photo.id)?"âœ“":""}</i></button>:<ProtectedPhoto photo={photo}/>} {!selecting&&photo.uploader_email.toLowerCase()===member.email.toLowerCase()&&<button className="library-photo-delete" onClick={()=>removePhoto(photo)} aria-label="åˆ é™¤ç…§ç‰‡">Ã—</button>}<small>{displayName(photo.uploader_email,members)}</small></div>)}</div>
-      {!shownPhotos.length&&<div className="media-empty"><h3>{albumView==="unorganized"?"æ²¡æœ‰æœªæ•´ç†ç…§ç‰‡":"è¿˜æ²¡æœ‰ç…§ç‰‡"}</h3><p>{albumView==="unorganized"?"åŠ¨æ€ã€æ—¥å†å’ŒæœªæŒ‡å®šç›¸å†Œä¸Šä¼ çš„ç…§ç‰‡ä¼šå‡ºç°åœ¨è¿™é‡Œã€‚":"ä¸Šä¼ ç…§ç‰‡ï¼Œæˆ–ä»æœªæ•´ç†ä¸­æŠŠç…§ç‰‡æ”¾å…¥è¿™ä¸ªç›¸å†Œã€‚"}</p></div>}
-    </div>
-    {uploadOpen&&<div className="album-organizer-overlay album-upload-overlay" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!busy)setUploadOpen(false)}}><section className="album-organizer album-upload-dialog" role="dialog" aria-modal="true" aria-label="ä¸Šä¼ ç…§ç‰‡"><header><div><p className="eyebrow">UPLOAD</p><h3>ä¸Šä¼ ç…§ç‰‡</h3></div><button type="button" disabled={busy} onClick={()=>setUploadOpen(false)}>Ã—</button></header><p>å…ˆé€‰æ‹©ç…§ç‰‡ï¼Œå†å†³å®šæ”¾åˆ°å“ªä¸ªåˆ†ç»„å’Œç›¸å†Œã€‚</p><label className="album-upload-dropzone">ï¼‹ ä»è®¾å¤‡é€‰æ‹©ç…§ç‰‡<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={selectUploadFiles}/><span>{uploadFiles.length?`å·²é€‰æ‹© ${uploadFiles.length} å¼ `:`æ”¯æŒ JPGã€PNGã€HEIC`}</span></label><label className="album-upload-field">ä¸Šä¼ åˆ°åˆ†ç»„<GroupSelect value={uploadGroup} onChange={(value)=>{setUploadGroup(value);setSelectedAlbum("")}} email={member.email}/></label><label className="album-upload-field">æ”¾å…¥ç›¸å†Œï¼ˆå¯é€‰ï¼‰<select value={selectedAlbum} onChange={(event)=>setSelectedAlbum(event.target.value)}><option value="">æœªæ•´ç†</option>{uploadAlbums.map((album)=><option key={album.id} value={album.id}>{album.name}</option>)}</select></label>{message&&<p className="media-error">{message}</p>}<div className="album-upload-actions"><button type="button" disabled={busy} onClick={()=>setUploadOpen(false)}>å–æ¶ˆ</button><button className="primary" type="button" disabled={busy||!uploadFiles.length} onClick={()=>void uploadSelectedPhotos()}>{busy?"æ­£åœ¨ä¸Šä¼ â€¦":"å¼€å§‹ä¸Šä¼ "}</button></div></section></div>}
-    {organizerOpen&&<div className="album-organizer-overlay" onMouseDown={(event)=>{if(event.target===event.currentTarget)setOrganizerOpen(false)}}><section className="album-organizer" role="dialog" aria-modal="true" aria-label="æ”¾å…¥ç›¸å†Œ"><header><div><p className="eyebrow">ORGANIZE</p><h3>æ”¾å…¥ç›¸å†Œ</h3></div><button onClick={()=>setOrganizerOpen(false)}>Ã—</button></header><p>å·²é€‰æ‹© {selectedPhotoIds.length} å¼ ç…§ç‰‡ï¼Œå¯åŒæ—¶æ”¾å…¥å¤šä¸ªç›¸å†Œã€‚</p><div className="album-organizer-list">{groupAlbums.map((album)=><label key={album.id}><input type="checkbox" checked={targetAlbumIds.includes(album.id)} onChange={()=>setTargetAlbumIds((current)=>current.includes(album.id)?current.filter((id)=>id!==album.id):[...current,album.id])}/><span>{album.name}</span></label>)}</div>{!groupAlbums.length&&<p>è¯·å…ˆæ–°å»ºä¸€ä¸ªç›¸å†Œã€‚</p>}<button className="primary" disabled={busy||!targetAlbumIds.length} onClick={addToAlbums}>{busy?"æ­£åœ¨æ•´ç†â€¦":"ç¡®è®¤æ”¾å…¥"}</button></section></div>}
-  </section>;
-}
+HOˆÈÙ]˜Z[Y
+˜[ÙJNÈ›ÚYØYİÕ\›
+İËšY
+K[Š
+\›
+HOˆÈYˆ
+XØ[˜Ù[Y
+HÙ]Ü˜Ê\›
+NÈJK˜Ø]Ú
+
+
+HOˆÈYˆ
+XØ[˜Ù[Y
+HÙ]˜Z[Y
+YJNÈJNÈNÂˆÛÛœİ\™Ù]HXÙZÛ\”™Y‹˜İ\œ™[ÂˆYˆ
+]\™Ù]J’[\œÙXİ[Û“ØœÙ\™\ˆˆ[ˆÚ[™İÊJHØY
+
+NÂˆ[ÙHÂˆÛÛœİØœÙ\™\ˆH™]È[\œÙXİ[Û“ØœÙ\™\Š
+[šY\ÊHOˆÂˆYˆ
+Y[šY\ËœÛÛYJ
+[JHOˆ[Kš\Ò[\œÙXİ[™ÊJH™]\›ÂˆØœÙ\™\‹™\ØÛÛ›™Xİ
+
+NÂˆØY
+
+NÂˆKÈ›ÛİX\™Ú[ˆŒˆJNÂˆØœÙ\™\‹›ØœÙ\™J\™Ù]
+NÂˆ™]\›ˆ
+
+HOˆÈØ[˜Ù[YHYNÈØœÙ\™\‹™\ØÛÛ›™Xİ
+
+NÈNÂˆBˆ™]\›ˆ
+
+HOˆÈØ[˜Ù[YHYNÈNÂˆKÜİËšYJNÂˆÛÛœİ™]HH
+
+HOˆÈÙ]˜Z[Y
+˜[ÙJNÈ›ÚYØYİÕ\›
+İËšY
+K[ŠÙ]Ü˜ÊK˜Ø]Ú
+
+
+HOˆÙ]˜Z[Y
+YJJNÈNÂˆ™]\›ˆÜ˜ÈÈ[YÈÜ˜Ï^ÜÜ˜ßH[^Ø[HØY[™ÏH›^HˆXÛÙ[™ÏH˜\Ş[˜ÈˆÏˆˆ˜Z[YÈÜ[ˆÛ\ÜÓ˜[YOH›YYXK\İË\™]HˆÛÛXÚÏ^Ê]™[
+HOˆÈ]™[œİÜ›ÜYØ][ÛŠ
+NÈ™]J
+NÈ_O¹áiùâaùb¨:/oyi,z-)H0­È9à®y«i:aãz+åOÜÜ[ˆˆÜ[ˆ™Y^ÜXÙZÛ\”™YŸHÛ\ÜÓ˜[YOH›YYXK\İË[ØY[™È¹áiùâaú/oyaiy.+x )ÜÜ[ÂŸB‚™[˜İ[ÛˆÜ›İ\Ù[Xİ
+È˜[YKÛÚ[™ÙK[XZ[Ü[ÛœÈNˆÈ˜[YNˆÜ›İ\Ù^NÈÛÚ[™ÙNˆ
+Ü›İ\ˆÜ›İ\Ù^JHOˆ›ÚYÈ[XZ[ˆİš[™ÎÈÜ[ÛœÏÎˆÜ›İ\Ù^V×HJHÂˆÛÛœİÜ›İ\ÈHÜ[ÛœÈ[İÙYÜ›İ\Ê[XZ[
+NÂˆÛÛœİÛÜ[‹Ù]Ü[—HH\ÙTİ]J˜[ÙJNÂˆYˆ
+Ü›İ\Ë›[™İOOHJH™]\›ˆÜ[ˆÛ\ÜÓ˜[YOH›YYXKYÜ›İ\[X™[ÙÜ›İ\X™[
+Ü›İ\ÖÌJ_OÜÜ[Âˆ™]\›ˆ]ˆÛ\ÜÓ˜[YOH[YYY›ÜİÛˆ]Ûˆ\OH˜]Ûˆˆ\šXKY^[™Y^ÛÜ[ŸHÛÛXÚÏ^Ê
+HOˆÙ]Ü[Š
+İ\œ™[
+HOˆXİ\œ™[
+_OÙÜ›İ\X™[
+˜[YJ_OÜ[¸£!ÜÜ[Ø]ÛÛÜ[ˆ	‰ˆ]ˆÛ\ÜÓ˜[YOH[YYY›ÜİÛ‹[Y[HÙÜ›İ\Ë›X\
+
+Ü›İ\
+HOˆ]Ûˆ\OH˜]ÛˆˆÛ\ÜÓ˜[YO^İ˜[YHOOHÜ›İ\ÈœÙ[XİYˆˆˆŸHÙ^O^ÙÜ›İ\HÛÛXÚÏ^Ê
+HOˆÈÛÚ[™ÙJÜ›İ\
+NÈÙ]Ü[Š˜[ÙJNÈ_OÙÜ›İ\X™[
+Ü›İ\
+_OØ]ÛŠ_OÙ]ŸOÙ]ÂŸB‚™^Ü[˜İ[Ûˆ]™[YYXT[™[
+È]™[\Ù\‹Y[X™\‹Y[X™\œÈNˆÈ]™[ˆØ[[™\‘]™[È\Ù\ˆ\Ù\ÈY[X™\ˆY[X™\ÈY[X™\œÎˆY[X™\–×HJHÂˆÛÛœİÜ›İ\ÎˆÜ›İ\Ù^V×HH]™[˜]YY[˜ÙQÜ›İ\OOH˜™\İY\È‚ˆÈÈ˜™\İY\È—Bˆˆ]™[˜]YY[˜ÙQÜ›İ\OOH™œšY[™È‚ˆÈÈ™œšY[™È—BˆˆY[X™\‹™[XZ[ÓİÙ\Ø\ÙJ
+HOOHSRS‘WÑSPRSˆÈÈ˜™\İY\È‹™œšY[™È‹˜›İ—Bˆˆ[İÙYÜ›İ\ÊY[X™\‹™[XZ[
+NÂˆÛÛœİÙÜ›İ\Ù]Ü›İ\HH\ÙTİ]OÜ›İ\Ù^OŠÜ›İ\ÖÌJNÂˆÛÛœİÜİÜËÙ]İÜ×HH\ÙTİ]OİÖ×OŠ×JNÂˆÛÛœİÙ]™[[šÜËÙ]]™[[šÜ×HH\ÙTİ]O]™[İÓ[šÖ×OŠ×JNÂˆÛÛœİØ\ŞKÙ]\ŞWHH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛY\ÜØYÙKÙ]Y\ÜØYÙWHH\ÙTİ]JˆŠNÂˆÛÛœİÛ[ÛÙÙ][ÛÙHH\ÙTİ]JˆŠNÂˆÛÛœİÜX›\Ú[™ËÙ]X›\Ú[™×HH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛXœ˜\SÜ[‹Ù]Xœ˜\SÜ[—HH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛ[ÛÙËÙ][ÛÙ×HH\ÙTİ]O]™[[ÛÙ×OŠ×JNÂˆÛÛœİÙ]™[[ÛY[Ù]]™[[ÛY[HH\ÙTİ]O[ÛY[[Š[
+NÂˆÛÛœİÜÚ\™UÓ[ÛY[Ù]Ú\™UÓ[ÛY[HH\ÙTİ]J˜[ÙJNÂˆÛÛœİÜ[™[™ÔİÒYÙ][™[™ÔİÒYHH\ÙTİ]Oİš[™È[[™Yš[™YŠ[™Yš[™Y
+NÂˆÛÛœİİ\ØY[™ÔİËÙ]\ØY[™Ôİ×HH\ÙTİ]J˜[ÙJNÂˆÛÛœİÙÜ›İ\Y[SÜ[‹Ù]Ü›İ\Y[SÜ[—HH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛXœ˜\SØY[™ËÙ]Xœ˜\SØY[™×HH\ÙTİ]J˜[ÙJNÂˆ\Ş[˜È[˜İ[ÛˆØY
+
+HÂˆÛÛœİÛ[šÔ™\İ[[ÛÙ™\İ[[ÛY[™\İ[HH]ØZ]›ÛZ\ÙK˜[
+Âˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ù]™[ÜİÜÈŠKœÙ[Xİ
+™]™[ÚYİ×ÚYŠK™\J™]™[ÚY‹]™[šY
+Kˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ù]™[Û[ÛÙÈŠKœÙ[Xİ
+šY]™[ÚY]]Ü—İ\Ù\—ÚY]]Ü—Ù[XZ[›ÙKÜ™X]YØ]ŠK™\J™]™[ÚY‹]™[šY
+K›Ü™\Š˜Ü™X]YØ]ŠKˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKœÙ[Xİ
+ŠˆŠK™\J™]™[ÚY‹]™[šY
+K›X^X™TÚ[™ÛJ
+KˆJNÂˆYˆ
+[šÔ™\İ[™\œ›Üˆ[ÛÙ™\İ[™\œ›Üˆ[ÛY[™\İ[™\œ›ÜŠHÙ]Y\ÜØYÙJ¹­.ùbª9a¡yk®z+îùcå¹i,z-){ï#:+íúaãz+åHŠNÂˆ[ÙHÂˆÛÛœİ^\İ[™Ó[ÛY[H[ÛY[™\İ[™]H\È[ÛY[[ÂˆÛÛœİ™^[šÜÈH
+[šÔ™\İ[™]H×JH\È]™[İÓ[šÖ×NÂˆÙ]]™[[šÜÊ™^[šÜÊNÂˆYˆ
+™^[šÜÖÌOËœİ×ÚY
+HÂˆÛÛœİÈ]Nˆİ\œ™[İÈHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—ÜİÜÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K\ØY\—Ù[XZ[]™[ÚYš[WÛ˜[YKÜ™X]YØ]ŠK™\JšY‹™^[šÜÖÌKœİ×ÚY
+K›X^X™TÚ[™ÛJ
+NÂˆYˆ
+İ\œ™[İÊHÙ]İÜÊ
+İ\œ™[
+HOˆØİ\œ™[İÈ\ÈİË‹‹˜İ\œ™[™š[\Š
+][JHOˆ][KšYOOHİ\œ™[İËšY
+WJNÂˆBˆÙ][ÛÙÊ
+[ÛÙ™\İ[™]H×JH\È]™[[ÛÙ×JNÂˆÙ]]™[[ÛY[
+^\İ[™Ó[ÛY[
+NÂˆYˆ
+^\İ[™Ó[ÛY[
+HÙ]Ú\™UÓ[ÛY[
+˜[ÙJNÂˆBˆBˆ\Ş[˜È[˜İ[ÛˆÜ[“Xœ˜\J
+HÂˆÙ]Xœ˜\SÜ[ŠYJNÂˆÙ]Xœ˜\SØY[™ÊYJNÂˆÙ]Y\ÜØYÙJˆŠNÂˆÛÛœİÜ›İ\ÕÓØYHÜ›İ\OOH˜›İˆÈÈ˜™\İY\È‹™œšY[™È‹˜›İ—HˆÙÜ›İ\˜›İ—NÂˆÛÛœİÈ]K\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—ÜİÜÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K\ØY\—Ù[XZ[]™[ÚYš[WÛ˜[YKÜ™X]YØ]ŠKš[Š™Ü›İ\ÚÙ^H‹Ü›İ\ÕÓØY
+K›Ü™\Š˜Ü™X]YØ]‹È\ØÙ[™[™Îˆ˜[ÙHJK›[Z]
+Œ
+NÂˆYˆ
+\œ›ÜŠHÙ]Y\ÜØYÙJ¹æî9a£9áiùâaú+îùcå¹i,z-){ï#:+íúaãz+åHŠNÂˆ[ÙHÙ]İÜÊ
+İ\œ™[
+HOˆÂˆÛÛœİY\™ÙYHË‹‹˜İ\œ™[NÂˆ
+
+]H×JH\ÈİÖ×JK™›Ü‘XXÚ
+
+İÊHOˆÈYˆ
+[Y\™ÙYœÛÛYJ
+][JHOˆ][KšYOOHİËšY
+JHY\™ÙYœ\Ú
+İÊNÈJNÂˆ™]\›ˆY\™ÙYÂˆJNÂˆÙ]Xœ˜\SØY[™Ê˜[ÙJNÂˆBˆ\ÙQY™™Xİ
+
+
+HOˆÈÙ][™[™ÔİÒY
+[™Yš[™Y
+NÈÙ][ÛÙ
+ˆŠNÈÙ]Ú\™UÓ[ÛY[
+˜[ÙJNÈ›ÚYØY
+
+NÈKÙ]™[šYJNÂˆ\ÙQY™™Xİ
+
+
+HOˆÈÙ]Ü›İ\
+Ü›İ\ÖÌJNÈKÙ]™[šY]™[˜]YY[˜ÙQÜ›İ\JNÂˆ\Ş[˜È[˜İ[ÛˆY
+]™[[œ]ˆÚ[™ÙQ]™[S[œ][[Y[ŠHÂˆÛÛœİš[\ÈH\œ˜^K™œ›ÛJ]™[[œ]\™Ù]™š[\È×JNÂˆYˆ
+Yš[\Ë›[™İ
+H™]\›ÂˆYˆ
+]™[İÊHÈÙ]Y\ÜØYÙJ¹«ãù.*¹­.ùbª9cêº ïy­îùb¨9. 9o(9áiùâaûï#:+íùab9éîúfi9c§ùáiùâaùa£y¦í9£h¸à ˆŠNÈ]™[[œ]\™Ù]˜[YHHˆÈ™]\›ÈBˆÙ]\ØY[™ÔİÊYJNÈÙ]Y\ÜØYÙJˆŠNÂˆHÂˆÛÛœİİÈH]ØZ]\ØYİÊš[\ÖÌKÜ›İ\
+NÂˆÙ]İÜÊ
+İ\œ™[
+HOˆÜİË‹‹˜İ\œ™[™š[\Š
+][JHOˆ][KšYOOHİËšY
+WJNÂˆÙ][™[™ÔİÒY
+İËšY
+NÂˆBˆØ]Ú
+\œ›ÜŠHÈÙ]Y\ÜØYÙJ\œ›Üˆ[œİ[˜Ù[Ùˆ\œ›ÜˆÈ\œ›Ü‹›Y\ÜØYÙHˆ¹."¹/(9i,z-)HŠNÈBˆš[˜[HÈÙ]\ØY[™ÔİÊ˜[ÙJNÈ]™[[œ]\™Ù]˜[YHHˆÈBˆBˆ[˜İ[Ûˆ™[[İ™J
+HÂˆÙ]Y\ÜØYÙJˆŠNÂˆÙ][™[™ÔİÒY
+[
+NÂˆBˆ\Ş[˜È[˜İ[ÛˆÚÛÜÙQ^\İ[™ÊİÎˆİÊHÂˆÙ]Y\ÜØYÙJˆŠNÂˆÙ][™[™ÔİÒY
+İËšY
+NÂˆÙ]Xœ˜\SÜ[Š˜[ÙJNÂˆBˆ\Ş[˜È[˜İ[Ûˆ[]S[ÛÙ
+[Nˆ]™[[ÛÙ
+HÂˆÙ]Y\ÜØYÙJˆŠNÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ù]™[Û[ÛÙÈŠK™[]J
+K™\JšY‹[KšY
+K™\J˜]]Ü—İ\Ù\—ÚY‹\Ù\‹šY
+NÂˆYˆ
+\œ›ÜŠHÈÙ]Y\ÜØYÙJº+á:+®¹b(:fi9i,z-)HŠNÈ™]\›ÈBˆÙ][ÛÙÊ
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][KšYOOH[KšY
+JNÂˆÙ]]™[[ÛY[
+
+İ\œ™[
+HOˆİ\œ™[ËœÛİ\˜ÙWÙ]™[Û[ÛÙÚYOOH[KšYÈÈ‹‹˜İ\œ™[Ø\[Ûˆˆ‹Ûİ\˜ÙWÙ]™[Û[ÛÙÚYˆ[Hˆİ\œ™[
+NÂˆBˆÛÛœİØ]™YİÒYH]™[[šÜÖÌOËœİ×ÚYÂˆÛÛœİÙ[XİYİÒYH[™[™ÔİÒYOOH[™Yš[™YÈØ]™YİÒYˆ[™[™ÔİÒYÂˆÛÛœİ]™[İÈHİÜË™š[™
+
+İÊHOˆİËšYOOHÙ[XİYİÒY
+NÂˆÛÛœİXœ˜\TİÜÈHİÜË™š[\Š
+İÊHOˆİËšYOOHÙ[XİYİÒY	‰ˆ
+Ü›İ\OOH˜›İˆİË™Ü›İ\ÚÙ^HOOHÜ›İ\İË™Ü›İ\ÚÙ^HOOH˜›İŠJNÂˆÛÛœİ\Ñ˜YH[™[™ÔİÒYOOH[™Yš[™Y›ÛÛX[Š[ÛÙš[J
+JHÚ\™UÓ[ÛY[Âˆ\Ş[˜È[˜İ[ÛˆØ]™PXİ]š]SYYXJ
+HÂˆYˆ
+Z\Ñ˜Y
+HÈÙ]Y\ÜØYÙJ¹mì¹/çykfŠNÈ™]\›ÈBˆÙ]\ŞJYJNÈÙ]X›\Ú[™ÊÚ\™UÓ[ÛY[
+NÈÙ]Y\ÜØYÙJˆŠNÂˆHÂˆÛÛœİ[ÛY[Ü›İ\ˆÜ›İ\Ù^HH[İÙYÜ›İ\ÊY[X™\‹™[XZ[
+Kš[˜ÛY\Ê˜™\İY\ÈŠHÈ˜™\İY\ÈˆˆÜ›İ\ÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙKœœÊœØ]™WÜÚ\™YØØ[[™\—Ù]™[ÛYYXH‹ÂˆÙ]™[ÚYˆ]™[šYˆÜ™\XÙWÜİÎˆ[™[™ÔİÒYOOH[™Yš[™YˆÜİ×ÚYˆÙ[XİYİÒY[ˆÛ[ÛÙØ›ÙNˆ[ÛÙš[J
+KˆÜX›\ÚˆÚ\™UÓ[ÛY[	‰ˆY]™[[ÛY[ˆÙÜ›İ\ˆ[ÛY[Ü›İ\ˆJNÂˆYˆ
+\œ›ÜŠH›İÈ\œ›ÜÂˆÙ][™[™ÔİÒY
+[™Yš[™Y
+NÈÙ][ÛÙ
+ˆŠNÈÙ]Ú\™UÓ[ÛY[
+˜[ÙJNÈÙ]Y\ÜØYÙJÚ\™UÓ[ÛY[È¹mì¹/çykf9nm¹cäyn ùb,9bª9  Hˆˆ¹mì¹/çykfŠNÈ]ØZ]ØY
+
+NÂˆHØ]Ú
+\œ›ÜŠHÈÙ]Y\ÜØYÙJ
+\œ›Üˆ\ÈÈÛÙOÎˆİš[™ÈJOË˜ÛÙHOOHŒŒÍLHˆÈº/æy.*¹­.ùbª9mì¹îãùcäyn ú/áùbª9  y.¡ˆˆˆ\œ›Üˆ[œİ[˜Ù[Ùˆ\œ›ÜˆÈ\œ›Ü‹›Y\ÜØYÙHˆ¹/çykf9i,z-)HŠNÈBˆš[˜[HÈÙ]\ŞJ˜[ÙJNÈÙ]X›\Ú[™Ê˜[ÙJNÈBˆBˆÛÛœİÙ[XİYÜ›İ\ÈHÜ›İ\OOH˜›İˆÈÈ˜™\İY\È‹™œšY[™È—HˆÙÜ›İ\NÂˆ[˜İ[ÛˆÙÙÛQÜ›İ\
+™^ˆ˜™\İY\Èˆ™œšY[™ÈŠHÂˆÛÛœİ\ÈHÙ[XİYÜ›İ\Ëš[˜ÛY\Ê™^
+NÂˆYˆ
+\È	‰ˆÙ[XİYÜ›İ\Ë›[™İOOHJH™]\›ÂˆÛÛœİ™^Ü›İ\ÈH\ÈÈÙ[XİYÜ›İ\Ë™š[\Š
+][JHOˆ][HOOH™^
+HˆË‹‹œÙ[XİYÜ›İ\Ë™^NÂˆÙ]Ü›İ\
+™^Ü›İ\Ë›[™İOOHˆÈ˜›İˆˆ™^Ü›İ\ÖÌH\ÈÜ›İ\Ù^JNÂˆBˆ™]\›ˆÙXİ[ÛˆÛ\ÜÓ˜[YOH™]™[[YYXK\[™[‚ˆ]ˆÛ\ÜÓ˜[YOH™]™[[YYXKZXY[™È]Ï¹­.ùbª9áiùâaÏÚÏÙ]™[İÈÈŒH9o(9áiùâaÈˆˆ¹..º/æy«(y­.ùbª9åfy."ù. 9o(9áiùâaÈŸOÜÙ]ÙÜ›İ\Ë›[™İOOHHÈÜ[ˆÛ\ÜÓ˜[YOH›YYXKYÜ›İ\[X™[ÙÜ›İ\X™[
+Ü›İ\ÖÌJ_OÜÜ[ˆˆ]ˆÛ\ÜÓ˜[YOH™]™[YÜ›İ\\XÚÙ\ˆ]Ûˆ\OH˜]Ûˆˆ\šXKY^[™Y^ÙÜ›İ\Y[SÜ[ŸHÛÛXÚÏ^Ê
+OOœÙ]Ü›İ\Y[SÜ[Š
+Ü[ŠOOˆ[Ü[Š_O¹b!¹îáÛX[ÜÙ[XİYÜ›İ\Ë›[™İH9.*ÜÛX[Ü[¸£!ÜÜ[Ø]ÛÙÜ›İ\Y[SÜ[‰‰]ˆÛ\ÜÓ˜[YOH™]™[YÜ›İ\[Y[HX™[[œ]\OH˜ÚXÚØ›ŞˆÚXÚÙY^ÜÙ[XİYÜ›İ\Ëš[˜ÛY\Ê˜™\İY\ÈŠ_HÛÚ[™ÙO^Ê
+OOÙÙÛQÜ›İ\
+˜™\İY\ÈŠ_KÏÜ[ºeîº''9îáÜÜ[ÛX™[X™[[œ]\OH˜ÚXÚØ›ŞˆÚXÚÙY^ÜÙ[XİYÜ›İ\Ëš[˜ÛY\Ê™œšY[™ÈŠ_HÛÚ[™ÙO^Ê
+OOÙÙÛQÜ›İ\
+™œšY[™ÈŠ_KÏÜ[¹§"ùcâùîáÜÜ[ÛX™[Ù]ŸOÙ]ŸOÙ]‚ˆÙ]™[İÈ	‰ˆ]ˆÛ\ÜÓ˜[YOH™]™[XÛİ™\ˆ›İXİYİÈİÏ^Ù]™[İßH[^Ø	Ù]™[]_H9l zgh˜KÏ]ÛˆÛÛXÚÏ^Ü™[[İ™_H\šXK[X™[H¹éîúfi9­.ùbª9áiùâaÈˆ]OH¹/çykf9d#¹.ã¹­.ùbª9éîúfi;ï#9c§ùfï¹.ãy/çyåfyg*9æî9a£°åÏØ]ÛÙ]ŸBˆÈY]™[İÈ	‰ˆ]ˆÛ\ÜÓ˜[YOH™]™[\İËXXİ[ÛœÈX™[Û\ÜÓ˜[YOH›YYXKYš[K\XÚÙ\ˆ»ï"È9.ãº+¯¹i!ù."¹/([œ]\OH™š[HˆXØÙ\Hš[XYÙKÚœYË[XYÙKÜ™Ë[XYÙKİÙXœ[XYÙKÚZXË[XYÙKÚZYˆˆÛÚ[™ÙO^ØYKÏÜ[İ\ØY[™ÔİÏÈ¹«hùg*9."¹/(8 )ˆˆº`"y¢êyáiùâaÈŸOÜÜ[ÛX™[]Ûˆ\OH˜]ÛˆˆÛ\ÜÓ˜[YOH™]™[[Xœ˜\K\XÚÙ\ˆˆÛÛXÚÏ^Ê
+OO›ÚYÜ[“Xœ˜\J
+_OÜ[»ï"È9.ã¹æî9a£9."¹/(ÜÜ[º`"y¢êyáiùâaÏØØ]ÛÙ]ŸBˆÛXœ˜\SÜ[ˆ	‰ˆ]ˆÛ\ÜÓ˜[YOHœİË\XÚÙ\ˆ]ˆÛ\ÜÓ˜[YOHœİË\XÚÙ\‹ZXYº`"y¢êymì¹§"yáiùâaÏØ]ÛˆÛÛXÚÏ^Ê
+OOœÙ]Xœ˜\SÜ[Š˜[ÙJ_O°åÏØ]ÛÙ]]ˆÛ\ÜÓ˜[YOHœİË[Xœ˜\KYÜšYÛXœ˜\TİÜË›X\
+
+İÊOO]ÛˆÙ^O^ÜİËšYHÛÛXÚÏ^Ê
+OO˜ÚÛÜÙQ^\İ[™ÊİÊ_H\ØX›Y^Ø\Ş_O›İXİYİÈİÏ^ÜİßKÏØ]ÛŠ_OÙ]ÛXœ˜\SØY[™ÏÏ¹«hùg*:+îùcå¹áiùâaø )Üˆ[Xœ˜\TİÜË›[™İ	‰º/æy.*¹îá9æ¡9æî9a£:aã:/æ9¬¨y§"ycëú`"yáiùâaÏÜŸOÙ]ŸBˆ]ˆÛ\ÜÓ˜[YOH™]™[[[ÛÙ[\İÛ[ÛÙË›X\
+
+[JOOØÛÛœİÛÛÜ[Y[X™\œË™š[™
+
+][JOOš][K™[XZ[ÓİÙ\Ø\ÙJ
+OOOY[K˜]]Ü—Ù[XZ[ÓİÙ\Ø\ÙJ
+JOË˜ÛÛÜŸœİÛ™HØÛÛœİØ[‘[]OY[K˜]]Ü—İ\Ù\—ÚYOO]\Ù\‹šYÜ™]\›ˆ]ˆÙ^O^Ù[KšYOÜ[ˆÛ\ÜÓ˜[YO^Ø[ÛY[X]˜]\ˆ	ØÛÛÜŸXOÙ\Ü^S˜[YJ[K˜]]Ü—Ù[XZ[Y[X™\œÊKœÛXÙJJ_OÜÜ[Ù\Ü^S˜[YJ[K˜]]Ü—Ù[XZ[Y[X™\œÊ_OØÜ[Ù[K˜›Ù_OÜÜ[ØØ[‘[]I‰]Ûˆ\OH˜]ÛˆˆÛ\ÜÓ˜[YOH™]™[[[ÛÙY[]HˆÛÛXÚÏ^Ê
+OO™[]S[ÛÙ
+[J_O¹b(:fiØ]ÛŸOÜÙ]ŸJ_OÙ]‚ˆX™[Û\ÜÓ˜[YOH™]™[[[ÛÙYšY[¹a¦yoàù áO^\™XH˜[YO^Û[ÛÙHÛÚ[™ÙO^Ê[œ]
+OOœÙ][ÛÙ
+[œ]\™Ù]˜[YJ_HXÙZÛ\Hº+¬9oez/æy. 9b.ø )¸ )ˆ‹ÏÛX™[‚ˆÙ]™[[ÛY[ˆÈÛ\ÜÓ˜[YOH™]™[[[ÛY[XÛÛ\Xİ¹mì¹cäyn ùbª9  H0­È9¥¬9oàù áy/&¹d#9«iy..º+á:+®Ü‚ˆˆ]ˆÛ\ÜÓ˜[YOH™]™[[[ÛY[\›İÈX™[Û\ÜÓ˜[YOH™]™[[[ÛY[[Ü[Ûˆ[œ]\OH˜ÚXÚØ›ŞˆÚXÚÙY^ÜÚ\™UÓ[ÛY[HÛÚ[™ÙO^Ê[œ]
+OOœÙ]Ú\™UÓ[ÛY[
+[œ]\™Ù]˜ÚXÚÙY
+_KÏ¹cäyn ùb,9bª9  OØÛX™[ÛX[¹cëú`"OÜÛX[Ù]ŸBˆ]ˆÛ\ÜÓ˜[YOH™]™[[[ÛÙXXİ[ÛœÈÚ[™ÛH]ÛˆÛ\ÜÓ˜[YOHœš[X\Hˆ\OH˜]Ûˆˆ\ØX›Y^Ø\ŞH\ØY[™ÔİßHÛÛXÚÏ^ÜØ]™PXİ]š]SYYX_OØ\ŞOÊX›\Ú[™ÏÈ¹«hùg*9/çykf9nm¹cäyn ø )ˆˆ¹«hùg*9/çykf8 )ˆŠNœÚ\™UÓ[ÛY[È¹/çykf9nm¹cäyn Èˆ¹/çykfŸOØ]ÛÙ]‚ˆÛY\ÜØYÙI‰Û\ÜÓ˜[YO^ÛY\ÜØYÙKœİ\ÕÚ]
+¹mì¹/çykfŠHÈ›YYXK\İXØÙ\ÜÈˆˆ›YYXKY\œ›ÜˆŸOÛY\ÜØYÙ_OÜŸBˆÜÙXİ[ÛÂŸB‚™^Ü[˜İ[Ûˆ[ÛY[ÔYÙJÈ\Ù\‹Y[X™\‹Y[X™\œÈNˆÈ\Ù\ˆ\Ù\ÈY[X™\ˆY[X™\ÈY[X™\œÎˆY[X™\–×HJHÂˆÛÛœİQÑWÔÒV‘HHLÂˆÛÛœİÜ›İ\ÈH[İÙYÜ›İ\ÊY[X™\‹™[XZ[
+NÂˆÛÛœİÙÜ›İ\Ù]Ü›İ\HH\ÙTİ]OÜ›İ\Ù^OŠÜ›İ\ÖÌJNÂˆÛÛœİÛ[ÛY[ËÙ][ÛY[×HH\ÙTİ]O[ÛY[×OŠ×JNÂˆÛÛœİÜİÜËÙ]İÜ×HH\ÙTİ]OİÖ×OŠ×JNÂˆÛÛœİÛ[šÜËÙ][šÜ×HH\ÙTİ]O[ÛY[İÖ×OŠ×JNÂˆÛÛœİÛZÙ\ËÙ]ZÙ\×HH\ÙTİ]OZÙV×OŠ×JNÂˆÛÛœİØÛÛ[Y[ËÙ]ÛÛ[Y[×HH\ÙTİ]OÛÛ[Y[×OŠ×JNÂˆÛÛœİÙ]™[[ÛÙËÙ]]™[[ÛÙ×HH\ÙTİ]O]™[[ÛÙ×OŠ×JNÂˆÛÛœİØÛÛ\ÜÙ\‹Ù]ÛÛ\ÜÙ\—HH\ÙTİ]J˜[ÙJNÂˆÛÛœİØØ\[Û‹Ù]Ø\[Û—HH\ÙTİ]JˆŠNÂˆÛÛœİÙš[\ËÙ]š[\×HH\ÙTİ]Oš[V×OŠ×JNÂˆÛÛœİİ\ØY˜Z[\™\ËÙ]\ØY˜Z[\™\×HH\ÙTİ]Oİš[™Ö×OŠ×JNÂˆÛÛœİ\ØYY˜YİÜÈH\ÙT™YŠ™]ÈX\İš[™ËİÏŠ
+JNÂˆÛÛœİØÛÛ[Y[˜YËÙ]ÛÛ[Y[˜Y×HH\ÙTİ]O™XÛÜ™[X™\‹İš[™ÏŠßJNÂˆÛÛœİÜÙ[™[™ĞÛÛ[Y[YËÙ]Ù[™[™ĞÛÛ[Y[Y×HH\ÙTİ]O[X™\–×OŠ×JNÂˆÛÛœİÜ™\U\™Ù]Ù]™\U\™Ù]HH\ÙTİ]O™\U\™Ù][Š[
+NÂˆÛÛœİÙ^[™YÛÛ[Y[ËÙ]^[™YÛÛ[Y[×HH\ÙTİ]O[X™\–×OŠ×JNÂˆÛÛœİÙ^[™YZÙ\ËÙ]^[™YZÙ\×HH\ÙTİ]O[X™\–×OŠ×JNÂˆÛÛœİÛY[S[ÛY[YÙ]Y[S[ÛY[YHH\ÙTİ]O[X™\ˆ[Š[
+NÂˆÛÛœİÙY][™Ó[ÛY[YÙ]Y][™Ó[ÛY[YHH\ÙTİ]O[X™\ˆ[Š[
+NÂˆÛÛœİÙY][™ĞØ\[Û‹Ù]Y][™ĞØ\[Û—HH\ÙTİ]JˆŠNÂˆÛÛœİÜİ]ËÙ]İ]×HH\ÙTİ]O™XÛÜ™[X™\‹[ÛY[İ]ÏŠßJNÂˆÛÛœİÛØYYÛÛ[Y[[ÛY[ËÙ]ØYYÛÛ[Y[[ÛY[×HH\ÙTİ]O[X™\–×OŠ×JNÂˆÛÛœİÛØYYZÙS[ÛY[ËÙ]ØYYZÙS[ÛY[×HH\ÙTİ]O[X™\–×OŠ×JNÂˆÛÛœİÚ\Ó[Ü™KÙ]\Ó[Ü™WHH\ÙTİ]JYJNÂˆÛÛœİÛØY[™Ó[Ü™KÙ]ØY[™Ó[Ü™WHH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛ™]Ó[ÛY[Ûİ[Ù]™]Ó[ÛY[Ûİ[HH\ÙTİ]J
+NÂˆÛÛœİ]\İ[ÛY[Ü™X]Y]H\ÙT™Yİš[™È[Š[
+NÂˆÛÛœİØY™\]Y\İYH\ÙT™YŠ
+NÂˆÛÛœİÛ›İYšXØ][ÛœËÙ]›İYšXØ][Ûœ×HH\ÙTİ]O[ÛY[›İYšXØ][Û–×OŠ×JNÂˆÛÛœİÛ›İYšXØ][ÛœÓÜ[‹Ù]›İYšXØ][ÛœÓÜ[—HH\ÙTİ]J˜[ÙJNÂˆÛÛœİØ\ŞKÙ]\ŞWHH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛY\ÜØYÙKÙ]Y\ÜØYÙWHH\ÙTİ]JˆŠNÂˆÛÛœİÜ™]šY]ËÙ]™]šY]×HH\ÙTİ]OÈİÜÎˆİÖ×NÈ[™^ˆ[X™\ˆH[Š[
+NÂˆÛÛœİ™]šY]ÕİXÚİ\H\ÙT™Y[X™\ˆ[Š[
+NÂˆÛÛœİÛØY[™Ò[š]X[Ù]ØY[™Ò[š]X[HH\ÙTİ]JYJNÂˆÛÛœİÙ™YY\œ›Ü‹Ù]™YY\œ›Ü—HH\ÙTİ]JˆŠNÂ‚ˆ\Ş[˜È[˜İ[ÛˆY˜]S[ÛY[ÊYÙS[ÛY[Îˆ[ÛY[×K™\XÙNˆ›ÛÛX[‹™\]Y\İYÎˆ[X™\ŠHÂˆÛÛœİYÈHYÙS[ÛY[Ë›X\
+
+][JHOˆ][KšY
+NÂˆYˆ
+ZYË›[™İ
+H™]\›ÂˆÛÛœİ]™[YÈHYÙS[ÛY[Ë›X\
+
+][JOOš][K™]™[ÚY
+K™š[\Š
+Y
+NšY\È[X™\OšYOO[[
+NÂˆÛÛœİÛ[šÔ™\İ[™]šY]Ô™\İ[İ]Ô™\İ[[ÛÙ™\İ[HH]ØZ]›ÛZ\ÙK˜[
+Âˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÜİÜÈŠKœÙ[Xİ
+›[ÛY[ÚYİ×ÚYÜÚ][ÛˆŠKš[Š›[ÛY[ÚY‹YÊKˆİ\X˜\ÙKœœÊ™Ù]ÜÚ\™YØØ[[™\—Û[ÛY[ØÛÛ[Y[Ü™]šY]È‹ÈÛ[ÛY[ÚYÎˆYËÛ[Z]ˆÈJKˆİ\X˜\ÙKœœÊ™Ù]ÜÚ\™YØØ[[™\—Û[ÛY[Üİ]È‹ÈÛ[ÛY[ÚYÎˆYÈJKˆ]™[YË›[™İÈİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ù]™[Û[ÛÙÈŠKœÙ[Xİ
+šY]™[ÚY]]Ü—İ\Ù\—ÚY]]Ü—Ù[XZ[›ÙKÜ™X]YØ]ŠKš[Š™]™[ÚY‹]™[YÊK›Ü™\Š˜Ü™X]YØ]ŠHˆ›ÛZ\ÙKœ™\ÛÛ™JÙ]N–×K\œ›Ü›[JKˆJNÂˆYˆ
+™\]Y\İY	‰ˆ™\]Y\İYOOHØY™\]Y\İY˜İ\œ™[
+H™]\›ÂˆÛÛœİYÙS[šÜÈH
+[šÔ™\İ[™]H×JH\È[ÛY[İÖ×NÂˆÛÛœİİÒYÈHË‹‹›™]ÈÙ]
+YÙS[šÜË›X\
+
+][JOOš][Kœİ×ÚY
+JWNÂˆÛÛœİİÔ™\İ[HİÒYË›[™İÈ]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—ÜİÜÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K\ØY\—Ù[XZ[]™[ÚYš[WÛ˜[YKÜ™X]YØ]ŠKš[ŠšY‹İÒYÊHˆÙ]N–×K\œ›Ü›[NÂˆYˆ
+™\]Y\İY	‰ˆ™\]Y\İYOOHØY™\]Y\İY˜İ\œ™[
+H™]\›ÂˆYˆ
+[šÔ™\İ[™\œ›Üˆ™]šY]Ô™\İ[™\œ›Üˆİ]Ô™\İ[™\œ›Üˆ[ÛÙ™\İ[™\œ›ÜˆİÔ™\İ[™\œ›ÜŠHÙ]Y\ÜØYÙJº`ê9b!¹bª9  ya¡yk®yb¨:/oyi,z-){ï#9cëùà®yaîúaãz+åHŠNÂˆÛÛœİY\™ÙU[š\]YHH^[™ÈÈYˆİš[™È[X™\ˆOŠİ\œ™[ˆ×K[˜ÛÛZ[™Îˆ×JHOˆÂˆÛÛœİX\H™]ÈX\
+İ\œ™[›X\
+
+][JHOˆÚ][KšY][WJJNÈ[˜ÛÛZ[™Ë™›Ü‘XXÚ
+
+][JHOˆX\œÙ]
+][KšY][JJNÈ™]\›ˆË‹‹›X\˜[Y\Ê
+WNÂˆNÂˆÙ][šÜÊ
+İ\œ™[
+OOœ™\XÙOÜYÙS[šÜÎ–Ë‹‹˜İ\œ™[™š[\Š
+][JOOˆZYËš[˜ÛY\Ê][K›[ÛY[ÚY
+JK‹‹œYÙS[šÜ×JNÂˆÙ]İÜÊ
+İ\œ™[
+OO›Y\™ÙU[š\]YJ™\XÙOÖ×N˜İ\œ™[
+İÔ™\İ[™]_×JH\ÈİÖ×JJNÂˆÙ]ÛÛ[Y[Ê
+İ\œ™[
+OOœ™\XÙOÊ™]šY]Ô™\İ[™]_×JH\ÈÛÛ[Y[×N–Ë‹‹˜İ\œ™[™š[\Š
+][JOOˆZYËš[˜ÛY\Ê][K›[ÛY[ÚY
+JK‹‹Š™]šY]Ô™\İ[™]_×JH\ÈÛÛ[Y[×WJNÂˆÙ]]™[[ÛÙÊ
+İ\œ™[
+OO›Y\™ÙU[š\]YJ™\XÙOÖ×N˜İ\œ™[
+[ÛÙ™\İ[™]_×JH\È]™[[ÛÙ×JJNÂˆÙ]İ]Ê
+İ\œ™[
+OO“Øš™Xİ™œ›ÛQ[šY\ÊË‹‹“Øš™Xİ™[šY\Ê™\XÙOŞßN˜İ\œ™[
+K‹‹Š
+İ]Ô™\İ[™]_×JH\È[ÛY[İ]Ö×JK›X\
+
+][JOO–Ú][K›[ÛY[ÚY][WJWJJNÂˆB‚ˆ\Ş[˜È[˜İ[ÛˆØYYÙJÙ™œÙ]H™\XÙHH˜[ÙJHÂˆÛÛœİ™\]Y\İYH
+ÊÛØY™\]Y\İY˜İ\œ™[ÂˆYˆ
+Ù™œÙ]
+HÙ]ØY[™Ó[Ü™JYJNÂˆYˆ
+™\XÙJHÈÙ]ØY[™Ò[š]X[
+YJNÈÙ]™YY\œ›ÜŠˆŠNÈBˆHÂˆÛÛœİ™\İ[H]ØZ]Ú]™]J\Ş[˜È
+
+HOˆÂˆÛÛœİ™\ÜÛœÙHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K]]Ü—Ù[XZ[Ø\[Û‹]™[ÚYÛİ\˜ÙWÙ]™[Û[ÛÙÚYÛİ\˜ÙWÙ]™[Üİ×ÚYÜ™X]YØ]ŠKš[Š™Ü›İ\ÚÙ^H‹ÙÜ›İ\˜›İ—JK›Ü™\Š˜Ü™X]YØ]‹È\ØÙ[™[™Îˆ˜[ÙHJKœ˜[™ÙJÙ™œÙ]Ù™œÙ]
+ÈQÑWÔÒV‘HHJNÂˆYˆ
+™\ÜÛœÙK™\œ›ÜŠH›İÈ™\ÜÛœÙK™\œ›ÜÂˆ™]\›ˆ™\ÜÛœÙK™]NÂˆJNÂˆYˆ
+™\]Y\İYOOHØY™\]Y\İY˜İ\œ™[
+H™]\›Âˆ]YÙS[ÛY[ÈH
+™\İ[×JH\È[ÛY[×NÂˆËÈHœ™\ÚH™\İÜ™Y[Øš[HÙ\ÜÚ[ÛˆØ[ˆœšYY›H™]\›ˆ[ˆ[\H“È™\İ[ˆËÈÚ]İ][ˆ\œ›Ü‹ˆÛÛ™š\›H[ˆ[š]X[[\HYÙHÛ˜ÙH™Y›Ü™HÚİÚ[™È]‚ˆYˆ
+™\XÙH	‰ˆÙ™œÙ]OOH	‰ˆYÙS[ÛY[Ë›[™İOOH
+HÂˆ]ØZ]™]È›ÛZ\ÙJ
+™\ÛÛ™JHOˆÚ[™İËœÙ][Y[İ]
+™\ÛÛ™KL
+JNÂˆÛÛœİÛÛ™š\›X][ÛˆH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K]]Ü—Ù[XZ[Ø\[Û‹]™[ÚYÛİ\˜ÙWÙ]™[Û[ÛÙÚYÛİ\˜ÙWÙ]™[Üİ×ÚYÜ™X]YØ]ŠKš[Š™Ü›İ\ÚÙ^H‹ÙÜ›İ\˜›İ—JK›Ü™\Š˜Ü™X]YØ]‹È\ØÙ[™[™Îˆ˜[ÙHJKœ˜[™ÙJQÑWÔÒV‘HHJNÂˆYˆ
+ÛÛ™š\›X][Û‹™\œ›ÜŠH›İÈÛÛ™š\›X][Û‹™\œ›ÜÂˆYÙS[ÛY[ÈH
+ÛÛ™š\›X][Û‹™]H×JH\È[ÛY[×NÂˆBˆÙ][ÛY[Ê
+İ\œ™[
+OOœ™\XÙOÜYÙS[ÛY[Î–Ë‹‹˜İ\œ™[™š[\Š
+][JOOˆ\YÙS[ÛY[ËœÛÛYJ
+™^
+OO›™^šYOOZ][KšY
+JK‹‹œYÙS[ÛY[×JNÂˆYˆ
+™\XÙJH[ÛY[Ñ™YYØXÚKœÙ]
+	İ\Ù\‹šYN‰ÙÜ›İ\XÈ[ÛY[ÎˆYÙS[ÛY[ËØ]™Y]ˆ]K››İÊ
+HJNÂˆÙ]\Ó[Ü™JYÙS[ÛY[Ë›[™İOOTQÑWÔÒV‘JNÂˆYŠ™\XÙJ^ÂˆÙ][šÜÊ×JNÈÙ]İÜÊ×JNÈÙ]ÛÛ[Y[Ê×JNÈÙ]]™[[ÛÙÊ×JNÈÙ]İ]ÊßJNÂˆ]\İ[ÛY[Ü™X]Y]˜İ\œ™[\YÙS[ÛY[ÖÌOË˜Ü™X]YØ][ÂˆÙ]™]Ó[ÛY[Ûİ[
+
+NÂˆBˆ]ØZ]Y˜]S[ÛY[ÊYÙS[ÛY[Ë™\XÙK™\]Y\İY
+NÂˆHØ]ÚÂˆYˆ
+™\]Y\İYOOHØY™\]Y\İY˜İ\œ™[
+HÙ]™YY\œ›ÜŠ¹bª9  y¦ ¹¥í¹¬¨y§"yb¨:/oy¢$9b§ÈŠNÂˆHš[˜[HÂˆYˆ
+™\]Y\İYOOHØY™\]Y\İY˜İ\œ™[
+HÈÙ]ØY[™Ó[Ü™J˜[ÙJNÈÙ]ØY[™Ò[š]X[
+˜[ÙJNÈBˆBˆBˆ\Ş[˜È[˜İ[ÛˆØY›İYšXØ][ÛœÊ
+HÂˆÛÛœİÙ]N›İÛ“[ÛY[ßOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKœÙ[Xİ
+šYŠK™\J˜]]Ü—İ\Ù\—ÚY‹\Ù\‹šY
+K›Ü™\Š˜Ü™X]YØ]‹Ø\ØÙ[™[™Î™˜[Ù_JK›[Z]
+L
+NÂˆÛÛœİİÛ’YÈH
+İÛ“[ÛY[ß×JK›X\
+
+][JOOš][KšY
+NÂˆÛÛœİÜ™\T™\İ[ZÙT™\İ[HH]ØZ]›ÛZ\ÙK˜[
+Âˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ØÛÛ[Y[ÈŠKœÙ[Xİ
+šY[ÛY[ÚY]]Ü—Ù[XZ[Ü™X]YØ]™\WÜ™XYØ]ŠK™\Jœ™\Wİ×İ\Ù\—ÚY‹\Ù\‹šY
+K›Ü™\Š˜Ü™X]YØ]‹Ø\ØÙ[™[™Î™˜[Ù_JK›[Z]
+Œ
+KˆİÛ’YË›[™İÜİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÛZÙ\ÈŠKœÙ[Xİ
+›[ÛY[ÚY\Ù\—ÚY\Ù\—Ù[XZ[Ü™X]YØ]™XYØ]ŠKš[Š›[ÛY[ÚY‹İÛ’YÊK›™\J\Ù\—ÚY‹\Ù\‹šY
+K›Ü™\Š˜Ü™X]YØ]‹Ø\ØÙ[™[™Î™˜[Ù_JK›[Z]
+Œ
+N”›ÛZ\ÙKœ™\ÛÛ™JÙ]N–×K\œ›Ü›[JKˆJNÂˆÛÛœİ™\R][\ÏJ™\T™\İ[™]_×JK›X\
+
+][JOOŠÚÙ^N˜™\KIÚ][KšYX[ÛY[Yš][K›[ÛY[ÚYXİÜ‘[XZ[š][K˜]]Ü—Ù[XZ[Ú[™ˆœ™\Hˆ\ÈÛÛœİÜ™X]Y]š][K˜Ü™X]YØ][œ™XYˆZ][Kœ™\WÜ™XYØ]JJNÂˆÛÛœİZÙR][\ÏJZÙT™\İ[™]_×JK›X\
+
+][JOOŠÚÙ^N˜ZÙKIÚ][K›[ÛY[ÚYKIÚ][K\Ù\—ÚYX[ÛY[Yš][K›[ÛY[ÚYXİÜ‘[XZ[š][K\Ù\—Ù[XZ[Ú[™ˆ›ZÙHˆ\ÈÛÛœİÜ™X]Y]š][K˜Ü™X]YØ][œ™XYˆZ][Kœ™XYØ]JJNÂˆÙ]›İYšXØ][ÛœÊË‹‹œ™\R][\Ë‹‹›ZÙR][\×KœÛÜ
+
+KŠOO˜‹˜Ü™X]Y]›ØØ[PÛÛ\\™JK˜Ü™X]Y]
+JKœÛXÙJÌ
+JNÂˆBˆ\ÙQY™™Xİ
+
+
+HOˆÂˆÛÛœİØXÚYH[ÛY[Ñ™YYØXÚK™Ù]
+	İ\Ù\‹šYN‰ÙÜ›İ\X
+NÂˆYˆ
+ØXÚY	‰ˆ]K››İÊ
+HHØXÚYœØ]™Y]H
+ˆŒÌ
+HÈÙ][ÛY[ÊØXÚY›[ÛY[ÊNÈÙ]ØY[™Ò[š]X[
+˜[ÙJNÈBˆÙ]\Ó[Ü™JYJNÈÙ]ZÙ\Ê×JNÈÙ]ØYYÛÛ[Y[[ÛY[Ê×JNÈÙ]ØYYZÙS[ÛY[Ê×JNÈÙ]^[™YÛÛ[Y[Ê×JNÈÙ]^[™YZÙ\Ê×JNÈ›ÚYØYYÙJYJNÂˆKÙÜ›İ\\Ù\‹šYJNÂˆ\ÙQY™™Xİ
+
+
+OOİ›ÚYØY›İYšXØ][ÛœÊ
+_Kİ\Ù\‹šYJNÂˆ\ÙQY™™Xİ
+
+
+OOÂˆÛÛœİÚXÚÑ›Ü“™]ÈH
+
+HOˆÂˆYˆ
+Øİ[Y[š\ÚXš[]Tİ]HOOHš\ÚX›HŠH™]\›ÂˆÛÛœİÚ[˜ÙO[]\İ[ÛY[Ü™X]Y]˜İ\œ™[ÂˆYŠ\Ú[˜ÙJHÈ›ÚYØYYÙJYJNÈ™]\›ÈBˆ›ÚYİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKœÙ[Xİ
+šY‹ØÛİ[ˆ™^Xİ‹XYY_JKš[Š™Ü›İ\ÚÙ^H‹ÙÜ›İ\˜›İ—JK™İ
+˜Ü™X]YØ]‹Ú[˜ÙJK[Š
+ØÛİ[JOOœÙ]™]Ó[ÛY[Ûİ[
+Ûİ[
+JNÂˆNÂˆÛÛœİÚ[›™[Hİ\X˜\ÙK˜Ú[›™[
+[ÛY[ËY™YYIİ\Ù\‹šYKIÙÜ›İ\X
+K›ÛŠœÜİÜ™\×ØÚ[™Ù\È‹È]™[ˆ’S”ÑT•‹ØÚ[XNˆœX›XÈ‹X›NˆœÚ\™YØØ[[™\—Û[ÛY[ÈˆK
+^[ØY
+HOˆÂˆÛÛœİ™^Ü›İ\H
+^[ØY›™]È\ÈÈÜ›İ\ÚÙ^OÎˆÜ›İ\Ù^HJK™Ü›İ\ÚÙ^NÂˆYˆ
+™^Ü›İ\OOHÜ›İ\™^Ü›İ\OOH˜›İŠHÚXÚÑ›Ü“™]Ê
+NÂˆJKœİXœØÜšX™J
+NÂˆÛÛœİ[Y\]Ú[™İËœÙ][\˜[
+ÚXÚÑ›Ü“™]ËŒ
+NÂˆØİ[Y[˜Y]™[\İ[™\Šš\ÚXš[]XÚ[™ÙH‹ÚXÚÑ›Ü“™]ÊNÂˆÚ[™İË˜Y]™[\İ[™\Š›Û›[™H‹ÚXÚÑ›Ü“™]ÊNÂˆ™]\›Š
+OOİÚ[™İË˜ÛX\’[\˜[
+[Y\ŠNÙØİ[Y[œ™[[İ™Q]™[\İ[™\Šš\ÚXš[]XÚ[™ÙH‹ÚXÚÑ›Ü“™]ÊNİÚ[™İËœ™[[İ™Q]™[\İ[™\Š›Û›[™H‹ÚXÚÑ›Ü“™]ÊNİ›ÚYİ\X˜\ÙKœ™[[İ™PÚ[›™[
+Ú[›™[
+_NÂˆKÙÜ›İ\\Ù\‹šYJNÂˆ\ÙQY™™Xİ
+
+
+HOˆÂˆYˆ
+\™]šY]ÊH™]\›ÂˆÛÛœİÛÜÙSÛ‘\ØØ\HH
+]™[ˆÙ^X›Ø\™]™[
+HOˆÈYˆ
+]™[šÙ^HOOH‘\ØØ\HŠHÙ]™]šY]Ê[
+NÈNÂˆÚ[™İË˜Y]™[\İ[™\ŠšÙ^YİÛˆ‹ÛÜÙSÛ‘\ØØ\JNÂˆ™]\›ˆ
+
+HOˆÚ[™İËœ™[[İ™Q]™[\İ[™\ŠšÙ^YİÛˆ‹ÛÜÙSÛ‘\ØØ\JNÂˆKÜ™]šY]×JNÂˆÛÛœİÛÛ\ÜÙ\”™]šY]ÜÈH\ÙSY[[Ê
+
+OO™š[\Ë›X\
+
+š[JOOŠÙš[K\›•T“˜Ü™X]SØš™XİT“
+š[J_JJKÙš[\×JNÂˆ\ÙQY™™Xİ
+
+
+OOŠ
+OO˜ÛÛ\ÜÙ\”™]šY]ÜË™›Ü‘XXÚ
+
+][JOO•T“œ™]›ÚÙSØš™XİT“
+][K\›
+JKØÛÛ\ÜÙ\”™]šY]Ü×JNÂ‚ˆ\Ş[˜È[˜İ[ÛˆX›\Ú
+
+HÂˆYˆ
+XØ\[Û‹š[J
+H	‰ˆYš[\Ë›[™İ
+H™]\›ÂˆÙ]\ŞJYJNÈÙ]Y\ÜØYÙJˆŠNÂˆHÂˆÙ]\ØY˜Z[\™\Ê×JNÂˆÛÛœİ™\İ[ÈH]ØZ]›ÛZ\ÙK˜[
+š[\ËœÛXÙJÊK›X\
+\Ş[˜Êš[JOOØÛÛœİÙ^OYš[RÙ^Jš[JNØÛÛœİØXÚY]\ØYY˜YİÜË˜İ\œ™[™Ù]
+Ù^JNÚYŠØXÚY
+\™]\›ˆÙš[KİÎ˜ØXÚYNİ^ØÛÛœİİÏX]ØZ]\ØYİÊš[KÜ›İ\
+Nİ\ØYY˜YİÜË˜İ\œ™[œÙ]
+Ù^KİÊNÜ™]\›ˆÙš[Kİß_XØ]ÚÜ™]\›ˆÙš[KİÎ›[__JJNÂˆÛÛœİ˜Z[Y\™\İ[Ë™š[\Š
+][JOOˆZ][KœİÊK›X\
+
+][JOO™š[RÙ^J][K™š[JJNÂˆYŠ˜Z[Y›[™İ
+^ÜÙ]\ØY˜Z[\™\Ê˜Z[Y
+NÜÙ]Y\ÜØYÙJ	Ù˜Z[Y›[™İH9o(9áiùâaù."¹/(9i,z-){ï#9cëùceyâë:aãz+åX
+NÜ™]\›ŸBˆÛÛœİ\ØYY\™\İ[Ë›X\
+
+][JOOš][KœİÊH\ÈİÖ×NÂˆÛÛœİÈ]K\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKš[œÙ\
+ÈÜ›İ\ÚÙ^NˆÜ›İ\]]Ü—İ\Ù\—ÚYˆ\Ù\‹šY]]Ü—Ù[XZ[ˆY[X™\‹™[XZ[Ø\[ÛˆØ\[Û‹š[J
+K]™[ÚYˆ[JKœÙ[Xİ
+
+KœÚ[™ÛJ
+NÂˆYˆ
+\œ›ÜŠH›İÈ\œ›ÜÂˆYˆ
+\ØYY›[™İ
+HÂˆÛÛœİÈ\œ›Üˆ[šÑ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÜİÜÈŠKš[œÙ\
+\ØYY›X\
+
+İËÜÚ][ÛŠHOˆ
+È[ÛY[ÚYˆ]KšYİ×ÚYˆİËšYÜÚ][ÛˆJJJNÂˆYˆ
+[šÑ\œ›ÜŠH›İÈ[šÑ\œ›ÜÂˆBˆÛÛœİ™]Ó[šÜÈH\ØYY›X\
+
+İËÜÚ][ÛŠHOˆ
+È[ÛY[ÚYˆ]KšYİ×ÚYˆİËšYÜÚ][ÛˆJJNÂˆÙ][ÛY[Ê
+İ\œ™[
+HOˆÙ]H\È[ÛY[‹‹˜İ\œ™[JNÈÙ]İÜÊ
+İ\œ™[
+HOˆË‹‹\ØYY‹‹˜İ\œ™[JNÈÙ][šÜÊ
+İ\œ™[
+HOˆË‹‹˜İ\œ™[‹‹›™]Ó[šÜ×JNÂˆÙ]Ø\[ÛŠˆŠNÈÙ]š[\Ê×JNÈÙ]ÛÛ\ÜÙ\Š˜[ÙJNÈ\ØYY˜YİÜË˜İ\œ™[˜ÛX\Š
+NÈÙ]\ØY˜Z[\™\Ê×JNÂˆHØ]Ú
+\œ›ÜŠHÈÙ]Y\ÜØYÙJ\œ›Üˆ[œİ[˜Ù[Ùˆ\œ›ÜˆÈ\œ›Ü‹›Y\ÜØYÙHˆ¹cäyn ùi,z-)HŠNÈBˆš[˜[HÈÙ]\ŞJ˜[ÙJNÈBˆBˆ\Ş[˜È[˜İ[ÛˆÙÙÛSZÙJ[ÛY[Yˆ[X™\ŠHÂˆÛÛœİZÙYHİ]ÖÛ[ÛY[YOË›ZÙYØWÛYHZÙ\ËœÛÛYJ
+ZÙJOO›ZÙK›[ÛY[ÚYOO[[ÛY[Y	‰›ZÙK\Ù\—ÚYOO]\Ù\‹šY
+NÂˆÛÛœİ™]š[İ\Ï\İ]ÖÛ[ÛY[YNÂˆÙ]İ]Ê
+İ\œ™[
+OOŠË‹‹˜İ\œ™[Û[ÛY[YNË‹‹Š™]š[İ\ßÛ[ÛY[ÚY›[ÛY[YZÙWØÛİ[ŒÛÛ[Y[ØÛİ[ŒZÙYØWÛYN™˜[Ù_JKZÙYØWÛYNˆ[ZÙYZÙWØÛİ[“X]›X^
+
+™]š[İ\ÏË›ZÙWØÛİ[
+JÊZÙYËLNŒJJ__JJNÂˆYˆ
+ZÙY
+HÂˆÛÛœİİÛˆHZÙ\Ë™š[™
+
+ZÙJHOˆZÙK›[ÛY[ÚYOOH[ÛY[Y	‰ˆZÙK\Ù\—ÚYOOH\Ù\‹šY
+NÂˆÙ]ZÙ\Ê
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+ZÙJHOˆJZÙK›[ÛY[ÚYOO[[ÛY[Y	‰›ZÙK\Ù\—ÚYOO]\Ù\‹šY
+JJNÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÛZÙ\ÈŠK™[]J
+K™\J›[ÛY[ÚY‹[ÛY[Y
+K™\J\Ù\—ÚY‹\Ù\‹šY
+NÂˆYˆ
+\œ›ÜŠHÜÙ]İ]Ê
+İ\œ™[
+OOŠË‹‹˜İ\œ™[Û[ÛY[YNœ™]š[İ\ßJJNÚYŠİÛŠ\Ù]ZÙ\Ê
+İ\œ™[
+OO–Ë‹‹˜İ\œ™[İÛ—JNÜÙ]Y\ÜØYÙJ¹à®z-g¹i,z-){ï#:+íúaãz+åHŠ_BˆH[ÙHÂˆÛÛœİ™^HÈ[ÛY[ÚYˆ[ÛY[Y\Ù\—ÚYˆ\Ù\‹šY\Ù\—Ù[XZ[ˆY[X™\‹™[XZ[NÂˆÙ]ZÙ\Ê
+İ\œ™[
+HOˆË‹‹˜İ\œ™[™^JNÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÛZÙ\ÈŠKš[œÙ\
+™^
+NÂˆYˆ
+\œ›ÜŠHÜÙ]İ]Ê
+İ\œ™[
+OOŠË‹‹˜İ\œ™[Û[ÛY[YNœ™]š[İ\ßJJNÜÙ]ZÙ\Ê
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+ZÙJHOˆJZÙK›[ÛY[ÚYOOH[ÛY[Y	‰ˆZÙK\Ù\—ÚYOOH\Ù\‹šY
+JJNÜÙ]Y\ÜØYÙJ¹à®z-g¹i,z-){ï#:+íúaãz+åHŠ_BˆBˆBˆ\Ş[˜È[˜İ[ÛˆYÛÛ[Y[
+[ÛY[Yˆ[X™\ŠHÂˆÛÛœİ›ÙHHÛÛ[Y[˜YÖÛ[ÛY[YOËš[J
+NÈYˆ
+X›ÙHÙ[™[™ĞÛÛ[Y[YËš[˜ÛY\Ê[ÛY[Y
+JH™]\›ÂˆÙ]Ù[™[™ĞÛÛ[Y[YÊ
+İ\œ™[
+OO–Ë‹‹˜İ\œ™[[ÛY[YJNÂˆÛÛœİ™\HH™\U\™Ù]Ë›[ÛY[YOOH[ÛY[YÈ™\U\™Ù]ˆ[ÂˆÛÛœİÈ]K\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ØÛÛ[Y[ÈŠKš[œÙ\
+È[ÛY[ÚYˆ[ÛY[Y]]Ü—İ\Ù\—ÚYˆ\Ù\‹šY]]Ü—Ù[XZ[ˆY[X™\‹™[XZ[›ÙK™\Wİ×ØÛÛ[Y[ÚYˆ™\OËšÚ[™OOH˜ÛÛ[Y[ˆÈ™\KšYˆ[™\Wİ×Ù]™[Û[ÛÙÚYˆ™\OËšÚ[™OOH›[ÛÙˆÈ™\KšYˆ[JKœÙ[Xİ
+šY[ÛY[ÚY]]Ü—İ\Ù\—ÚY]]Ü—Ù[XZ[›ÙKÜ™X]YØ]™\Wİ×ØÛÛ[Y[ÚY™\Wİ×Ù]™[Û[ÛÙÚY™\Wİ×İ\Ù\—ÚY™\Wİ×Ù[XZ[™\WÜ™XYØ]ŠKœÚ[™ÛJ
+NÂˆYˆ
+\œ›ÜŠHÈÙ]Y\ÜØYÙJº+á:+®¹cäz` yi,z-){ï#9a¡yk®ymì¹/çyåf{ï#:+íúaãz+åHŠNÈÙ]Ù[™[™ĞÛÛ[Y[YÊ
+İ\œ™[
+OO˜İ\œ™[™š[\Š
+Y
+OOšYOO[[ÛY[Y
+JNÈ™]\›ÈBˆÙ]ÛÛ[Y[Ê
+İ\œ™[
+HOˆË‹‹˜İ\œ™[]H\ÈÛÛ[Y[JNÂˆÙ]İ]Ê
+İ\œ™[
+OOŠË‹‹˜İ\œ™[Û[ÛY[YNË‹‹Šİ\œ™[Û[ÛY[Y_Û[ÛY[ÚY›[ÛY[YZÙWØÛİ[ŒÛÛ[Y[ØÛİ[ŒZÙYØWÛYN™˜[Ù_JKÛÛ[Y[ØÛİ[Šİ\œ™[Û[ÛY[YOË˜ÛÛ[Y[ØÛİ[
+JÌ__JJNÂˆÙ]ÛÛ[Y[˜YÊ
+˜[YJHOˆ
+È‹‹˜[YKÛ[ÛY[YNˆˆˆJJNÈÙ]™\U\™Ù]
+[
+NÈÙ]Ù[™[™ĞÛÛ[Y[YÊ
+İ\œ™[
+OO˜İ\œ™[™š[\Š
+Y
+OOšYOO[[ÛY[Y
+JNÂˆBˆ\Ş[˜È[˜İ[Ûˆ[]PÛÛ[Y[
+ÛÛ[Y[ˆÛÛ[Y[
+HÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ØÛÛ[Y[ÈŠK™[]J
+K™\JšY‹ÛÛ[Y[šY
+K™\J˜]]Ü—İ\Ù\—ÚY‹\Ù\‹šY
+NÂˆYˆ
+\œ›ÜŠHÈÙ]Y\ÜØYÙJº+á:+®¹b(:fi9i,z-)HŠNÈ™]\›ÈBˆÙ]ÛÛ[Y[Ê
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][KšYOOHÛÛ[Y[šY
+K›X\
+
+][JHOˆ][Kœ™\Wİ×ØÛÛ[Y[ÚYOOHÛÛ[Y[šYÈÈ‹‹š][K™\Wİ×ØÛÛ[Y[ÚYˆ[™\Wİ×İ\Ù\—ÚYˆ[™\Wİ×Ù[XZ[ˆ[Hˆ][JJNÂˆÙ]İ]Ê
+İ\œ™[
+OOŠË‹‹˜İ\œ™[ØÛÛ[Y[›[ÛY[ÚYNË‹‹˜İ\œ™[ØÛÛ[Y[›[ÛY[ÚYKÛÛ[Y[ØÛİ[“X]›X^
+
+İ\œ™[ØÛÛ[Y[›[ÛY[ÚYOË˜ÛÛ[Y[ØÛİ[JKLJ__JJNÂˆBˆ\Ş[˜È[˜İ[Ûˆ[]TŞ[˜ÙY[ÛÙ
+[Nˆ]™[[ÛÙ
+HÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ù]™[Û[ÛÙÈŠK™[]J
+K™\JšY‹[KšY
+K™\J˜]]Ü—İ\Ù\—ÚY‹\Ù\‹šY
+NÂˆYˆ
+\œ›ÜŠHÈÙ]Y\ÜØYÙJº+á:+®¹b(:fi9i,z-)HŠNÈ™]\›ÈBˆÙ]]™[[ÛÙÊ
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][KšYOOH[KšY
+JNÂˆÙ]ÛÛ[Y[Ê
+İ\œ™[
+HOˆİ\œ™[›X\
+
+][JHOˆ][Kœ™\Wİ×Ù]™[Û[ÛÙÚYOOH[KšYÈÈ‹‹š][K™\Wİ×Ù]™[Û[ÛÙÚYˆ[™\Wİ×İ\Ù\—ÚYˆ[™\Wİ×Ù[XZ[ˆ[Hˆ][JJNÂˆÙ][ÛY[Ê
+İ\œ™[
+HOˆİ\œ™[›X\
+
+][JHOˆ][KœÛİ\˜ÙWÙ]™[Û[ÛÙÚYOOH[KšYÈÈ‹‹š][KØ\[Ûˆˆ‹Ûİ\˜ÙWÙ]™[Û[ÛÙÚYˆ[Hˆ][JJNÂˆBˆ\Ş[˜È[˜İ[Ûˆ[]S[ÛY[
+[ÛY[Yˆ[X™\ŠHÂˆÛÛœİ\™Ù]H[ÛY[Ë™š[™
+
+][JHOˆ][KšYOOH[ÛY[Y
+NÂˆYˆ
+]\™Ù]Ë™]™[ÚY	‰ˆ]Ú[™İË˜ÛÛ™š\›J¹èk¹k¦¹b(:fi:/æy§hybª9  yd%ûï'ùáiùâaù.ãy/&¹/çyåfyg*9æî9a£9.+xà ˆŠJH™]\›ÂˆÛÛœİÈ\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠK™[]J
+K™\JšY‹[ÛY[Y
+NÂˆYˆ
+\œ›ÜŠHÈÙ]Y\ÜØYÙJ¹bª9  yb(:fi9i,z-)HŠNÈ™]\›ÈBˆÙ][ÛY[Ê
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][KšYOOH[ÛY[Y
+JNÂˆÙ][šÜÊ
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][K›[ÛY[ÚYOOH[ÛY[Y
+JNÂˆÙ]ZÙ\Ê
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][K›[ÛY[ÚYOOH[ÛY[Y
+JNÂˆÙ]ÛÛ[Y[Ê
+İ\œ™[
+HOˆİ\œ™[™š[\Š
+][JHOˆ][K›[ÛY[ÚYOOH[ÛY[Y
+JNÂˆBˆ\Ş[˜È[˜İ[ÛˆØ]™S[ÛY[Ø\[ÛŠ[ÛY[Yˆ[X™\ŠHÂˆÛÛœİÈ]K\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠK\]JÈØ\[ÛˆY][™ĞØ\[Û‹š[J
+HJK™\JšY‹[ÛY[Y
+K™\J˜]]Ü—Ù[XZ[‹Y[X™\‹™[XZ[
+KœÙ[Xİ
+šYØ\[ÛˆŠKœÚ[™ÛJ
+NÂˆYˆ
+\œ›ÜŠHÈÙ]Y\ÜØYÙJ¹bª9  y/ë¹¥.yi,z-)HŠNÈ™]\›ÈBˆÙ][ÛY[Ê
+İ\œ™[
+HOˆİ\œ™[›X\
+
+][JHOˆ][KšYOOH[ÛY[YÈÈ‹‹š][KØ\[Ûˆ]K˜Ø\[ÛˆHˆ][JJNÈÙ]Y][™Ó[ÛY[Y
+[
+NÂˆBˆ\Ş[˜È[˜İ[ÛˆØY[ÛÛ[Y[Ê[ÛY[Y›[X™\Š^ÂˆYŠØYYÛÛ[Y[[ÛY[Ëš[˜ÛY\Ê[ÛY[Y
+J\™]\›ÂˆÛÛœİÙ]K\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ØÛÛ[Y[ÈŠKœÙ[Xİ
+šY[ÛY[ÚY]]Ü—İ\Ù\—ÚY]]Ü—Ù[XZ[›ÙKÜ™X]YØ]™\Wİ×ØÛÛ[Y[ÚY™\Wİ×Ù]™[Û[ÛÙÚY™\Wİ×İ\Ù\—ÚY™\Wİ×Ù[XZ[™\WÜ™XYØ]ŠK™\J›[ÛY[ÚY‹[ÛY[Y
+K›Ü™\Š˜Ü™X]YØ]ŠNÂˆYŠ\œ›ÜŠ\™]\›ÜÙ]ÛÛ[Y[Ê
+İ\œ™[
+OO–Ë‹‹˜İ\œ™[™š[\Š
+][JOOš][K›[ÛY[ÚYOO[[ÛY[Y
+K‹‹Š]_×JH\ÈÛÛ[Y[×WJNÜÙ]ØYYÛÛ[Y[[ÛY[Ê
+İ\œ™[
+OO–Ë‹‹˜İ\œ™[[ÛY[YJNÂˆBˆ\Ş[˜È[˜İ[ÛˆØYZÙS˜[Y\Ê[ÛY[Y›[X™\Š^ÂˆYŠØYYZÙS[ÛY[Ëš[˜ÛY\Ê[ÛY[Y
+J\™]\›ÂˆÛÛœİÙ]K\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÛZÙ\ÈŠKœÙ[Xİ
+›[ÛY[ÚY\Ù\—ÚY\Ù\—Ù[XZ[Ü™X]YØ]™XYØ]ŠK™\J›[ÛY[ÚY‹[ÛY[Y
+K›Ü™\Š˜Ü™X]YØ]ŠNÂˆYŠ\œ›ÜŠ\™]\›ÜÙ]ZÙ\Ê
+İ\œ™[
+OO–Ë‹‹˜İ\œ™[™š[\Š
+][JOOš][K›[ÛY[ÚYOO[[ÛY[Y
+K‹‹Š]_×JH\ÈZÙV×WJNÜÙ]ØYYZÙS[ÛY[Ê
+İ\œ™[
+OO–Ë‹‹˜İ\œ™[[ÛY[YJNÂˆBˆ\Ş[˜È[˜İ[ÛˆÜ[“›İYšXØ][ÛŠ[ÛY[Yˆ[X™\ŠHÂˆÙ]›İYšXØ][ÛœÓÜ[Š˜[ÙJNÂˆÛÛœİ™]™X[H
+
+HOˆÚ[™İËœÙ][Y[İ]
+
+
+HOˆØİ[Y[™Ù][[Y[RY
+[ÛY[IÛ[ÛY[YX
+OËœØÜ›Û[ÕšY]ÊÈ™Z]š[ÜˆœÛ[Ûİ‹›ØÚÎˆ˜Ù[\ˆˆJK
+NÂˆYˆ
+[ÛY[ËœÛÛYJ
+][JHOˆ][KšYOOH[ÛY[Y
+JHÈ™]™X[
+
+NÈ™]\›ÈBˆÙ]Y\ÜØYÙJ¹«hùg*9k¦¹/cybª9  x )ˆŠNÂˆÛÛœİÈ]K\œ›ÜˆHH]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Û[ÛY[ÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K]]Ü—Ù[XZ[Ø\[Û‹]™[ÚYÛİ\˜ÙWÙ]™[Û[ÛÙÚYÛİ\˜ÙWÙ]™[Üİ×ÚYÜ™X]YØ]ŠK™\JšY‹[ÛY[Y
+K›X^X™TÚ[™ÛJ
+NÂˆYˆ
+\œ›ÜˆY]JHÈÙ]Y\ÜØYÙJº/æy§hybª9  ymì¹b(:fi9¢%¹/h9ã¬9g*9¥è9§`ù§éyç"ÈŠNÈ™]\›ÈBˆÛÛœİ\™Ù]H]H\È[ÛY[ÂˆÛÛœİ\™Ù]Ü›İ\H\™Ù]™Ü›İ\ÚÙ^HOOH˜›İˆÈÜ›İ\ˆ\™Ù]™Ü›İ\ÚÙ^NÂˆYˆ
+\™Ù]Ü›İ\OOHÜ›İ\
+HÙ]Ü›İ\
+\™Ù]Ü›İ\
+NÂˆÙ][ÛY[Ê
+İ\œ™[
+HOˆİ\™Ù]‹‹˜İ\œ™[™š[\Š
+][JHOˆ][KšYOOH\™Ù]šY
+WJNÂˆ]ØZ]Y˜]S[ÛY[Êİ\™Ù]K˜[ÙJNÂˆÙ]Y\ÜØYÙJˆŠNÂˆ™]™X[
+
+NÂˆBˆÛÛœİİĞRYH\ÙSY[[Ê
+
+HOˆ™]ÈX\
+İÜË›X\
+
+İÊHOˆÜİËšYİ×JJKÜİÜ×JNÂˆÛÛœİ[šÜĞS[ÛY[H\ÙSY[[Ê
+
+HOˆÈÛÛœİX\H™]ÈX\[X™\‹[ÛY[İÖ×OŠ
+NÈ[šÜË™›Ü‘XXÚ
+
+[šÊHOˆX\œÙ]
+[šË›[ÛY[ÚYË‹‹ŠX\™Ù]
+[šË›[ÛY[ÚY
+H×JK[š×JJNÈ™]\›ˆX\ÈKÛ[šÜ×JNÂˆÛÛœİZÙ\ĞS[ÛY[H\ÙSY[[Ê
+
+HOˆÈÛÛœİX\H™]ÈX\[X™\‹ZÙV×OŠ
+NÈZÙ\Ë™›Ü‘XXÚ
+
+ZÙJHOˆX\œÙ]
+ZÙK›[ÛY[ÚYË‹‹ŠX\™Ù]
+ZÙK›[ÛY[ÚY
+H×JKZÙWJJNÈ™]\›ˆX\ÈKÛZÙ\×JNÂˆÛÛœİÛÛ[Y[ĞS[ÛY[H\ÙSY[[Ê
+
+HOˆÈÛÛœİX\H™]ÈX\[X™\‹ÛÛ[Y[×OŠ
+NÈÛÛ[Y[Ë™›Ü‘XXÚ
+
+ÛÛ[Y[
+HOˆX\œÙ]
+ÛÛ[Y[›[ÛY[ÚYË‹‹ŠX\™Ù]
+ÛÛ[Y[›[ÛY[ÚY
+H×JKÛÛ[Y[JJNÈ™]\›ˆX\ÈKØÛÛ[Y[×JNÂˆÛÛœİ[ÛÙĞQ]™[H\ÙSY[[Ê
+
+HOˆÈÛÛœİX\H™]ÈX\[X™\‹]™[[ÛÙ×OŠ
+NÈ]™[[ÛÙË™›Ü‘XXÚ
+
+[ÛÙ
+HOˆX\œÙ]
+[ÛÙ™]™[ÚYË‹‹ŠX\™Ù]
+[ÛÙ™]™[ÚY
+H×JK[ÛÙJJNÈ™]\›ˆX\ÈKÙ]™[[ÛÙ×JNÂˆÛÛœİš\ÚX›HH\ÙSY[[Ê
+
+HOˆ[ÛY[Ë™š[\Š
+[ÛY[
+HOˆ[ÛY[™Ü›İ\ÚÙ^HOOHÜ›İ\[ÛY[™Ü›İ\ÚÙ^HOOH˜›İŠKÛ[ÛY[ËÜ›İ\JNÂˆÛÛœİ[œ™XY›İYšXØ][ÛÛİ[H›İYšXØ][ÛœË™š[\Š
+][JHOˆ][K[œ™XY
+K›[™İÂˆ™]\›ˆÙXİ[ÛˆÛ\ÜÓ˜[YOH›YYXK\YÙH[ÛY[Ë\YÙH‚ˆXY\ˆÛ\ÜÓ˜[YOH›YYXK\YÙKZXY‚ˆ]Û\ÜÓ˜[YOH™^YXœ›İÈ“SÓQS•ÏÜ¹bª9  OÚÙ]‚ˆ]ˆÛ\ÜÓ˜[YOH›YYXKZXYXXİ[ÛœÈ‚ˆÜ›İ\Ù[Xİ˜[YO^ÙÜ›İ\HÛÚ[™ÙO^ÜÙ]Ü›İ\H[XZ[^ÛY[X™\‹™[XZ[KÏ‚ˆ]ˆÛ\ÜÓ˜[YOH›[ÛY[[›İYšXØ][Û‹]Ü˜\‚ˆ]ÛˆÛ\ÜÓ˜[YOH›[ÛY[[›İYšXØ][Û‹X]Ûˆˆ\OH˜]Ûˆˆ\šXK[X™[H¹§éyç"ú`&¹çéHˆ]OHº`&¹çéHˆ\šXKY^[™Y^Û›İYšXØ][ÛœÓÜ[ŸHÛÛXÚÏ^Ê
+OOÜÙ]›İYšXØ][ÛœÓÜ[Š
+Ü[ŠOOˆ[Ü[ŠNİ›ÚYİ\X˜\ÙKœœÊ›X\š×ÜÚ\™YØØ[[™\—Û[ÛY[Û›İYšXØ][Ûœ×Ü™XYŠNÜÙ]›İYšXØ][ÛœÊ
+İ\œ™[
+OO˜İ\œ™[›X\
+
+][JOOŠË‹‹š][K[œ™XY™˜[Ù_JJJ__O‚ˆİ™ÈšY]Ğ›ŞHŒˆ\šXKZY[HYH]H“LNMˆˆLLˆÌËLÈËLÈZNÌL‹LËL‹LËNSLLŒZ‹ÏÜİ™Ï‚ˆİ[œ™XY›İYšXØ][ÛÛİ[Œ	‰Oİ[œ™XY›İYšXØ][ÛÛİ[OÈJÈ[œ™XY›İYšXØ][ÛÛİ[OÚOŸBˆØ]Û‚ˆÛ›İYšXØ][ÛœÓÜ[‰‰]ˆÛ\ÜÓ˜[YOH›[ÛY[[›İYšXØ][ÛœÈXY\º`&¹çéOØ]Ûˆ\OH˜]Ûˆˆ\šXK[X™[H¹alúeëz`&¹çéHˆÛÛXÚÏ^Ê
+OOœÙ]›İYšXØ][ÛœÓÜ[Š˜[ÙJ_O°åÏØ]ÛÚXY\Û›İYšXØ][ÛœË›X\
+
+][JOO]ÛˆÙ^O^Ú][KšÙ^_HÛÛXÚÏ^Ê
+OO›ÚYÜ[“›İYšXØ][ÛŠ][K›[ÛY[Y
+_OÜ[ˆÛ\ÜÓ˜[YO^Ú][K[œ™XYÈ[œ™XYˆˆŸKÏÙ\Ü^S˜[YJ][K˜XİÜ‘[XZ[Y[X™\œÊ_OØÚ][KšÚ[™OOH›ZÙHÈº-g¹.¡¹/h9æ¡9bª9  Hˆ¹fç¹i#y.¡¹/hŸOØ]ÛŠ_^È[›İYšXØ][ÛœË›[™İ	‰¹¦ ¹¥í¹¬¨y§"z`&¹çéOÜŸOÙ]ŸBˆÙ]‚ˆ]ÛˆÛ\ÜÓ˜[YOHœš[X\H[ÛY[XÜ™X]KX]ÛˆˆÛÛXÚÏ^Ê
+HOˆÙ]ÛÛ\ÜÙ\ŠYJ_O»ï"È9cäyn ÏØ]Û‚ˆÙ]‚ˆÚXY\‚ˆÈH[™]Ó[ÛY[Ûİ[	‰]ÛˆÛ\ÜÓ˜[YOH›[ÛY[[™]Ë\ÜİÈˆÛÛXÚÏ^Ê
+OO›ÚYØYYÙJYJ_O¹§"HÛ™]Ó[ÛY[Ûİ[H9§hy¥¬9bª9  {ï#9à®yaîù§éyç"ÏØ]ÛŸBˆØÛÛ\ÜÙ\ˆ	‰ˆ]ˆÛ\ÜÓ˜[YOH›YYXKXÛÛ\ÜÙ\ˆ]ˆÛ\ÜÓ˜[YOH›YYXKXÛÛ\ÜÙ\‹ZXYÏ¹cäyn ùb,ÙÜ›İ\X™[
+Ü›İ\
+_OÚÏ]ÛˆÛÛXÚÏ^Ê
+HOˆÙ]ÛÛ\ÜÙ\Š˜[ÙJ_O°åÏØ]ÛÙ]Ü›İ\Ù[Xİ˜[YO^ÙÜ›İ\HÛÚ[™ÙO^ÜÙ]Ü›İ\H[XZ[^ÛY[X™\‹™[XZ[KÏ^\™XH˜[YO^ØØ\[ÛŸHÛÚ[™ÙO^ÊJHOˆÙ]Ø\[ÛŠK\™Ù]˜[YJ_HXÙZÛ\Hº+í9à®y.à9.b8 )¸ )ˆ‹Ï]ˆÛ\ÜÓ˜[YOH›[ÛY[Y˜Y\İÜÈØÛÛ\ÜÙ\”™]šY]ÜË›X\
+
+Ùš[K\›K[™^
+OO]ˆÛ\ÜÓ˜[YO^İ\ØY˜Z[\™\Ëš[˜ÛY\Êš[RÙ^Jš[JJOÈ™˜Z[YˆˆŸHÙ^O^Ùš[RÙ^Jš[J_O[YÈÜ˜Ï^İ\›KÏ]ÛˆÛÛXÚÏ^Ê
+OOœÙ]š[\Ê
+İ\œ™[
+OO˜İ\œ™[™š[\Š
+ËJOOšHOOZ[™^
+J_O°åÏØ]ÛÜ[İ\ØY˜Z[\™\Ëš[˜ÛY\Êš[RÙ^Jš[JJOÈ¹."¹/(9i,z-)HˆˆŸOÜÜ[Ú[™^Œ	‰]ÛˆÛ\ÜÓ˜[YOH›[İ™H™]š[İ\ÈˆÛÛXÚÏ^Ê
+OOœÙ]š[\Ê
+İ\œ™[
+OOØÛÛœİ™^VË‹‹˜İ\œ™[NÖÛ™^Ú[™^LWK™^Ú[™^WOVÛ™^Ú[™^K™^Ú[™^LWWNÜ™]\›ˆ™^J_O¸ .OØ]ÛŸ^Ú[™^š[\Ë›[™İLI‰]ÛˆÛ\ÜÓ˜[YOH›[İ™H™^ˆÛÛXÚÏ^Ê
+OOœÙ]š[\Ê
+İ\œ™[
+OOØÛÛœİ™^VË‹‹˜İ\œ™[NÖÛ™^Ú[™^K™^Ú[™^
+ÌWWOVÛ™^Ú[™^
+ÌWK™^Ú[™^WNÜ™]\›ˆ™^J_O¸ .Ø]ÛŸOÙ]Š_OÙ]X™[Û\ÜÓ˜[YOH›YYXKYš[K\XÚÙ\ˆº`"y¢êyáiùâaûï"9§ 9i&ˆÈ9o(;ï"O[œ]\OH™š[HˆXØÙ\Hš[XYÙKÚœYË[XYÙKÜ™Ë[XYÙKİÙXœ[XYÙKÚZXË[XYÙKÚZYˆˆ][\HÛÚ[™ÙO^ÊJHOˆÜÙ]š[\Ê\œ˜^K™œ›ÛJK\™Ù]™š[\È×JKœÛXÙJÊJNÜÙ]\ØY˜Z[\™\Ê×JNİ\ØYY˜YİÜË˜İ\œ™[˜ÛX\Š
+__KÏÜ[Ùš[\Ë›[™İÈ9mìº`"y¢êH	Ùš[\Ë›[™İH9o(ˆ¹.ãº+¯¹i!ù."¹/(ŸOÜÜ[ÛX™[ÛY\ÜØYÙH	‰ˆÛ\ÜÓ˜[YOH›YYXKY\œ›ÜˆÛY\ÜØYÙ_OÜŸO]ÛˆÛ\ÜÓ˜[YOHœš[X\HYYXK\X›\Úˆ\ØX›Y^Ø\ŞH
+XØ\[Û‹š[J
+H	‰ˆYš[\Ë›[™İ
+_HÛÛXÚÏ^ÜX›\ÚOØ\ŞHÈ¹«hùg*9cäyn ø )ˆˆˆ\ØY˜Z[\™\Ë›[™İÈºaãz+åyi,z-)yáiùâaÈˆ¹cäyn ùbª9  HŸOØ]ÛÙ]ŸBˆ]ˆÛ\ÜÓ˜[YOH›[ÛY[Y™YY‚ˆİš\ÚX›K›X\
+
+[ÛY[
+HOˆÂˆÛÛœİ[ÛY[İÜÈH
+[šÜĞS[ÛY[™Ù]
+[ÛY[šY
+H×JKœÛÜ
+
+KŠHOˆKœÜÚ][Û‹X‹œÜÚ][ÛŠK›X\
+
+[šÊHOˆİĞRY™Ù]
+[šËœİ×ÚY
+JK™š[\Š›ÛÛX[ŠH\ÈİÖ×NÂˆÛÛœİ[ÛY[ZÙ\ÈHZÙ\ĞS[ÛY[™Ù]
+[ÛY[šY
+H×NÂˆÛÛœİ[ÛY[ÛÛ[Y[ÈHÛÛ[Y[ĞS[ÛY[™Ù]
+[ÛY[šY
+H×NÂˆÛÛœİŞ[˜ÙY[ÛÙÈH[ÛY[™]™[ÚYÈ
+[ÛÙĞQ]™[™Ù]
+[ÛY[™]™[ÚY
+H×JK™š[\Š
+][JHOˆ][KšYOOH[ÛY[œÛİ\˜ÙWÙ]™[Û[ÛÙÚY
+Hˆ×NÂˆÛÛœİ[šY\ÈHË‹‹œŞ[˜ÙY[ÛÙË›X\
+
+][JOOŠÚÚ[™ˆ›[ÛÙˆ\ÈÛÛœİ][K]Nš][K˜Ü™X]YØ]JJK‹‹›[ÛY[ÛÛ[Y[Ë›X\
+
+][JOOŠÚÚ[™ˆ˜ÛÛ[Y[ˆ\ÈÛÛœİ][K]Nš][K˜Ü™X]YØ]JJWKœÛÜ
+
+KŠOO˜K™]K›ØØ[PÛÛ\\™J‹™]JJNÂˆÛÛœİÚİÛ‘[šY\ÈH^[™YÛÛ[Y[Ëš[˜ÛY\Ê[ÛY[šY
+HÈ[šY\Èˆ[šY\ËœÛXÙJLÊNÂˆÛÛœİ[ÛY[İ]Ï\İ]ÖÛ[ÛY[šY_Û[ÛY[ÚY›[ÛY[šYZÙWØÛİ[›[ÛY[ZÙ\Ë›[™İÛÛ[Y[ØÛİ[™[šY\Ë›[™İZÙYØWÛYN›[ÛY[ZÙ\ËœÛÛYJ
+ZÙJOO›ZÙK\Ù\—ÚYOO]\Ù\‹šY
+_NÂˆÛÛœİ\Ğ]]ÜˆH[ÛY[˜]]Ü—Ù[XZ[ÓİÙ\Ø\ÙJ
+HOOHY[X™\‹™[XZ[ÓİÙ\Ø\ÙJ
+NÂˆÛÛœİ]]ÜÛÛÜˆHY[X™\œË™š[™
+
+][JHOˆ][K™[XZ[ÓİÙ\Ø\ÙJ
+HOOH[ÛY[˜]]Ü—Ù[XZ[ÓİÙ\Ø\ÙJ
+JOË˜ÛÛÜˆœİÛ™HÂˆ™]\›ˆ\XÛHÛ\ÜÓ˜[YOH›[ÛY[\ÜİˆY^Ø[ÛY[IÛ[ÛY[šYXHÙ^O^Û[ÛY[šYO‚ˆXY\Ü[ˆÛ\ÜÓ˜[YO^Ø[ÛY[X]˜]\ˆ	Ø]]ÜÛÛÜŸXOÙ\Ü^S˜[YJ[ÛY[˜]]Ü—Ù[XZ[Y[X™\œÊKœÛXÙJJ_OÜÜ[]İ›Û™ÏÙ\Ü^S˜[YJ[ÛY[˜]]Ü—Ù[XZ[Y[X™\œÊ_OÜİ›Û™ÏÛX[Û™]È]J[ÛY[˜Ü™X]YØ]
+KÓØØ[Q]Tİš[™ÊšPÓˆŠ_H0­ÈÙÜ›İ\X™[
+[ÛY[™Ü›İ\ÚÙ^J_OÜÛX[Ù]Ú\Ğ]]Ü‰‰]ˆÛ\ÜÓ˜[YOH›[ÛY[[Y[H]ÛˆÛÛXÚÏ^Ê
+OOœÙ]Y[S[ÛY[Y
+Y[S[ÛY[YOO[[ÛY[šYÛ[›[ÛY[šY
+_O¸ (¸ (¸ (Ø]ÛÛY[S[ÛY[YOO[[ÛY[šY	‰]]ÛˆÛÛXÚÏ^Ê
+OOÜÙ]Y][™Ó[ÛY[Y
+[ÛY[šY
+NÜÙ]Y][™ĞØ\[ÛŠ[ÛY[˜Ø\[ÛŠNÜÙ]Y[S[ÛY[Y
+[
+__O¹ï%º/¤y¥¡ùkeÏØ]Û]ÛˆÛÛXÚÏ^Ê
+OO›ÚY[]S[ÛY[
+[ÛY[šY
+_O¹b(:fi9bª9  OØ]ÛÙ]ŸOÙ]ŸOÚXY\‚ˆÙY][™Ó[ÛY[YOO[[ÛY[šYÏ]ˆÛ\ÜÓ˜[YOH›[ÛY[YY]^\™XH˜[YO^ÙY][™ĞØ\[ÛŸHÛÚ[™ÙO^ÊJOOœÙ]Y][™ĞØ\[ÛŠK\™Ù]˜[YJ_KÏ]ÛˆÛÛXÚÏ^Ê
+OOÚYŠY][™ĞØ\[ÛˆOO[[ÛY[˜Ø\[Û‰‰ˆ]Ú[™İË˜ÛÛ™š\›J¹/ë¹¥.z/æ9¬¨y§"y/çykf;ï#9èk¹k¦¹é®ùo 9d%ûï'ÈŠJ\™]\›ÜÙ]Y][™Ó[ÛY[Y
+[
+__O¹cå¹­¢Ø]Û]ÛˆÛ\ÜÓ˜[YOHœš[X\HˆÛÛXÚÏ^Ê
+OO›ÚYØ]™S[ÛY[Ø\[ÛŠ[ÛY[šY
+_O¹/çykfØ]ÛÙ]›[ÛY[˜Ø\[Û‰‰Û\ÜÓ˜[YOH›[ÛY[XØ\[ÛˆÛ[ÛY[˜Ø\[ÛŸOÜŸBˆÈH[[ÛY[İÜË›[™İ	‰ˆ]ˆÛ\ÜÓ˜[YO^Ø[ÛY[\İËYÜšYÛİ[IÓX]›Z[Š[ÛY[İÜË›[™İÊ_XOÛ[ÛY[İÜË›X\
+
+İË[™^
+OO]Ûˆ\OH˜]ÛˆˆÛ\ÜÓ˜[YOH›[ÛY[\İÈˆÙ^O^ÜİËšYH\šXK[X™[H¹¥/¹i)ù§éyç"ùáiùâaÈˆÛÛXÚÏ^Ê
+OOœÙ]™]šY]ÊÜİÜÎ›[ÛY[İÜË[™^J_O›İXİYİÈİÏ^ÜİßKÏØ]ÛŠ_OÙ]ŸBˆ]ˆÛ\ÜÓ˜[YOH›[ÛY[XXİ[ÛœÈ]ÛˆÛ\ÜÓ˜[YO^Ø[ÛY[XXİ[Û‹X]Ûˆ	Û[ÛY[İ]Ë›ZÙYØWÛYOÈ›ZÙYˆˆŸXHÛÛXÚÏ^Ê
+OO›ÚYÙÙÛSZÙJ[ÛY[šY
+_O¸¦hHÛ[ÛY[İ]Ë›ZÙYØWÛYOÈ¹mìº-gˆˆº-gˆŸOØ]ÛÛ[ÛY[İ]Ë›ZÙWØÛİ[Œ	‰]ÛˆÛ\ÜÓ˜[YOH›[ÛY[[ZÙKXÛİ[ˆÛÛXÚÏ^Ê
+OOÚYŠY^[™YZÙ\Ëš[˜ÛY\Ê[ÛY[šY
+J]›ÚYØYZÙS˜[Y\Ê[ÛY[šY
+NÜÙ]^[™YZÙ\Ê
+İ\œ™[
+OO˜İ\œ™[š[˜ÛY\Ê[ÛY[šY
+OØİ\œ™[™š[\Š
+Y
+OOšYOO[[ÛY[šY
+N–Ë‹‹˜İ\œ™[[ÛY[šYJ__OÛ[ÛY[İ]Ë›ZÙWØÛİ[H9.®º-gØ]ÛŸO]ÛˆÛ\ÜÓ˜[YOH›[ÛY[XXİ[Û‹X]ÛˆˆÛÛXÚÏ^Ê
+OO™Øİ[Y[™Ù][[Y[RY
+[ÛY[XÛÛ[Y[IÛ[ÛY[šYX
+OË™›Øİ\Ê
+_O¸¥ëÈ:+á:+®Û[ÛY[İ]Ë˜ÛÛ[Y[ØÛİ[È	Û[ÛY[İ]Ë˜ÛÛ[Y[ØÛİ[XˆˆŸOØ]ÛÙ]‚ˆÙ^[™YZÙ\Ëš[˜ÛY\Ê[ÛY[šY
+I‰Û\ÜÓ˜[YOH›[ÛY[[ZÙK[˜[Y\È¸¦hHÛ[ÛY[ZÙ\Ë›X\
+
+ZÙJOO™\Ü^S˜[YJZÙK\Ù\—Ù[XZ[Y[X™\œÊJKš›Ú[Š¸à HŠ_OÜŸBˆ]ˆÛ\ÜÓ˜[YOH›[ÛY[XÛÛ[Y[ÈÛ[ÛY[İ]Ë˜ÛÛ[Y[ØÛİ[ŒÉ‰]ÛˆÛ\ÜÓ˜[YOH›[ÛY[XÛÛ[Y[Ë]ÙÙÛHˆÛÛXÚÏ^Ê
+OOÚYŠY^[™YÛÛ[Y[Ëš[˜ÛY\Ê[ÛY[šY
+J]›ÚYØY[ÛÛ[Y[Ê[ÛY[šY
+NÜÙ]^[™YÛÛ[Y[Ê
+İ\œ™[
+OO˜İ\œ™[š[˜ÛY\Ê[ÛY[šY
+OØİ\œ™[™š[\Š
+Y
+OOšYOO[[ÛY[šY
+N–Ë‹‹˜İ\œ™[[ÛY[šYJ__OÙ^[™YÛÛ[Y[Ëš[˜ÛY\Ê[ÛY[šY
+OÈ¹¥-º-mú+á:+®ˆ˜9leyo 9aj:`ê	Û[ÛY[İ]Ë˜ÛÛ[Y[ØÛİ[H9§hz+á:+®˜OØ]ÛŸ^ÜÚİÛ‘[šY\Ë›X\
+
+ÚÚ[™][_JOOÙ^O^Ø	ÚÚ[™KIÚ][KšYXOÜ[Ù\Ü^S˜[YJ][K˜]]Ü—Ù[XZ[Y[X™\œÊ_OØÚÚ[™OOH˜ÛÛ[Y[‰‰š][Kœ™\Wİ×Ù[XZ[	‰ˆ9fç¹i#HÙ\Ü^S˜[YJ][Kœ™\Wİ×Ù[XZ[Y[X™\œÊ_OØÏŸ{ï&Ú][K˜›Ù_OÜÜ[Ü[ˆÛ\ÜÓ˜[YOH›[ÛY[XÛÛ[Y[]ÛÛÈ]ÛˆÛÛXÚÏ^Ê
+OOÜÙ]™\U\™Ù]
+Û[ÛY[Y›[ÛY[šYÚ[™Yš][KšY[XZ[š][K˜]]Ü—Ù[XZ[JNÙØİ[Y[™Ù][[Y[RY
+[ÛY[XÛÛ[Y[IÛ[ÛY[šYX
+OË™›Øİ\Ê
+__O¹fç¹i#OØ]ÛÚ][K˜]]Ü—İ\Ù\—ÚYOO]\Ù\‹šY	‰]ÛˆÛÛXÚÏ^Ê
+OOšÚ[™OOH˜ÛÛ[Y[İ›ÚY[]PÛÛ[Y[
+][JN›ÚY[]TŞ[˜ÙY[ÛÙ
+][J_O¹b(:fiØ]ÛŸOÜÜ[ÜŠ_^Ü™\U\™Ù]Ë›[ÛY[YOO[[ÛY[šY	‰]ˆÛ\ÜÓ˜[YOH›[ÛY[\™\Z[™È¹fç¹i#HÙ\Ü^S˜[YJ™\U\™Ù]™[XZ[Y[X™\œÊ_O]ÛˆÛÛXÚÏ^Ê
+OOœÙ]™\U\™Ù]
+[
+_O°åÏØ]ÛÙ]ŸO][œ]Y^Ø[ÛY[XÛÛ[Y[IÛ[ÛY[šYXH˜[YO^ØÛÛ[Y[˜YÖÛ[ÛY[šY_ˆŸHÛÚ[™ÙO^ÊJOOœÙ]ÛÛ[Y[˜YÊ
+˜[YJOOŠË‹‹˜[YKÛ[ÛY[šYN™K\™Ù]˜[Y_JJ_HXÙZÛ\^Ü™\U\™Ù]Ë›[ÛY[YOO[[ÛY[šYØ9fç¹i#H	Ù\Ü^S˜[YJ™\U\™Ù]™[XZ[Y[X™\œÊ_x )¸ )˜ˆ¹a¦z+á:+®¸ )¸ )ˆŸHÛ’Ù^QİÛ^ÊJOOÚYŠKšÙ^OOOH‘[\ˆŠ]›ÚYYÛÛ[Y[
+[ÛY[šY
+__KÏ]ÛˆÛ\ÜÓ˜[YOH›[ÛY[XÛÛ[Y[\Ù[™ˆ\ØX›Y^ÈXÛÛ[Y[˜YÖÛ[ÛY[šYOËš[J
+_HÛÛXÚÏ^Ê
+OO›ÚYYÛÛ[Y[
+[ÛY[šY
+_O¹cäz` OØ]ÛÙ]Ù]‚ˆØ\XÛOÂˆJ_BˆÛØY[™Ò[š]X[	‰ˆ]š\ÚX›K›[™İÏ]ˆÛ\ÜÓ˜[YOH›YYXKY[\HYYXK[ØY[™Ë\İ]HÜ[ˆÛ\ÜÓ˜[YOH›YYXK\Ü[›™\ˆ‹ÏÏ¹«hùg*:+îùcå¹bª9  OÚÏ¹ë+9. 9«(z/æùaiy.gù/&º!ê¹bª:aãz+å{ï#9¥è:g 9b-ù¥¬:hmzgh¸à ÜÙ]™™YY\œ›Ü‰‰ˆ]š\ÚX›K›[™İÏ]ˆÛ\ÜÓ˜[YOH›YYXKY[\HÏÙ™YY\œ›ÜŸOÚÏ¹ïdyîç9 h¹i#yd#¹cëù.éyæí9£©zaãz+åxà Ü]ÛˆÛ\ÜÓ˜[YOHœš[X\Hˆ\OH˜]ÛˆˆÛÛXÚÏ^Ê
+OO›ÚYØYYÙJYJ_Oºaãy¥¬9b¨:/oOØ]ÛÙ]ˆ]š\ÚX›K›[™İ	‰]ˆÛ\ÜÓ˜[YOH›YYXKY[\HÏº/æ9¬¨y§"ybª9  OÚÏ¹g*ÙÜ›İ\X™[
+Ü›İ\
+_H9b!¹.ªùë+9. 9o(9áiùâaùd)øà ÜÙ]ŸBˆÚ\Ó[Ü™I‰]ÛˆÛ\ÜÓ˜[YOH›[ÛY[[ØY[[Ü™Hˆ\ØX›Y^ÛØY[™Ó[Ü™_HÛÛXÚÏ^Ê
+OO›ÚYØYYÙJ[ÛY[Ë›[™İ
+_OÛØY[™Ó[Ü™OÈ¹«hùg*9b¨:/ox )ˆˆ¹b¨:/oy¦í9i&ˆŸOØ]ÛŸBˆÙ]‚ˆÜ™]šY]È	‰ˆ]ˆÛ\ÜÓ˜[YOH›[ÛY[\İË\™]šY]Èˆ›ÛOH™X[ÙÈˆ\šXK[[Ù[HYHˆ\šXK[X™[H¹áiùâaúh¡:)âˆÛ“[İ\ÙQİÛ^Ê]™[
+OOÚYŠ]™[\™Ù]OOY]™[˜İ\œ™[\™Ù]
+\Ù]™]šY]Ê[
+__HÛ•İXÚİ\^Ê]™[
+OOÜ™]šY]ÕİXÚİ\˜İ\œ™[Y]™[İXÚ\ÖÌOË˜ÛY[ÏÛ[_HÛ•İXÚ[™^Ê]™[
+OOÚYŠ™]šY]ÕİXÚİ\˜İ\œ™[OO[[
+\™]\›ØÛÛœİ[OJ]™[˜Ú[™ÙYİXÚ\ÖÌOË˜ÛY[ÏÜ™]šY]ÕİXÚİ\˜İ\œ™[
+K\™]šY]ÕİXÚİ\˜İ\œ™[ÚYŠX]˜XœÊ[JO
+\Ù]™]šY]Ê
+İ\œ™[
+OO˜İ\œ™[ŞË‹‹˜İ\œ™[[™^“X]›X^
+X]›Z[Šİ\œ™[œİÜË›[™İLKİ\œ™[š[™^
+Ê[OÌN‹LJJJ_N›[
+NÜ™]šY]ÕİXÚİ\˜İ\œ™[[[_O]Ûˆ\OH˜]ÛˆˆÛ\ÜÓ˜[YOH›[ÛY[\İË\™]šY]ËXÛÜÙHˆ\šXK[X™[H¹alúeëyáiùâaúh¡:)âˆÛÛXÚÏ^Ê
+OOœÙ]™]šY]Ê[
+_O°åÏØ]ÛÜ™]šY]ËœİÜË›[™İŒI‰]ÛˆÛ\ÜÓ˜[YOH›[ÛY[\™]šY]Ë[˜]ˆ™]š[İ\Èˆ\ØX›Y^Ü™]šY]Ëš[™^OOLHÛÛXÚÏ^Ê
+OOœÙ]™]šY]ÊË‹‹œ™]šY]Ë[™^œ™]šY]Ëš[™^L_J_O¸ .OØ]ÛŸO›İXİYİÈİÏ^Ü™]šY]ËœİÜÖÜ™]šY]Ëš[™^_H[H¹bª9  yáiùâaúh¡:)â‹ÏÜ™]šY]ËœİÜË›[™İŒI‰Ü[ˆÛ\ÜÓ˜[YOH›[ÛY[\™]šY]ËXÛİ[Ü™]šY]Ëš[™^
+Ì_HÈÜ™]šY]ËœİÜË›[™İOÜÜ[]ÛˆÛ\ÜÓ˜[YOH›[ÛY[\™]šY]Ë[˜]ˆ™^ˆ\ØX›Y^Ü™]šY]Ëš[™^OO\™]šY]ËœİÜË›[™İL_HÛÛXÚÏ^Ê
+OOœÙ]™]šY]ÊË‹‹œ™]šY]Ë[™^œ™]šY]Ëš[™^
+Ì_J_O¸ .Ø]ÛÏŸOÙ]ŸBˆÜÙXİ[ÛÂŸB‚™^Ü[˜İ[Ûˆ[[\ÔYÙJÈ\Ù\‹Y[X™\‹Y[X™\œÈNˆÈ\Ù\ˆ\Ù\ÈY[X™\ˆY[X™\ÈY[X™\œÎˆY[X™\–×HJHÂˆÛÛœİÕ×ÔQÑWÔÒV‘HHŒÂˆÛÛœİÜ›İ\ÈH[İÙYÜ›İ\ÊY[X™\‹™[XZ[
+NÂˆÛÛœİÙÜ›İ\Ù]Ü›İ\HH\ÙTİ]OÜ›İ\Ù^OŠÜ›İ\ÖÌJNÂˆÛÛœİÜİÜËÙ]İÜ×HH\ÙTİ]OİÖ×OŠ×JNÂˆÛÛœİØ[[\ËÙ][[\×HH\ÙTİ]O[[V×OŠ×JNÂˆÛÛœİØ[[S[šÜËÙ][[S[šÜ×HH\ÙTİ]OØ[[WÚY›[X™\Üİ×ÚYœİš[™ßV×OŠ×JNÂˆÛÛœİÛ™]Ğ[[KÙ]™]Ğ[[WHH\ÙTİ]JˆŠNÂˆÛÛœİİ\ØYÜ[‹Ù]\ØYÜ[—HH\ÙTİ]J˜[ÙJNÂˆÛÛœİİ\ØYÜ›İ\Ù]\ØYÜ›İ\HH\ÙTİ]OÜ›İ\Ù^OŠÜ›İ\ÖÌJNÂˆÛÛœİİ\ØYš[\ËÙ]\ØYš[\×HH\ÙTİ]Oš[V×OŠ×JNÂˆÛÛœİÜÙ[XİY[[KÙ]Ù[XİY[[WHH\ÙTİ]JˆŠNÂˆÛÛœİØ[[UšY]ËÙ][[UšY]×HH\ÙTİ]O˜[ˆ[›Ü™Ø[š^™Yˆ[X™\Š˜[ŠNÂˆÛÛœİÜÙ[Xİ[™ËÙ]Ù[Xİ[™×HH\ÙTİ]J˜[ÙJNÂˆÛÛœİÜÙ[XİYİÒYËÙ]Ù[XİYİÒY×HH\ÙTİ]Oİš[™Ö×OŠ×JNÂˆÛÛœİÛÜ™Ø[š^™\“Ü[‹Ù]Ü™Ø[š^™\“Ü[—HH\ÙTİ]J˜[ÙJNÂˆÛÛœİİ\™Ù][[RYËÙ]\™Ù][[RY×HH\ÙTİ]O[X™\–×OŠ×JNÂˆÛÛœİÜ™[˜[Z[™ËÙ]™[˜[Z[™×HH\ÙTİ]J˜[ÙJNÂˆÛÛœİØ[[S˜[YQ˜YÙ][[S˜[YQ˜YHH\ÙTİ]JˆŠNÂˆÛÛœİØ\ŞKÙ]\ŞWHH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛY\ÜØYÙKÙ]Y\ÜØYÙWHH\ÙTİ]JˆŠNÂˆÛÛœİÛØY[™ÔİÜËÙ]ØY[™ÔİÜ×HH\ÙTİ]JYJNÂˆÛÛœİÚ\Ó[Ü™TİÜËÙ]\Ó[Ü™TİÜ×HH\ÙTİ]JYJNÂˆ\Ş[˜È[˜İ[ÛˆØY
+Ù™œÙ]H\[™H˜[ÙJHÂˆYˆ
+X\[™
+HÙ]ØY[™ÔİÜÊYJNÂˆÙ]Y\ÜØYÙJˆŠNÂˆHÂˆÛÛœİÜWHH]ØZ]Ú]™]J\Ş[˜È
+
+HOˆÂˆÛÛœİ™\İ[ÈH]ØZ]›ÛZ\ÙK˜[
+Âˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—ÜİÜÈŠKœÙ[Xİ
+šYÜ›İ\ÚÙ^K\ØY\—Ù[XZ[]™[ÚYš[WÛ˜[YKÜ™X]YØ]ŠKš[Š™Ü›İ\ÚÙ^H‹ÙÜ›İ\˜›İ—JK›Ü™\Š˜Ü™X]YØ]‹Ø\ØÙ[™[™Î™˜[Ù_JKœ˜[™ÙJÙ™œÙ]Ù™œÙ]
+ÔÕ×ÔQÑWÔÒV‘KLJKˆİ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[\ÈŠKœÙ[Xİ
+ŠˆŠK™\J™Ü›İ\ÚÙ^H‹Ü›İ\
+K›Ü™\Š˜Ü™X]YØ]‹Ø\ØÙ[™[™Î™˜[Ù_JKˆJNÂˆYˆ
+™\İ[ÖÌK™\œ›ÜŠH›İÈ™\İ[ÖÌK™\œ›ÜÂˆYˆ
+™\İ[ÖÌWK™\œ›ÜŠH›İÈ™\İ[ÖÌWK™\œ›ÜÂˆ™]\›ˆ™\İ[ÎÂˆJNÂˆÛÛœİ™^[[\ÈH
+K™]H×JH\È[[V×NÂˆÛÛœİ[[RYÈH™^[[\Ë›X\
+
+[[JHOˆ[[KšY
+NÂˆÛÛœİH[[RYË›[™İÈ]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[WÜİÜÈŠKœÙ[Xİ
+˜[[WÚYİ×ÚYŠKš[Š˜[[WÚY‹[[RYÊHˆÈ]Nˆ×K\œ›Üˆ[NÂˆYˆ
+™\œ›ÜŠH›İÈ™\œ›ÜÂˆÙ]İÜÊ
+İ\œ™[
+OO˜\[™ÖË‹‹˜İ\œ™[‹‹Š
+™]_×JH\ÈİÖ×JK™š[\Š
+İÊOOˆXİ\œ™[œÛÛYJ
+][JOOš][KšYOO\İËšY
+JWNŠ™]_×JH\ÈİÖ×JNÂˆÙ][[\Ê™^[[\ÊNÂˆÙ][[S[šÜÊ
+™]_×JH\ÈØ[[WÚY›[X™\Üİ×ÚYœİš[™ßV×JNÂˆÙ]\Ó[Ü™TİÜÊ
+™]_×JK›[™İOOTÕ×ÔQÑWÔÒV‘JNÂˆHØ]ÚÈÙ]Y\ÜØYÙJ¹æî9a£9¦ ¹¥í¹¬¨y§"yb¨:/oy¢$9b§ûï#:+íúaãz+åHŠNÈBˆš[˜[HÈÙ]ØY[™ÔİÜÊ˜[ÙJNÈBˆBˆ\ÙQY™™Xİ
+
+
+OOİ›ÚYØY
+˜[ÙJ_KÙÜ›İ\JNÂˆ\Ş[˜È[˜İ[ÛˆÜ™X]P[[J
+^ÚYŠ[™]Ğ[[Kš[J
+J\™]\›ØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[\ÈŠKš[œÙ\
+Û˜[YN›™]Ğ[[Kš[J
+KÜ›İ\ÚÙ^N™Ü›İ\İÛ™\—İ\Ù\—ÚY\Ù\‹šYİÛ™\—Ù[XZ[›Y[X™\‹™[XZ[JNÚYŠ\œ›ÜŠ\Ù]Y\ÜØYÙJ¹æî9a£9b&ùnî¹i,z-)HŠNÙ[Ù^ÜÙ]™]Ğ[[JˆŠNØ]ØZ]ØY
+
+Nß_Bˆ[˜İ[ÛˆÜ[•\ØY
+
+^ÜÙ]\ØYÜ›İ\
+Ü›İ\
+NÜÙ]Ù[XİY[[JˆŠNÜÙ]\ØYš[\Ê×JNÜÙ]Y\ÜØYÙJˆŠNÜÙ]\ØYÜ[ŠYJNßBˆ[˜İ[ÛˆÙ[Xİ\ØYš[\Ê]™[ˆÚ[™ÙQ]™[S[œ][[Y[Š^ÜÙ]\ØYš[\Ê\œ˜^K™œ›ÛJ]™[\™Ù]™š[\ß×JJNÙ]™[\™Ù]˜[YOHˆßBˆ\Ş[˜È[˜İ[Ûˆ\ØYÙ[XİYİÜÊ
+^ÚYŠ]\ØYš[\Ë›[™İ
+\™]\›ÜÙ]\ŞJYJNÜÙ]Y\ÜØYÙJˆŠNİ^ØÛÛœİ]Y]YOVË‹‹\ØYš[\×NØÛÛœİ\ØYY”İÖ×OV×NØ]ØZ]›ÛZ\ÙK˜[
+\œ˜^K™œ›ÛJÛ[™İ“X]›Z[ŠË]Y]YK›[™İ
+_K\Ş[˜Ê
+OOİÚ[J]Y]YK›[™İ
+^ØÛÛœİš[O\]Y]YKœÚY
+
+NÚYŠš[J]\ØYYœ\Ú
+]ØZ]\ØYİÊš[K\ØYÜ›İ\
+JNß_JJNÚYŠÙ[XİY[[I‰\ØYY›[™İ
+^ØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[WÜİÜÈŠKš[œÙ\
+\ØYY›X\
+
+İÊOOŠØ[[WÚY“[X™\ŠÙ[XİY[[JKİ×ÚYœİËšYYYØWİ\Ù\—ÚY\Ù\‹šYJJJNÚYŠ\œ›ÜŠ]›İÈ\œ›Üß\Ù]Ü›İ\
+\ØYÜ›İ\
+NØÚ[™ÙUšY]Ê˜[ŠNÜÙ]\ØYÜ[Š˜[ÙJNÜÙ]\ØYš[\Ê×JNÜÙ]Ù[XİY[[JˆŠNÚYŠ\ØYÜ›İ\OOYÜ›İ\
+X]ØZ]ØY
+˜[ÙJNßXØ]Ú
+\œ›ÜŠ^ÜÙ]Y\ÜØYÙJ\œ›Üˆ[œİ[˜Ù[Ùˆ\œ›ÜÙ\œ›Ü‹›Y\ÜØYÙNˆ¹."¹/(9i,z-)HŠNßYš[˜[^ÜÙ]\ŞJ˜[ÙJNß_Bˆ\Ş[˜È[˜İ[Ûˆ™[[İ™TİÊİÎˆİÊ^ÚYŠ]Ú[™İË˜ÛÛ™š\›J¹èk¹k¦¹¬.9.ayb(:fi:/æyo(9áiùâaùd%ûï'ù¥éyc¡¹d£9bª9  y.+yæ¡9o%yå*9.gù/&¹. :-mùéîúfi8à ˆŠJ\™]\›ØÛÛœİXØÙ\ÜÕÚÙ[X]ØZ]ÚÙ[Š
+NØÛÛœİ™\ÜÛœÙOX]ØZ]™]Ú
+	ÓQQPWĞT_KÜİÜËÉÜİËšYXÛY]Ùˆ‘SUH‹XY\œÎĞ]]Üš^˜][Û˜™X\™\ˆ	ØXØÙ\ÜÕÚÙ[ŸX_JNÚYŠ\™\ÜÛœÙK›ÚÊ^ØÛÛœİ™\İ[X]ØZ]™\ÜÛœÙKšœÛÛŠ
+NÜÙ]Y\ÜØYÙJ™\İ[™\œ›ÜŸ¹b(:fi9i,z-)HŠNÜ™]\›ßX]ØZ]ØY
+
+NßBˆ[˜İ[Ûˆ™\Ù]Ù[Xİ[ÛŠ
+^ÜÙ]Ù[Xİ[™Ê˜[ÙJNÜÙ]Ù[XİYİÒYÊ×JNÜÙ]Ü™Ø[š^™\“Ü[Š˜[ÙJNÜÙ]\™Ù][[RYÊ×JNßBˆ[˜İ[ÛˆÚ[™ÙUšY]Ê™^ˆ˜[ˆ[›Ü™Ø[š^™Yˆ[X™\Š^ÜÙ][[UšY]Ê™^
+NÜÙ]™[˜[Z[™Ê˜[ÙJNÜ™\Ù]Ù[Xİ[ÛŠ
+NßBˆ[˜İ[ÛˆÙÙÛTİÊİÒYœİš[™Ê^ÜÙ]Ù[XİYİÒYÊ
+İ\œ™[
+OO˜İ\œ™[š[˜ÛY\ÊİÒY
+OØİ\œ™[™š[\Š
+Y
+OOšYOO\İÒY
+N–Ë‹‹˜İ\œ™[İÒYJNßBˆ[˜İ[ÛˆÜ[“Ü™Ø[š^™\Š
+^ÚYŠ\Ù[XİYİÒYË›[™İ
+\™]\›ÜÙ]\™Ù][[RYÊ×JNÜÙ]Ü™Ø[š^™\“Ü[ŠYJNßBˆ\Ş[˜È[˜İ[ÛˆYĞ[[\Ê
+^ÚYŠ\Ù[XİYİÒYË›[™İ]\™Ù][[RYË›[™İ
+\™]\›ÜÙ]\ŞJYJNÜÙ]Y\ÜØYÙJˆŠNØÛÛœİ^\İ[™Ï[™]ÈÙ]
+[[S[šÜË›X\
+
+[šÊOO˜	Û[šË˜[[WÚYN‰Û[šËœİ×ÚYX
+JNØÛÛœİ›İÜÏ]\™Ù][[RYË™›]X\
+
+[[RY
+OOœÙ[XİYİÒYË™š[\Š
+İÒY
+OOˆY^\İ[™Ëš\Ê	Ø[[RYN‰ÜİÒYX
+JK›X\
+
+İÒY
+OOŠØ[[WÚY˜[[RYİ×ÚYœİÒYYYØWİ\Ù\—ÚY\Ù\‹šYJJJNÚYŠ›İÜË›[™İ
+^ØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[WÜİÜÈŠKš[œÙ\
+›İÜÊNÚYŠ\œ›ÜŠ^ÜÙ]Y\ÜØYÙJ¹áiùâaù¥m9ä!¹i,z-)HŠNÜÙ]\ŞJ˜[ÙJNÜ™]\›ß_\Ù]\ŞJ˜[ÙJNÜ™\Ù]Ù[Xİ[ÛŠ
+NØ]ØZ]ØY
+
+NßBˆ\Ş[˜È[˜İ[Ûˆ™[[İ™Qœ›ÛPİ\œ™[[[J
+^ÚYŠ\[Ùˆ[[UšY]ÈOOH›[X™\ˆŸ\Ù[XİYİÒYË›[™İ
+\™]\›ÜÙ]\ŞJYJNØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[WÜİÜÈŠK™[]J
+K™\J˜[[WÚY‹[[UšY]ÊKš[Šœİ×ÚY‹Ù[XİYİÒYÊNÚYŠ\œ›ÜŠ\Ù]Y\ÜØYÙJ¹¥è9¬åy.ã¹odùbcyæî9a£9éîúfi9¢`:`"yáiùâaÈŠNÙ[Ù^Ü™\Ù]Ù[Xİ[ÛŠ
+NØ]ØZ]ØY
+
+Nß\Ù]\ŞJ˜[ÙJNßBˆ\Ş[˜È[˜İ[Ûˆ™[˜[YP[[J
+^ÚYŠ\[Ùˆ[[UšY]ÈOOH›[X™\ˆŸX[[S˜[YQ˜Yš[J
+J\™]\›ØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[\ÈŠK\]JÛ˜[YN˜[[S˜[YQ˜Yš[J
+_JK™\JšY‹[[UšY]ÊK™\J›İÛ™\—İ\Ù\—ÚY‹\Ù\‹šY
+NÚYŠ\œ›ÜŠ\Ù]Y\ÜØYÙJ¹æî9a£:aãydoyd#yi,z-)HŠNÙ[Ù^ÜÙ]™[˜[Z[™Ê˜[ÙJNØ]ØZ]ØY
+
+Nß_Bˆ\Ş[˜È[˜İ[ÛˆÙ][[PÛİ™\Š
+^ÚYŠ\[Ùˆ[[UšY]ÈOOH›[X™\ˆŸÙ[XİYİÒYË›[™İOOLJ\™]\›ØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[\ÈŠK\]JØÛİ™\—Üİ×ÚYœÙ[XİYİÒYÖÌ_JK™\JšY‹[[UšY]ÊK™\J›İÛ™\—İ\Ù\—ÚY‹\Ù\‹šY
+NÚYŠ\œ›ÜŠ\Ù]Y\ÜØYÙJ¹l zghº+¯¹ïk¹i,z-)HŠNÙ[Ù^Ü™\Ù]Ù[Xİ[ÛŠ
+NØ]ØZ]ØY
+
+Nß_Bˆ\Ş[˜È[˜İ[Ûˆ[]P[[J
+^ÚYŠ\[Ùˆ[[UšY]ÈOOH›[X™\ˆŠ\™]\›ØÛÛœİİ\œ™[X[[\Ë™š[™
+
+[[JOO˜[[KšYOOX[[UšY]ÊNÚYŠXİ\œ™[]Ú[™İË˜ÛÛ™š\›J9b(:fi9æî9a£8 '	Øİ\œ™[›˜[Y_x '{ï'ùáiùâaù/&¹fç¹b,9§*¹¥m9ä!»ï#9.#y/&º(ªù¬.9.ayb(:fi8à ˜
+J\™]\›ØÛÛœİÙ\œ›ÜŸOX]ØZ]İ\X˜\ÙK™œ›ÛJœÚ\™YØØ[[™\—Ø[[\ÈŠK™[]J
+K™\JšY‹[[UšY]ÊK™\J›İÛ™\—İ\Ù\—ÚY‹\Ù\‹šY
+NÚYŠ\œ›ÜŠ\Ù]Y\ÜØYÙJ¹æî9a£9b(:fi9i,z-)HŠNÙ[Ù^ØÚ[™ÙUšY]Ê˜[ŠNØ]ØZ]ØY
+
+Nß_BˆÛÛœİÜ›İ\İÜÏ\İÜË™š[\Š
+İÊOOœİË™Ü›İ\ÚÙ^OOOYÜ›İ\İË™Ü›İ\ÚÙ^OOOH˜›İŠNÂˆÛÛœİÜ›İ\[[\ÏX[[\Ë™š[\Š
+[[JOO˜[[K™Ü›İ\ÚÙ^OOOYÜ›İ\
+NÂˆÛÛœİ\ØY[[\ÏX[[\Ë™š[\Š
+[[JOO˜[[K™Ü›İ\ÚÙ^OOO]\ØYÜ›İ\
+NÂˆÛÛœİ[šÙYİÒYÏ[™]ÈÙ]
+[[S[šÜË™š[\Š
+[šÊOO™Ü›İ\[[\ËœÛÛYJ
+[[JOO˜[[KšYOO[[šË˜[[WÚY
+JK›X\
+
+[šÊOO›[šËœİ×ÚY
+JNÂˆÛÛœİ[›Ü™Ø[š^™YİÜÏYÜ›İ\İÜË™š[\Š
+İÊOOˆ[[šÙYİÒYËš\ÊİËšY
+JNÂˆÛÛœİİ\œ™[[[O]\[Ùˆ[[UšY]ÏOOH›[X™\ˆÙÜ›İ\[[\Ë™š[™
+
+[[JOO˜[[KšYOOX[[UšY]ÊN[™Yš[™YÂˆÛÛœİİ\œ™[YÏ]\[Ùˆ[[UšY]ÏOOH›[X™\ˆÛ™]ÈÙ]
+[[S[šÜË™š[\Š
+[šÊOO›[šË˜[[WÚYOOX[[UšY]ÊK›X\
+
+[šÊOO›[šËœİ×ÚY
+JN›[ÂˆÛÛœİÚİÛ”İÜÏX[[UšY]ÏOOH[›Ü™Ø[š^™Yİ[›Ü™Ø[š^™YİÜÎ˜İ\œ™[YÏÙÜ›İ\İÜË™š[\Š
+İÊOO˜İ\œ™[YËš\ÊİËšY
+JN™Ü›İ\İÜÎÂˆÛÛœİØ[“X[˜YÙPİ\œ™[P›ÛÛX[Šİ\œ™[[[I‰˜İ\œ™[[[K›İÛ™\—Ù[XZ[ÓİÙ\Ø\ÙJ
+OOO[Y[X™\‹™[XZ[ÓİÙ\Ø\ÙJ
+JNÂˆÛÛœİšY]Õ]OX[[UšY]ÏOOH˜[È¹aj:`ê9áiùâaÈ˜[[UšY]ÏOOH[›Ü™Ø[š^™YÈ¹§*¹¥m9ä!ˆ˜İ\œ™[[[OË›˜[Y_¹æî9a£Âˆ™]\›ˆÙXİ[ÛˆÛ\ÜÓ˜[YOH›YYXK\YÙH[[\Ë\YÙH‚ˆXY\ˆÛ\ÜÓ˜[YOH›YYXK\YÙKZXY]Û\ÜÓ˜[YOH™^YXœ›İÈ”ÕÔÏÜ¹æî9a£ÚÙ]]ˆÛ\ÜÓ˜[YOH˜[[KZXYXXİ[ÛœÈÜ›İ\Ù[Xİ˜[YO^ÙÜ›İ\HÛÚ[™ÙO^Ê˜[YJOOÜÙ]Ü›İ\
+˜[YJNØÚ[™ÙUšY]Ê˜[Š__H[XZ[^ÛY[X™\‹™[XZ[KÏ]ÛˆÛ\ÜÓ˜[YOHœš[X\H[[K]\ØY]šYÙÙ\ˆˆ\OH˜]ÛˆˆÛÛXÚÏ^ÛÜ[•\ØYO»ï"È9."¹/(9áiùâaÏØ]ÛÙ]ÚXY\‚ˆÛY\ÜØYÙI‰Û\ÜÓ˜[YOH›YYXKY\œ›ÜˆÛY\ÜØYÙ_OÜŸBˆ]ˆÛ\ÜÓ˜[YOH˜[[KXÜ™X]H[œ]˜[YO^Û™]Ğ[[_HÛÚ[™ÙO^ÊJOOœÙ]™]Ğ[[JK\™Ù]˜[YJ_HXÙZÛ\H¹¥¬9æî9a£9d#yéì‹Ï]ÛˆÛÛXÚÏ^ØÜ™X]P[[_O»ï"È9¥¬9nî¹æî9a£Ø]ÛÙ]‚ˆ]ˆÛ\ÜÓ˜[YOH˜[[K\ÙXİ[ÛˆÏ¹ìîùîçùæî9a£ÚÏ]ˆÛ\ÜÓ˜[YOH˜[[K\Ş\İ[K[\İ]ÛˆÛ\ÜÓ˜[YO^Ø[[UšY]ÏOOH[›Ü™Ø[š^™YÈ˜Xİ]™HˆˆŸHÛÛXÚÏ^Ê
+OO˜Ú[™ÙUšY]Ê[›Ü™Ø[š^™YŠ_O¹§*¹¥m9ä!ØÛX[İ[›Ü™Ø[š^™YİÜË›[™İH9o(ÜÛX[Ø]Û]ÛˆÛ\ÜÓ˜[YO^Ø[[UšY]ÏOOH˜[È˜Xİ]™HˆˆŸHÛÛXÚÏ^Ê
+OO˜Ú[™ÙUšY]Ê˜[Š_O¹aj:`ê9áiùâaÏØÛX[ÙÜ›İ\İÜË›[™İH9o(ÜÛX[Ø]ÛÙ]Ù]‚ˆ]ˆÛ\ÜÓ˜[YOH˜[[K\ÙXİ[ÛˆÏÙÜ›İ\X™[
+Ü›İ\
+_yæî9a£ÚÏ]ˆÛ\ÜÓ˜[YOH˜[[K[\İÙÜ›İ\[[\Ë›X\
+
+[[JOOØÛÛœİYÏX[[S[šÜË™š[\Š
+[šÊOO›[šË˜[[WÚYOOX[[KšY
+K›X\
+
+[šÊOO›[šËœİ×ÚY
+NØÛÛœİÛİ™\\İÜË™š[™
+
+İÊOOœİËšYOOJ[[K˜Ûİ™\—Üİ×ÚYYÖÌJJNÜ™]\›ˆ]ÛˆÛ\ÜÓ˜[YO^Ø[[KY›Û\ˆ	Ø[[UšY]ÏOOX[[KšYÈ˜Xİ]™HˆˆŸXHÙ^O^Ø[[KšYHÛÛXÚÏ^Ê
+OO˜Ú[™ÙUšY]Ê[[KšY
+_OÜ[ØÛİ™\Ï›İXİYİÈİÏ^ØÛİ™\ŸKÏˆ¹¦ ¹¥è9áiùâaÈŸOÜÜ[Ø[[K›˜[Y_OØÛX[ÚYË›[™İH9o(0­ÈÙ\Ü^S˜[YJ[[K›İÛ™\—Ù[XZ[Y[X™\œÊ_OÜÛX[Ø]ÛŸJ_OÙ]Ù]‚ˆ]ˆÛ\ÜÓ˜[YOH˜[[K\ÙXİ[Ûˆ[[K\İË\ÙXİ[Ûˆ]ˆÛ\ÜÓ˜[YOH˜[[K\ÙXİ[Û‹ZXYÏİ\[Ùˆ[[UšY]ÏOOH›[X™\ˆ‰‰]ÛˆÛ\ÜÓ˜[YOH˜[[KZ[›[™KX˜XÚÈˆÛÛXÚÏ^Ê
+OO˜Ú[™ÙUšY]Ê˜[Š_O¸ .OØ]ÛŸ^İšY]Õ]_OÚÏ]ÜÙ[Xİ[™ÏÏÜ[ÜÙ[XİYİÒYË›[™İH9o(9mìº`"OÜÜ[]ÛˆÛÛXÚÏ^Ü™\Ù]Ù[Xİ[ÛŸO¹cå¹­¢Ø]ÛÏ]ÛˆÛÛXÚÏ^Ê
+OOœÙ]Ù[Xİ[™ÊYJ_H\ØX›Y^È\ÚİÛ”İÜË›[™İOº`"y¢êOØ]ÛŸOÙ]Ù]‚ˆØİ\œ™[[[I‰˜Ø[“X[˜YÙPİ\œ™[	‰]ˆÛ\ÜÓ˜[YOH˜[[K[X[˜YÙKX˜\ˆÜ™[˜[Z[™ÏÏ[œ]˜[YO^Ø[[S˜[YQ˜YHÛÚ[™ÙO^Ê]™[
+OOœÙ][[S˜[YQ˜Y
+]™[\™Ù]˜[YJ_H]]Ñ›Øİ\ËÏ]ÛˆÛÛXÚÏ^Ü™[˜[YP[[_O¹/çykf9d#yéìØ]Û]ÛˆÛÛXÚÏ^Ê
+OOœÙ]™[˜[Z[™Ê˜[ÙJ_O¹cå¹­¢Ø]ÛÏ]ÛˆÛÛXÚÏ^Ê
+OOÜÙ][[S˜[YQ˜Y
+İ\œ™[[[K›˜[YJNÜÙ]™[˜[Z[™ÊYJ__Oºaãydoyd#OØ]Û]Ûˆ\ØX›Y^È\Ù[Xİ[™ßÙ[XİYİÒYË›[™İOOL_HÛÛXÚÏ^ÜÙ][[PÛİ™\ŸOº+¯¹..¹l zghØ]Û]ÛˆÛ\ÜÓ˜[YOH˜[[KY[™Ù\ˆˆÛÛXÚÏ^Ù[]P[[_O¹b(:fi9æî9a£Ø]ÛÏŸOÙ]ŸBˆÜÙ[Xİ[™É‰œÙ[XİYİÒYË›[™İŒ	‰]ˆÛ\ÜÓ˜[YOH˜[[KX˜]ÚX˜\ˆ]ÛˆÛ\ÜÓ˜[YOHœš[X\HˆÛÛXÚÏ^ÛÜ[“Ü™Ø[š^™\ŸO¹¥/¹aiyæî9a£Ø]Ûİ\[Ùˆ[[UšY]ÏOOH›[X™\ˆ‰‰]ÛˆÛÛXÚÏ^Ü™[[İ™Qœ›ÛPİ\œ™[[[_O¹.ã¹odùbcyæî9a£9éîúfiØ]ÛŸOÙ]ŸBˆ]ˆÛ\ÜÓ˜[YO^ØİË[Xœ˜\KYÜšY	ÜÙ[Xİ[™ÏÈœÙ[Xİ[™ÈˆˆŸXOÜÚİÛ”İÜË›X\
+
+İÊOO]ˆÛ\ÜÓ˜[YO^ØXœ˜\K\İÈ	ÜÙ[XİYİÒYËš[˜ÛY\ÊİËšY
+OÈœÙ[XİYˆˆŸXHÙ^O^ÜİËšYOÜÙ[Xİ[™ÏÏ]Ûˆ\OH˜]ÛˆˆÛ\ÜÓ˜[YOH›Xœ˜\K\İË\Ù[Xİˆ\šXK[X™[^ÜÙ[XİYİÒYËš[˜ÛY\ÊİËšY
+OÈ¹cå¹­¢:`"y¢êyáiùâaÈˆº`"y¢êyáiùâaÈŸHÛÛXÚÏ^Ê
+OOÙÙÛTİÊİËšY
+_O›İXİYİÈİÏ^ÜİßKÏOÜÙ[XİYİÒYËš[˜ÛY\ÊİËšY
+OÈ¸§$ÈˆˆŸOÚOØ]Û›İXİYİÈİÏ^ÜİßKÏŸHÈ\Ù[Xİ[™É‰œİË\ØY\—Ù[XZ[ÓİÙ\Ø\ÙJ
+OOO[Y[X™\‹™[XZ[ÓİÙ\Ø\ÙJ
+I‰]ÛˆÛ\ÜÓ˜[YOH›Xœ˜\K\İËY[]HˆÛÛXÚÏ^Ê
+OOœ™[[İ™TİÊİÊ_H\šXK[X™[H¹b(:fi9áiùâaÈ°åÏØ]ÛŸOÛX[Ù\Ü^S˜[YJİË\ØY\—Ù[XZ[Y[X™\œÊ_OÜÛX[Ù]Š_OÙ]‚ˆÛØY[™ÔİÜÉ‰ˆ\ÚİÛ”İÜË›[™İÏ]ˆÛ\ÜÓ˜[YOH›YYXKY[\HYYXK[ØY[™Ë\İ]HÜ[ˆÛ\ÜÓ˜[YOH›YYXK\Ü[›™\ˆ‹ÏÏ¹«hùg*:+îùcå¹æî9a£ÚÏÙ]ˆ\ÚİÛ”İÜË›[™İ	‰]ˆÛ\ÜÓ˜[YOH›YYXKY[\HÏØ[[UšY]ÏOOH[›Ü™Ø[š^™YÈ¹¬¨y§"y§*¹¥m9ä!¹áiùâaÈˆº/æ9¬¨y§"yáiùâaÈŸOÚÏØ[[UšY]ÏOOH[›Ü™Ø[š^™YÈ¹bª9  xà y¥éyc¡¹d£9§*¹£!ùk¦¹æî9a£9."¹/(9æ¡9áiùâaù/&¹aî¹ã¬9g*:/æzaã8à ˆˆ¹."¹/(9áiùâaûï#9¢%¹.ã¹§*¹¥m9ä!¹.+y¢¢¹áiùâaù¥/¹aiz/æy.*¹æî9a£8à ˆŸOÜÙ]ŸBˆØ[[UšY]ÏOOH˜[‰‰š\Ó[Ü™TİÜÉ‰]ÛˆÛ\ÜÓ˜[YOH›[ÛY[[ØY[[Ü™Hˆ\ØX›Y^ÛØY[™ÔİÜßHÛÛXÚÏ^Ê
+OO›ÚYØY
+İÜË›[™İYJ_OÛØY[™ÔİÜÏÈ¹«hùg*9b¨:/ox )ˆˆ¹b¨:/oy¦í9i&¹áiùâaÈŸOØ]ÛŸBˆÙ]‚ˆİ\ØYÜ[‰‰]ˆÛ\ÜÓ˜[YOH˜[[K[Ü™Ø[š^™\‹[İ™\›^H[[K]\ØY[İ™\›^HˆÛ“[İ\ÙQİÛ^Ê]™[
+OOÚYŠ]™[\™Ù]OOY]™[˜İ\œ™[\™Ù]	‰ˆX\ŞJ\Ù]\ØYÜ[Š˜[ÙJ__OÙXİ[ÛˆÛ\ÜÓ˜[YOH˜[[K[Ü™Ø[š^™\ˆ[[K]\ØYYX[ÙÈˆ›ÛOH™X[ÙÈˆ\šXK[[Ù[HYHˆ\šXK[X™[H¹."¹/(9áiùâaÈXY\]Û\ÜÓ˜[YOH™^YXœ›İÈ•TĞQÜÏ¹."¹/(9áiùâaÏÚÏÙ]]Ûˆ\OH˜]Ûˆˆ\ØX›Y^Ø\Ş_HÛÛXÚÏ^Ê
+OOœÙ]\ØYÜ[Š˜[ÙJ_O°åÏØ]ÛÚXY\¹ab:`"y¢êyáiùâaûï#9a£ya¬ùk¦¹¥/¹b,9dê¹.*¹b!¹îá9d£9æî9a£8à ÜX™[Û\ÜÓ˜[YOH˜[[K]\ØYY›Ü›Û™H»ï"È9.ãº+¯¹i!ú`"y¢êyáiùâaÏ[œ]\OH™š[HˆXØÙ\Hš[XYÙKÚœYË[XYÙKÜ™Ë[XYÙKİÙXœ[XYÙKÚZXË[XYÙKÚZYˆˆ][\HÛÚ[™ÙO^ÜÙ[Xİ\ØYš[\ßKÏÜ[İ\ØYš[\Ë›[™İØ9mìº`"y¢êH	İ\ØYš[\Ë›[™İH9o(˜9¥+ù£ H”øà T‘øà RRPØOÜÜ[ÛX™[X™[Û\ÜÓ˜[YOH˜[[K]\ØYYšY[¹."¹/(9b,9b!¹îáÜ›İ\Ù[Xİ˜[YO^İ\ØYÜ›İ\HÛÚ[™ÙO^Ê˜[YJOOÜÙ]\ØYÜ›İ\
+˜[YJNÜÙ]Ù[XİY[[JˆŠ__H[XZ[^ÛY[X™\‹™[XZ[KÏÛX™[X™[Û\ÜÓ˜[YOH˜[[K]\ØYYšY[¹¥/¹aiyæî9a£;ï"9cëú`"{ï"OÙ[Xİ˜[YO^ÜÙ[XİY[[_HÛÚ[™ÙO^Ê]™[
+OOœÙ]Ù[XİY[[J]™[\™Ù]˜[YJ_OÜ[Ûˆ˜[YOHˆ¹§*¹¥m9ä!ÛÜ[Ûİ\ØY[[\Ë›X\
+
+[[JOOÜ[ÛˆÙ^O^Ø[[KšYH˜[YO^Ø[[KšYOØ[[K›˜[Y_OÛÜ[ÛŠ_OÜÙ[XİÛX™[ÛY\ÜØYÙI‰Û\ÜÓ˜[YOH›YYXKY\œ›ÜˆÛY\ÜØYÙ_OÜŸO]ˆÛ\ÜÓ˜[YOH˜[[K]\ØYXXİ[ÛœÈ]Ûˆ\OH˜]Ûˆˆ\ØX›Y^Ø\Ş_HÛÛXÚÏ^Ê
+OOœÙ]\ØYÜ[Š˜[ÙJ_O¹cå¹­¢Ø]Û]ÛˆÛ\ÜÓ˜[YOHœš[X\Hˆ\OH˜]Ûˆˆ\ØX›Y^Ø\Ş_]\ØYš[\Ë›[™İHÛÛXÚÏ^Ê
+OO›ÚY\ØYÙ[XİYİÜÊ
+_OØ\ŞOÈ¹«hùg*9."¹/(8 )ˆˆ¹o 9iâù."¹/(ŸOØ]ÛÙ]ÜÙXİ[ÛÙ]ŸBˆÛÜ™Ø[š^™\“Ü[‰‰]ˆÛ\ÜÓ˜[YOH˜[[K[Ü™Ø[š^™\‹[İ™\›^HˆÛ“[İ\ÙQİÛ^Ê]™[
+OOÚYŠ]™[\™Ù]OOY]™[˜İ\œ™[\™Ù]
+\Ù]Ü™Ø[š^™\“Ü[Š˜[ÙJ__OÙXİ[ÛˆÛ\ÜÓ˜[YOH˜[[K[Ü™Ø[š^™\ˆˆ›ÛOH™X[ÙÈˆ\šXK[[Ù[HYHˆ\šXK[X™[H¹¥/¹aiyæî9a£XY\]Û\ÜÓ˜[YOH™^YXœ›İÈ“Ô‘ĞS’V‘OÜÏ¹¥/¹aiyæî9a£ÚÏÙ]]ÛˆÛÛXÚÏ^Ê
+OOœÙ]Ü™Ø[š^™\“Ü[Š˜[ÙJ_O°åÏØ]ÛÚXY\¹mìº`"y¢êHÜÙ[XİYİÒYË›[™İH9o(9áiùâaûï#9cëùd#9¥í¹¥/¹aiyi&¹.*¹æî9a£8à Ü]ˆÛ\ÜÓ˜[YOH˜[[K[Ü™Ø[š^™\‹[\İÙÜ›İ\[[\Ë›X\
+
+[[JOOX™[Ù^O^Ø[[KšYO[œ]\OH˜ÚXÚØ›ŞˆÚXÚÙY^İ\™Ù][[RYËš[˜ÛY\Ê[[KšY
+_HÛÚ[™ÙO^Ê
+OOœÙ]\™Ù][[RYÊ
+İ\œ™[
+OO˜İ\œ™[š[˜ÛY\Ê[[KšY
+OØİ\œ™[™š[\Š
+Y
+OOšYOOX[[KšY
+N–Ë‹‹˜İ\œ™[[[KšYJ_KÏÜ[Ø[[K›˜[Y_OÜÜ[ÛX™[Š_OÙ]ÈYÜ›İ\[[\Ë›[™İ	‰º+íùab9¥¬9nî¹. 9.*¹æî9a£8à ÜŸO]ÛˆÛ\ÜÓ˜[YOHœš[X\Hˆ\ØX›Y^Ø\Ş_]\™Ù][[RYË›[™İHÛÛXÚÏ^ØYĞ[[\ßOØ\ŞOÈ¹«hùg*9¥m9ä!¸ )ˆˆ¹èkº+©9¥/¹aiHŸOØ]ÛÜÙXİ[ÛÙ]ŸBˆÜÙXİ[ÛÂŸB
