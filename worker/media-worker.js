@@ -141,7 +141,11 @@ async function getPhoto(request, env, user, id) {
 
 async function uploadDisplayPhoto(request, env, user, id) {
   const mime = (request.headers.get("Content-Type") || "").split(";")[0];
-  const size = Number(request.headers.get("Content-Length") || 0);
+  const size = Number(
+    request.headers.get("X-File-Size") ||
+      request.headers.get("Content-Length") ||
+      0,
+  );
   if (mime !== "image/webp" || !request.body || !size || size > 1024 * 1024)
     return json(request, { error: "展示图格式或大小不正确" }, 415);
   const found = await supabaseRequest(

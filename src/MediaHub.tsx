@@ -78,7 +78,11 @@ async function uploadDisplayPhoto(photoId: string, display: Blob, accessToken?: 
   const authToken = accessToken || await token();
   const response = await fetch(`${MEDIA_API}/photos/${photoId}/display`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "image/webp" },
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": "image/webp",
+      "X-File-Size": String(display.size),
+    },
     body: display,
   });
   if (!response.ok) throw new Error("展示图保存失败");
