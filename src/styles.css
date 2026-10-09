@@ -2631,7 +2631,14 @@ body input[type="checkbox"] {
 .moment-comments > div {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: stretch;
+  align-items: center;
+  gap: 8px;
+}
+.moment-comments > div > input,
+.moment-comments .moment-comment-send {
+  box-sizing: border-box;
+  height: 44px;
+  min-height: 44px;
 }
 .moment-comments button {
   min-width: 58px;
@@ -2684,7 +2691,6 @@ body input[type="checkbox"] {
   align-items: center;
   justify-content: center;
   min-width: 64px;
-  min-height: 44px;
   padding: 0 16px;
   border: 1px solid #746f50;
   border-radius: 12px;
