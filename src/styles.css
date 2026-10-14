@@ -6023,18 +6023,19 @@ body .event-moment-row > small { margin-left: 10px; }
 .album-system-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 .album-system-list button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 52px;
-  padding: 10px 13px;
+  gap: 10px;
+  min-height: 58px;
+  padding: 9px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #f8f2e8;
+  border-radius: 14px;
+  background: rgba(248, 242, 232, .72);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
@@ -6043,13 +6044,44 @@ body .event-moment-row > small { margin-left: 10px; }
 .album-system-list button.active,
 .album-folder.active {
   border-color: var(--deep);
-  box-shadow: inset 0 0 0 1px var(--deep);
+  background: #f2eadc;
+  box-shadow: inset 0 0 0 1px var(--deep), 0 7px 18px rgba(72, 62, 42, .06);
 }
 
+.album-system-list button > span:last-child { display: grid; gap: 2px; }
+.album-system-list b { font-size: 12px; }
 .album-system-list small {
   color: var(--muted);
   font-size: 10px;
 }
+.album-system-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  background: #e9dfcf;
+  color: var(--deep);
+  font-size: 17px;
+}
+
+.album-page-intro { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+.album-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.album-title-row h3 { margin: 0; }
+.album-title-row small { color: var(--muted); font-size: 10px; }
+.album-collection-section { padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.albums-page .album-list { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.albums-page .album-folder { padding: 7px; border-radius: 14px; background: transparent; }
+.albums-page .album-folder > span { aspect-ratio: 5 / 3; border-radius: 10px; }
+.albums-page .album-folder b { margin: 8px 3px 0; font-size: 12px; }
+.albums-page .album-folder small { margin: 3px; color: var(--muted); font-size: 9px; }
+.albums-page .album-folder > span > i { display: grid; place-items: center; width: 100%; height: 100%; color: var(--muted); font-style: normal; font-size: 10px; }
+.album-folder-empty > span > i { font-size: 24px !important; }
+.album-photo-section { margin-top: 22px; }
+.albums-page .photo-library-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.albums-page .library-photo { border-radius: 8px; }
+.library-photo-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
 
 .album-section-head,
 .album-section-head > div,
@@ -6087,6 +6119,10 @@ body .event-moment-row > small { margin-left: 10px; }
 .album-manage-bar .album-danger { color: #9d5e55; }
 .album-batch-bar { margin: 0 0 10px; }
 .album-batch-bar .primary { border-color: var(--deep); background: var(--deep); color: #fff; }
+.album-batch-bar .album-danger { border-color: #d5b8ad; color: #945a4f; }
+.album-settings-wrap { margin: -2px 0 10px; }
+.album-settings-trigger { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; }
+.album-settings-wrap .album-manage-bar { margin-top: 7px; }
 
 .library-photo-select {
   display: block;
@@ -6177,7 +6213,8 @@ body .event-moment-row > small { margin-left: 10px; }
 }
 
 .album-head-actions .themed-dropdown > button,
-.album-upload-trigger {
+.album-upload-trigger,
+.album-create-trigger {
   box-sizing: border-box;
   height: 36px;
   min-height: 36px;
@@ -6189,6 +6226,16 @@ body .event-moment-row > small { margin-left: 10px; }
   border-radius: 11px;
   background: var(--deep);
   color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.album-create-trigger {
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #f8f2e8;
+  color: var(--ink);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -6225,10 +6272,12 @@ body .event-moment-row > small { margin-left: 10px; }
 
 .album-upload-field .themed-dropdown,
 .album-upload-field .themed-dropdown > button,
-.album-upload-field select { width: 100%; }
+.album-upload-field select,
+.album-upload-field input { width: 100%; }
 
 .album-upload-field .themed-dropdown > button,
-.album-upload-field select {
+.album-upload-field select,
+.album-upload-field input {
   min-height: 36px;
   padding: 0 11px;
   border: 1px solid var(--line);
@@ -6240,6 +6289,7 @@ body .event-moment-row > small { margin-left: 10px; }
 }
 
 .album-upload-field .themed-dropdown-menu { width: 100%; }
+.album-create-dialog { width: min(360px, 100%); }
 
 .album-upload-actions {
   display: flex;
@@ -6278,11 +6328,16 @@ body .event-moment-row > small { margin-left: 10px; }
 }
 
 @media (max-width: 700px) {
-  .albums-page .media-page-head { align-items: flex-end; }
-  .album-head-actions { gap: 6px; }
-  .album-head-actions .themed-dropdown { min-width: 92px; }
-  .album-upload-trigger { padding: 0 10px; }
-  .albums-page .album-create { align-items: stretch; }
+  .albums-page .media-page-head { flex-direction: column; align-items: stretch; gap: 14px; }
+  .album-head-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .album-head-actions .themed-dropdown { grid-column: 1 / -1; width: 100%; }
+  .album-head-actions .themed-dropdown > button { width: 100%; }
+  .album-upload-trigger,
+  .album-create-trigger { width: 100%; padding: 0 8px; }
+  .albums-page .album-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .albums-page .photo-library-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+  .albums-page .library-photo { border-radius: 5px; }
+  .albums-page .library-photo small { left: 4px; bottom: 4px; padding: 2px 4px; font-size: 8px; }
   .album-upload-overlay { align-items: end; padding: 0; }
   .album-upload-dialog {
     width: 100%;
@@ -6292,6 +6347,12 @@ body .event-moment-row > small { margin-left: 10px; }
     border-radius: 18px 18px 0 0;
   }
   .album-upload-actions button { flex: 1; }
+  .album-batch-bar { position: sticky; z-index: 4; bottom: max(8px, env(safe-area-inset-bottom)); padding: 7px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 250, 240, .96); box-shadow: 0 8px 24px rgba(45, 37, 26, .14); }
+}
+
+@media (min-width: 701px) and (max-width: 1050px) {
+  .albums-page .album-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .albums-page .photo-library-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 /* Moments toolbar */
