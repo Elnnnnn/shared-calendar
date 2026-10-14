@@ -6729,6 +6729,7 @@ body .admin-sheet label {
   object-fit: cover;
 }
 .moments-page .moment-photo-grid.count-1 .moment-photo {
+  aspect-ratio: 1;
   min-height: 0;
   max-height: none;
 }
