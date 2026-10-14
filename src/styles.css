@@ -6874,6 +6874,8 @@ body .admin-sheet label {
   font-size: 10px;
 }
 .moments-page .moment-composer-actions > .primary {
+  width: auto;
+  flex: 0 0 auto;
   border-color: var(--deep);
   background: var(--deep);
   color: #fff;
