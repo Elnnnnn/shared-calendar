@@ -25,6 +25,11 @@ function allowedGroups(email: string): GroupKey[] {
   return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === "test@test.com" ? ["friends"] : ["besties"];
 }
 function displayName(email: string, members: Member[]) { return members.find((m) => m.email.toLowerCase() === email.toLowerCase())?.display_name || email.split("@")[0]; }
+function canManagePhoto(photo: Photo, email: string) {
+  const normalizedEmail = email.toLowerCase();
+  return photo.uploader_email.toLowerCase() === normalizedEmail
+    || (normalizedEmail === ELAINE_EMAIL && photo.group_key === "besties");
+}
 function fileKey(file: File) { return `${file.name}:${file.size}:${file.lastModified}`; }
 
 async function token() {
@@ -687,7 +692,7 @@ export function AlbumsPage({ user, member, members }: { user: User; member: Memb
     <div className="album-section album-photo-section"><div className="album-section-head"><h3>{typeof albumView==="number"&&<button className="album-inline-back" onClick={()=>changeView("all")}>‹</button>}{viewTitle}</h3><div>{selecting?<><span>{selectedPhotoIds.length} 张已选</span><button onClick={resetSelection}>取消</button></>:<button onClick={()=>setSelecting(true)} disabled={!shownPhotos.length}>选择</button>}</div></div>
       {currentAlbum&&canManageCurrent&&<div className="album-manage-bar">{renaming?<><input value={albumNameDraft} onChange={(event)=>setAlbumNameDraft(event.target.value)} autoFocus/><button onClick={renameAlbum}>保存名称</button><button onClick={()=>setRenaming(false)}>取消</button></>:<><button onClick={()=>{setAlbumNameDraft(currentAlbum.name);setRenaming(true)}}>重命名</button><button disabled={!selecting||selectedPhotoIds.length!==1} onClick={setAlbumCover}>设为封面</button><button className="album-danger" onClick={deleteAlbum}>删除相册</button></>}</div>}
       {selecting&&selectedPhotoIds.length>0&&<div className="album-batch-bar"><button className="primary" onClick={openOrganizer}>放入相册</button>{typeof albumView==="number"&&<button onClick={removeFromCurrentAlbum}>从当前相册移除</button>}</div>}
-      <div className={`photo-library-grid ${selecting?"selecting":""}`}>{shownPhotos.map((photo)=><div className={`library-photo ${selectedPhotoIds.includes(photo.id)?"selected":""}`} key={photo.id}>{selecting?<button type="button" className="library-photo-select" aria-label={selectedPhotoIds.includes(photo.id)?"取消选择照片":"选择照片"} onClick={()=>togglePhoto(photo.id)}><ProtectedPhoto photo={photo}/><i>{selectedPhotoIds.includes(photo.id)?"✓":""}</i></button>:<ProtectedPhoto photo={photo}/>} {!selecting&&photo.uploader_email.toLowerCase()===member.email.toLowerCase()&&<button className="library-photo-delete" onClick={()=>removePhoto(photo)} aria-label="删除照片">×</button>}<small>{displayName(photo.uploader_email,members)}</small></div>)}</div>
+      <div className={`photo-library-grid ${selecting?"selecting":""}`}>{shownPhotos.map((photo)=><div className={`library-photo ${selectedPhotoIds.includes(photo.id)?"selected":""}`} key={photo.id}>{selecting?<button type="button" className="library-photo-select" aria-label={selectedPhotoIds.includes(photo.id)?"取消选择照片":"选择照片"} onClick={()=>togglePhoto(photo.id)}><ProtectedPhoto photo={photo}/><i>{selectedPhotoIds.includes(photo.id)?"✓":""}</i></button>:<ProtectedPhoto photo={photo}/>} {!selecting&&canManagePhoto(photo,member.email)&&<button className="library-photo-delete" onClick={()=>removePhoto(photo)} aria-label="删除照片">×</button>}<small>{displayName(photo.uploader_email,members)}</small></div>)}</div>
       {loadingPhotos&&!shownPhotos.length?<div className="media-empty media-loading-state"><span className="media-spinner"/><h3>正在读取相册</h3></div>:!shownPhotos.length&&<div className="media-empty"><h3>{albumView==="unorganized"?"没有未整理照片":"还没有照片"}</h3><p>{albumView==="unorganized"?"动态、日历和未指定相册上传的照片会出现在这里。":"上传照片，或从未整理中把照片放入这个相册。"}</p></div>}
       {albumView==="all"&&hasMorePhotos&&<button className="moment-load-more" disabled={loadingPhotos} onClick={()=>void load(photos.length,true)}>{loadingPhotos?"正在加载…":"加载更多照片"}</button>}
     </div>

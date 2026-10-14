@@ -170,7 +170,7 @@ async function deletePhoto(request, env, user, id) {
   );
   if (!deleted.ok) return json(request, { error: "删除失败" }, 400);
   const rows = await deleted.json();
-  if (!rows.length) return json(request, { error: "只能删除自己上传的照片" }, 403);
+  if (!rows.length) return json(request, { error: "没有权限删除这张照片" }, 403);
   await env.PHOTOS.delete(rows[0].object_key);
   await env.PHOTOS.delete(`${rows[0].object_key}.display.webp`);
   return json(request, { success: true });
