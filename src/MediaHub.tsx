@@ -9,7 +9,7 @@ type Member = { email: string; display_name: string; color: string };
 type Photo = { id: string; group_key: GroupKey; uploader_email: string; event_id: number | null; file_name: string; created_at: string };
 type Album = { id: number; name: string; group_key: GroupKey; owner_email: string; cover_photo_id: string | null; created_at: string };
 type Moment = { id: number; group_key: GroupKey; author_email: string; caption: string; event_id: number | null; source_event_mood_id: number | null; source_event_photo_id: string | null; created_at: string };
-type MomentPhoto = { moment_id: number; photo_id: string; position: number };
+type MomentPhoto = { moment_id: number; photo_id: string; position: number; uploaded_from_moment: boolean };
 type Like = { moment_id: number; user_id: string; user_email: string; created_at?: string; read_at?: string | null };
 type Comment = { id: number; moment_id: number; author_user_id: string; author_email: string; body: string; created_at: string; reply_to_comment_id: number | null; reply_to_event_mood_id: number | null; reply_to_user_id: string | null; reply_to_email: string | null; reply_read_at: string | null };
 type EventMood = { id: number; event_id: number; author_user_id: string; author_email: string; body: string; created_at: string };
@@ -362,7 +362,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     if (!ids.length) return;
     const eventIds = pageMoments.map((item)=>item.event_id).filter((id):id is number=>id!==null);
     const [linkResult, previewResult, statsResult, moodResult] = await Promise.all([
-      supabase.from("shared_calendar_moment_photos").select("moment_id,photo_id,position").in("moment_id", ids),
+      supabase.from("shared_calendar_moment_photos").select("moment_id,photo_id,position,uploaded_from_moment").in("moment_id", ids),
       supabase.rpc("get_shared_calendar_moment_comment_preview", { p_moment_ids: ids, p_limit: 3 }),
       supabase.rpc("get_shared_calendar_moment_stats", { p_moment_ids: ids }),
       eventIds.length ? supabase.from("shared_calendar_event_moods").select("id,event_id,author_user_id,author_email,body,created_at").in("event_id", eventIds).order("created_at") : Promise.resolve({data:[],error:null}),
@@ -472,10 +472,10 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
       const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: null }).select().single();
       if (error) throw error;
       if (uploaded.length) {
-        const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert(uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position })));
+        const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert(uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position, uploaded_from_moment: true })));
         if (linkError) throw linkError;
       }
-      const newLinks = uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position }));
+      const newLinks = uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position, uploaded_from_moment: true }));
       setMoments((current) => [data as Moment, ...current]); setPhotos((current) => [...uploaded, ...current]); setLinks((current) => [...current, ...newLinks]);
       setCaption(""); setFiles([]); setComposer(false); uploadedDraftPhotos.current.clear(); setUploadFailures([]);
     } catch (error) { setMessage(error instanceof Error ? error.message : "发布失败"); }
@@ -522,13 +522,32 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   }
   async function deleteMoment(momentId: number) {
     const target = moments.find((item) => item.id === momentId);
-    if (!target?.event_id && !window.confirm("确定删除这条动态吗？照片仍会保留在相册中。")) return;
+    const uploadedPhotoLinks = links.filter((item) => item.moment_id === momentId && item.uploaded_from_moment);
+    if (!target?.event_id && !window.confirm("确定删除这条动态吗？")) return;
+    const shouldDeleteUploadedPhotos = !target?.event_id && uploadedPhotoLinks.length > 0
+      ? window.confirm(`这条动态有 ${uploadedPhotoLinks.length} 张从动态入口上传的照片。是否同时从相册永久删除？\n\n选择“取消”只删除动态，照片会保留在相册中。`)
+      : false;
     const { error } = await supabase.from("shared_calendar_moments").delete().eq("id", momentId);
     if (error) { setMessage("动态删除失败"); return; }
     setMoments((current) => current.filter((item) => item.id !== momentId));
     setLinks((current) => current.filter((item) => item.moment_id !== momentId));
     setLikes((current) => current.filter((item) => item.moment_id !== momentId));
     setComments((current) => current.filter((item) => item.moment_id !== momentId));
+    if (shouldDeleteUploadedPhotos) {
+      const accessToken = await token();
+      const results = await Promise.all(uploadedPhotoLinks.map(async ({ photo_id }) => {
+        const response = await fetch(`${MEDIA_API}/photos/${photo_id}`, { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } });
+        return { photoId: photo_id, ok: response.ok };
+      }));
+      const deletedIds = results.filter((item) => item.ok).map((item) => item.photoId);
+      deletedIds.forEach((photoId) => {
+        const cachedUrl = photoUrlCache.get(photoId);
+        if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+        photoUrlCache.delete(photoId);
+      });
+      setPhotos((current) => current.filter((photo) => !deletedIds.includes(photo.id)));
+      if (deletedIds.length !== uploadedPhotoLinks.length) setMessage("动态已删除，但有照片未能从相册删除，请稍后在相册中重试");
+    }
   }
   async function saveMomentCaption(momentId: number) {
     const { data, error } = await supabase.from("shared_calendar_moments").update({ caption: editingCaption.trim() }).eq("id", momentId).eq("author_email", member.email).select("id,caption").single();
