@@ -6634,3 +6634,267 @@ body .admin-sheet label {
   .module-loading > span,
   .media-spinner { animation: none; }
 }
+
+/* Moments: compact, photo-led social feed */
+.moments-page .moment-page-intro {
+  margin: 3px 0 0;
+  color: #82796c;
+  font-size: 11px;
+}
+
+.moments-page .moment-feed {
+  width: min(100%, 680px);
+  max-width: 680px;
+  margin: 18px auto 0;
+}
+
+.moments-page .moment-post {
+  margin: 0;
+  padding: 22px 0 24px;
+  border: 0;
+  border-bottom: 1px solid rgba(102, 91, 69, .72);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.moments-page .moment-post:last-child { border-bottom: 0; }
+.moments-page .moment-post > header { gap: 10px; }
+.moments-page .moment-avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  font-size: 15px;
+}
+.moments-page .moment-post > header strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.moments-page .moment-post > header small {
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.3;
+}
+.moments-page .moment-menu > button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 13px;
+}
+.moments-page .moment-caption {
+  margin: 13px 0 11px;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.moments-page .moment-photo-grid {
+  gap: 5px;
+  width: min(100%, 560px);
+  margin: 0 0 11px;
+}
+.moments-page .moment-photo-grid.count-1 { grid-template-columns: minmax(0, 400px); }
+.moments-page .moment-photo-grid.count-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.moments-page .moment-photo-grid.count-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.moments-page .moment-photo-grid.count-1 .moment-photo {
+  min-height: 210px;
+  max-height: 520px;
+  aspect-ratio: auto;
+}
+.moments-page .moment-photo-grid.count-1 .moment-photo img {
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  background: #e9e0d2;
+}
+.moments-page .moment-photo-grid.count-2 .moment-photo,
+.moments-page .moment-photo-grid.count-3 .moment-photo { border-radius: 7px; }
+
+.moments-page .moment-actions {
+  gap: 5px;
+  margin-top: 8px;
+}
+.moments-page .moment-actions .moment-action-button,
+.moments-page .moment-actions .moment-like-count {
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #eee6d8;
+  color: #675f52 !important;
+  font-size: 10px;
+  font-weight: 600;
+}
+.moments-page .moment-actions .moment-action-button:hover,
+.moments-page .moment-actions .moment-like-count:hover { background: #e4dac9; }
+.moments-page .moment-actions .moment-action-button.liked {
+  background: #eadbd7;
+  color: #9d605d !important;
+}
+.moments-page .moment-like-names {
+  margin: 8px 0 0;
+  padding: 7px 9px;
+  border-radius: 8px 8px 3px 3px;
+  background: #f0e8db;
+  font-size: 10px;
+}
+.moments-page .moment-comments {
+  margin-top: 8px;
+  padding: 9px 10px 10px;
+  border-radius: 10px;
+  background: #f3ecdf;
+}
+.moments-page .moment-comments:has(> p:first-child) { padding-top: 8px; }
+.moments-page .moment-comments > p {
+  margin: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(216, 205, 185, .62);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.moments-page .moment-comments > p:last-of-type { border-bottom: 0; }
+.moments-page .moment-comments .moment-comments-toggle {
+  margin: 0 0 4px;
+  color: #716854;
+}
+.moments-page .moment-comments > div:last-child {
+  grid-template-columns: minmax(0, 1fr) 56px;
+  gap: 6px;
+  margin-top: 7px;
+}
+.moments-page .moment-comments > div:last-child > input,
+.moments-page .moment-comments .moment-comment-send {
+  height: 34px !important;
+  min-height: 34px !important;
+}
+.moments-page .moment-comments > div:last-child > input {
+  border-color: #d8cdb9;
+  background: #fffaf2;
+}
+.moments-page .moment-comments .moment-comment-send {
+  min-width: 56px;
+  padding: 0 11px;
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.moment-composer-overlay {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(47, 41, 33, .42);
+  backdrop-filter: blur(3px);
+}
+.moments-page .moment-composer-dialog {
+  width: min(100%, 520px);
+  max-height: min(720px, calc(100dvh - 48px));
+  margin: 0;
+  padding: 20px;
+  overflow-y: auto;
+  border: 1px solid #d6cab6;
+  border-radius: 18px;
+  background: #fffaf2;
+  box-shadow: 0 22px 70px rgba(45, 37, 26, .24);
+}
+.moments-page .moment-composer-dialog .media-composer-head { align-items: flex-start; }
+.moments-page .moment-composer-dialog .media-composer-head h3 {
+  margin: 3px 0 1px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.moments-page .moment-composer-dialog .media-composer-head small {
+  color: #81786a;
+  font-size: 10px;
+}
+.moments-page .moment-composer-dialog .media-composer-head > button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 20px;
+}
+.moments-page .moment-composer-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+.moments-page .moment-composer-dialog textarea {
+  min-height: 108px;
+  margin: 12px 0 0;
+  padding: 11px;
+  border-color: #d8cdb9;
+  background: #fffdf8;
+  resize: vertical;
+}
+.moments-page .moment-file-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 0 12px;
+  border: 1px dashed #cabca5;
+  border-radius: 10px;
+  background: #faf5ec;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 600;
+}
+.moments-page .moment-file-picker span {
+  color: #8a8173;
+  font-size: 9px;
+  font-weight: 400;
+}
+.moments-page .moment-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 14px;
+}
+.moments-page .moment-composer-actions > button {
+  min-width: 78px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid #d8cdb9;
+  border-radius: 9px;
+  background: #f6efe4;
+  color: var(--ink);
+  font-size: 10px;
+}
+.moments-page .moment-composer-actions > .primary {
+  border-color: var(--deep);
+  background: var(--deep);
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .moments-page .media-page-head { padding-bottom: 4px; }
+  .moments-page .moment-page-intro { font-size: 10px; }
+  .moments-page .moment-feed { margin-top: 12px; }
+  .moments-page .moment-post { padding: 18px 0 20px; }
+  .moments-page .moment-caption { margin-top: 11px; font-size: 13px; }
+  .moments-page .moment-photo-grid { width: 100%; }
+  .moments-page .moment-photo-grid.count-1 { grid-template-columns: minmax(0, min(82vw, 390px)); }
+  .moments-page .moment-photo-grid.count-1 .moment-photo { min-height: 180px; }
+  .moments-page .moment-comments { padding: 8px; }
+  .moment-composer-overlay { align-items: end; padding: 0; }
+  .moments-page .moment-composer-dialog {
+    width: 100%;
+    max-height: 88dvh;
+    padding: 18px 16px max(18px, env(safe-area-inset-bottom));
+    border-width: 1px 0 0;
+    border-radius: 18px 18px 0 0;
+  }
+}
