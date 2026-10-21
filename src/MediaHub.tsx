@@ -724,7 +724,7 @@ export function AlbumsPage({ user, member, members }: { user: User; member: Memb
         <div className="album-portfolio-actions">{showGroupConcept&&<GroupSelect value={group} onChange={(value)=>{setGroup(value);changeView("all")}} email={member.email}/>}<button className={collectionManaging?"active":""} type="button" onClick={()=>setCollectionManaging((value)=>!value)}>{collectionManaging?"完成":"管理"}</button></div>
       </header>
       {!libraryMode&&<>
-        <div className="album-portfolio-hero"><div><p className="eyebrow">PHOTO COLLECTIONS</p><h2>我们的照片集——<br/>一起经历的日常与远方</h2><p>每个相册是一段共同记忆。浏览时只留下照片和故事；需要整理时，再进入管理模式。</p></div><small>照片来自相册、日历活动和动态。<br/>所有照片仍遵守原有查看权限与关联规则。</small></div>
+        <div className="album-portfolio-hero"><div><p className="eyebrow">PHOTO COLLECTIONS</p><h2>我们的相册</h2></div></div>
         <div className="album-portfolio-title"><b>ALL COLLECTIONS</b><button type="button" onClick={()=>changeView("library")}>查看全部照片 · {groupPhotos.length}</button></div>
         {collectionManaging&&<div className="album-portfolio-manage"><span>管理模式：创建相册、上传照片，或进入相册继续整理。</span><div><button type="button" onClick={()=>{setNewAlbum("");setCreateOpen(true)}}>＋ 创建相册</button><button className="primary" type="button" onClick={openUpload}>＋ 上传照片</button></div></div>}
         {message&&<p className="media-error">{message}</p>}

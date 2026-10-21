@@ -2077,23 +2077,19 @@ select option {
 .album-portfolio-actions .themed-dropdown > button { min-height: 32px; height: 32px; border-radius: 999px; font-size: 10px; }
 
 .album-portfolio-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  align-items: end;
-  gap: 42px;
-  min-height: 270px;
-  padding: 54px 24px 42px;
+  display: flex;
+  align-items: flex-end;
+  min-height: 190px;
+  padding: 50px 24px 34px;
 }
 .album-portfolio-hero h2 {
-  margin: 10px 0 15px;
+  margin: 10px 0 0;
   font-family: Georgia, "Songti SC", serif;
-  font-size: clamp(34px, 4.2vw, 58px);
+  font-size: clamp(34px, 3.6vw, 50px);
   font-weight: 500;
-  line-height: 1.02;
-  letter-spacing: -.04em;
+  line-height: 1.08;
+  letter-spacing: -.03em;
 }
-.album-portfolio-hero p:not(.eyebrow) { max-width: 500px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.75; }
-.album-portfolio-hero > small { color: var(--muted); font-size: 9px; line-height: 1.75; text-align: right; }
 
 .album-portfolio-title {
   display: flex;
@@ -2173,7 +2169,19 @@ select option {
   object-fit: cover !important;
 }
 .album-cover-art em { color: var(--muted); font-size: 10px; font-style: normal; }
-.album-card-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.albums-page .album-folder.album-portfolio-card > .album-card-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  aspect-ratio: auto;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
 .albums-page .album-folder.album-portfolio-card .album-card-meta b { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 13px; }
 .albums-page .album-folder.album-portfolio-card .album-card-meta small { margin: 0; font-size: 8px; letter-spacing: .04em; white-space: nowrap; }
 .albums-page .album-folder.album-portfolio-card > small { margin: 3px 0 0; font-size: 8px; }
@@ -2246,9 +2254,8 @@ select option {
   .album-portfolio-nav { grid-template-columns: 1fr auto; min-height: 58px; padding: 0 14px; }
   .album-portfolio-tabs { display: none; }
   .album-portfolio-actions .themed-dropdown { max-width: 112px; }
-  .album-portfolio-hero { grid-template-columns: 1fr; min-height: 215px; padding: 40px 14px 32px; }
-  .album-portfolio-hero > small { display: none; }
-  .album-portfolio-hero h2 { font-size: clamp(31px, 9vw, 44px); }
+  .album-portfolio-hero { min-height: 150px; padding: 34px 14px 28px; }
+  .album-portfolio-hero h2 { font-size: clamp(30px, 8vw, 40px); }
   .album-portfolio-title { margin: 0 14px 14px; }
   .album-portfolio-manage { align-items: flex-start; flex-direction: column; margin: 0 14px 14px; }
   .album-portfolio-manage > div { width: 100%; }
