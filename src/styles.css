@@ -7327,3 +7327,49 @@ body .admin-sheet label {
   }
 }
 
+/* Final album mat contract: every photo stays complete, centered and uncropped. */
+.albums-page .album-exhibition-grid .library-photo-open,
+.albums-page .album-exhibition-grid .library-photo-select {
+  --album-photo-inset: 16px;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 1 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #f3ede4;
+}
+
+.albums-page .album-exhibition-grid .album-photo-mat {
+  position: absolute;
+  inset: var(--album-photo-inset);
+  display: grid;
+  place-items: center;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.albums-page .album-exhibition-grid .album-photo-mat img {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: auto !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+@media (max-width: 700px) {
+  .albums-page .album-exhibition-grid .library-photo-open,
+  .albums-page .album-exhibition-grid .library-photo-select {
+    --album-photo-inset: 10px;
+  }
+}
+
