@@ -4361,13 +4361,6 @@ export default function Home() {
               </button>
             </div>
             <strong>{label}</strong>
-            <button
-              type="button"
-              className="calendar-today"
-              onClick={() => setCursor(new Date())}
-            >
-              今天
-            </button>
             <div className="toolbar-right">
               <div
                 className="member-filter"
