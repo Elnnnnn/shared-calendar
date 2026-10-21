@@ -2737,6 +2737,21 @@ export default function Home() {
         : wishRegion === "all" || wish.region === wishRegion) &&
       (wishStatus === "all" || wish.status === wishStatus),
   );
+  const wishStatusOrder: Record<WishStatus, number> = {
+    wish: 0,
+    planning: 1,
+    done: 2,
+  };
+  const sortedVisibleWishes = [...visibleWishes].sort((a, b) => {
+    const statusDifference = wishStatusOrder[a.status] - wishStatusOrder[b.status];
+    if (statusDifference) return statusDifference;
+    const aMine = a.ownerUserId === user.id;
+    const bMine = b.ownerUserId === user.id;
+    if (aMine !== bMine) return aMine ? -1 : 1;
+    const aOwner = members.find((item) => item.email.toLowerCase() === a.owner.toLowerCase())?.display_name || a.owner;
+    const bOwner = members.find((item) => item.email.toLowerCase() === b.owner.toLowerCase())?.display_name || b.owner;
+    return aOwner.localeCompare(bOwner, "zh-CN") || a.title.localeCompare(b.title, "zh-CN");
+  });
   const luckyImportFilters =
     luckyCategory === "watch"
       ? WATCH_TYPES.map((item) => ({ value: item.value, label: item.label }))
@@ -3817,7 +3832,7 @@ export default function Home() {
         </div>
       </div>
       <div className="wish-list">
-        {visibleWishes.map((wish) => {
+        {sortedVisibleWishes.map((wish) => {
           const category = WISH_CATEGORIES.find(
             (item) => item.value === wish.category,
           )!;
@@ -3827,7 +3842,7 @@ export default function Home() {
           const media = WATCH_TYPES.find(
             (item) => item.value === wish.mediaType,
           );
-          const owner = members.find((item) => item.email === wish.owner);
+          const owner = members.find((item) => item.email.toLowerCase() === wish.owner.toLowerCase());
           const isOwner = wish.ownerUserId === user.id;
           const joined = wish.participants.includes(member.email);
           return (
@@ -3846,9 +3861,7 @@ export default function Home() {
               <div className="wish-copy">
                 <h3>{wish.title}</h3>
                 <p>
-                  {isOwner
-                    ? "你创建"
-                    : `${owner?.display_name || wish.owner} 添加`}
+                  {`创建：${owner?.display_name || wish.owner}`}
                   {wish.category === "watch"
                     ? ` · ${[media?.label, wish.place, wish.releaseDate ? `上映 ${wish.releaseDate}` : "", wish.plannedWatchDate ? `计划 ${wish.plannedWatchDate}` : ""].filter(Boolean).join(" · ")}`
                     : ` · ${wish.region}${wish.place ? ` · ${wish.place}` : ""}`}
@@ -3871,7 +3884,6 @@ export default function Home() {
                     {wish.participants.length} 人
                     {wish.category === "watch" ? "想看" : "想去"}
                   </span>
-                  {isOwner && <span>点击整行编辑</span>}
                 </div>
               </div>
               <div
