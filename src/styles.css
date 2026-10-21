@@ -7414,6 +7414,10 @@ body .admin-sheet label {
 .moments-page .moment-page-intro { margin-top: 8px; font-size: 12px; }
 .moments-page .moment-welcome .media-head-actions { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; }
 .moments-page .moment-welcome .moment-create-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   width: auto;
   min-width: 104px;
   height: 40px !important;
@@ -7671,8 +7675,9 @@ body .admin-sheet label {
   .moments-page .moment-welcome .moment-page-intro { font-size: 10px; }
   .moments-page .moment-welcome .media-head-actions { display: flex; flex-direction: row; flex-wrap: nowrap; width: auto; margin-top: 0; }
   .moments-page .moment-welcome .themed-dropdown { display: none; }
-  .moments-page .moment-welcome .moment-create-button { width: 40px; min-width: 40px; height: 40px !important; padding: 0; overflow: hidden; color: transparent; font-size: 0 !important; }
-  .moments-page .moment-welcome .moment-create-button::before { content: "+"; color: #fff; font-size: 20px; }
+  .moments-page .moment-welcome .moment-create-button { width: 40px; min-width: 40px; height: 40px !important; padding: 0; overflow: hidden; }
+  .moments-page .moment-welcome .moment-create-button > span:first-child { font-size: 20px; }
+  .moments-page .moment-welcome .moment-create-label { display: none; }
   .moments-page .moment-dashboard { display: block; width: 100%; }
   .moments-page .moment-left-rail,
   .moments-page .moment-right-rail { display: none; }

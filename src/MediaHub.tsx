@@ -615,7 +615,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           </button>
           {notificationsOpen&&<div className="moment-notifications"><header><b>通知</b><button type="button" aria-label="关闭通知" onClick={()=>setNotificationsOpen(false)}>×</button></header>{notifications.map((item)=><button key={item.key} onClick={()=>void openNotification(item.momentId)}><span className={item.unread?"unread":""}/><b>{displayName(item.actorEmail,members)}</b>{item.kind==="like"?"赞了你的动态":"回复了你"}</button>)}{!notifications.length&&<p>暂时没有通知</p>}</div>}
         </div>
-        <button className="primary moment-create-button" onClick={() => setComposer(true)}>＋ 发布动态</button>
+        <button className="primary moment-create-button" aria-label="发布动态" onClick={() => setComposer(true)}><span aria-hidden="true">＋</span><span className="moment-create-label">发布动态</span></button>
       </div>
     </header>
 
