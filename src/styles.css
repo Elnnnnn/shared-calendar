@@ -2143,7 +2143,9 @@ select option {
   display: grid;
   place-items: center;
   width: 100%;
-  aspect-ratio: 1.12 / 1;
+  aspect-ratio: 1;
+  padding: clamp(20px, 3vw, 42px);
+  box-sizing: border-box;
   overflow: hidden;
   border: 1px solid rgba(207, 194, 174, .44);
   border-radius: 0;
@@ -2152,21 +2154,18 @@ select option {
 .album-cover-art {
   display: grid;
   place-items: center;
-  width: 52%;
-  height: 70%;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  background: #e8dfd1;
-  box-shadow: 0 12px 25px rgba(57, 50, 40, .13);
+  background: transparent;
   font-style: normal;
 }
-.album-portfolio-card:nth-child(4n + 2) .album-cover-art { width: 70%; height: 46%; }
-.album-portfolio-card:nth-child(4n + 3) .album-cover-art { width: 60%; height: 60%; }
-.album-portfolio-card:nth-child(4n + 4) .album-cover-art { width: 42%; height: 72%; }
 .album-cover-art img {
   display: block;
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important;
+  object-fit: contain !important;
+  object-position: center !important;
 }
 .album-cover-art em { color: var(--muted); font-size: 10px; font-style: normal; }
 .albums-page .album-folder.album-portfolio-card > .album-card-meta {
@@ -2191,8 +2190,8 @@ select option {
 .album-unorganized-section h3 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 22px; font-weight: 500; }
 .album-unorganized-preview { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .album-unorganized-preview > button { aspect-ratio: 1; padding: 16px; border: 0; background: #f2ebe0; }
-.album-unorganized-preview > button > span { display: block; width: 100%; height: 100%; overflow: hidden; }
-.album-unorganized-preview img { width: 100%; height: 100%; object-fit: cover; }
+.album-unorganized-preview > button > span { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; }
+.album-unorganized-preview img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .album-portfolio-empty { color: var(--muted); font-size: 10px; }
 
 .album-library-view { padding: 34px 24px 0; }
@@ -2216,7 +2215,7 @@ select option {
 .album-exhibition-grid .library-photo-open,
 .album-exhibition-grid .library-photo-select { aspect-ratio: 1.08 / 1; padding: 16px; background: #f3ede4; }
 .album-photo-mat { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; }
-.album-photo-mat img { width: 100%; height: 100%; object-fit: contain; }
+.album-photo-mat img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .albums-page .album-exhibition-grid .library-photo > small { position: static; display: block; margin-top: 6px; padding: 0; background: transparent; color: var(--muted); font-size: 8px; text-transform: uppercase; }
 
 .album-detail-mode { min-height: 72vh; background: var(--album-night); color: #f7f2e8; }
@@ -2261,7 +2260,7 @@ select option {
   .album-portfolio-manage > div { width: 100%; }
   .album-portfolio-manage button { flex: 1; }
   .albums-page .album-list.album-portfolio-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 8px; padding: 0 14px; }
-  .albums-page .album-folder.album-portfolio-card > .album-folder-canvas { aspect-ratio: 1 / 1.08; }
+  .albums-page .album-folder.album-portfolio-card > .album-folder-canvas { aspect-ratio: 1; padding: 12px; }
   .album-card-meta { gap: 5px; }
   .albums-page .album-folder.album-portfolio-card .album-card-meta b { font-size: 11px; }
   .album-unorganized-section { margin: 58px 14px 0; }
