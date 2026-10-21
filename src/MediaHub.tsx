@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 
 const MEDIA_API = "https://shared-calendar-media.elaine-shared-calendar.workers.dev";
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
+const TEST_EMAIL = "test@test.com";
 type GroupKey = "besties" | "friends" | "both";
 type Member = { email: string; display_name: string; color: string };
 type Photo = { id: string; group_key: GroupKey; uploader_email: string; event_id: number | null; file_name: string; created_at: string };
@@ -22,7 +23,7 @@ const momentsFeedCache = new Map<string, { moments: Moment[]; savedAt: number }>
 
 function groupLabel(group: GroupKey) { return group === "besties" ? "闺蜜组" : group === "friends" ? "朋友组" : "两个组"; }
 function allowedGroups(email: string): GroupKey[] {
-  return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === "test@test.com" ? ["friends"] : ["besties"];
+  return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === TEST_EMAIL ? ["friends"] : ["besties"];
 }
 function displayName(email: string, members: Member[]) { return members.find((m) => m.email.toLowerCase() === email.toLowerCase())?.display_name || email.split("@")[0]; }
 function canManagePhoto(photo: Photo, email: string) {
@@ -185,13 +186,15 @@ function GroupSelect({ value, onChange, email, options }: { value: GroupKey; onC
 }
 
 export function EventMediaPanel({ event, user, member, members }: { event: CalendarEvent; user: User; member: Member; members: Member[] }) {
-  const groups: GroupKey[] = event.audienceGroup === "besties"
-    ? ["besties"]
-    : event.audienceGroup === "friends"
-      ? ["friends"]
-      : member.email.toLowerCase() === ELAINE_EMAIL
-        ? ["besties", "friends", "both"]
-        : allowedGroups(member.email);
+  const accountGroups = allowedGroups(member.email);
+  const groups: GroupKey[] = accountGroups.length < 2
+    ? accountGroups
+    : event.audienceGroup === "besties"
+      ? ["besties"]
+      : event.audienceGroup === "friends"
+        ? ["friends"]
+        : ["besties", "friends", "both"];
+  const showGroupConcept = accountGroups.length > 1;
   const [group, setGroup] = useState<GroupKey>(groups[0]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [eventLinks, setEventLinks] = useState<EventPhotoLink[]>([]);
@@ -303,7 +306,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     setGroup(nextGroups.length === 2 ? "both" : nextGroups[0] as GroupKey);
   }
   return <section className="event-media-panel">
-    <div className="event-media-heading"><div><h3>活动照片</h3><p>{eventPhoto ? "1 张照片" : "为这次活动留下一张照片"}</p></div>{groups.length === 1 ? <span className="media-group-label">{groupLabel(groups[0])}</span> : <div className="event-group-picker"><button type="button" aria-expanded={groupMenuOpen} onClick={()=>setGroupMenuOpen((open)=>!open)}>分组 <small>{selectedGroups.length} 个</small><span>⌄</span></button>{groupMenuOpen&&<div className="event-group-menu"><label><input type="checkbox" checked={selectedGroups.includes("besties")} onChange={()=>toggleGroup("besties")}/><span>闺蜜组</span></label><label><input type="checkbox" checked={selectedGroups.includes("friends")} onChange={()=>toggleGroup("friends")}/><span>朋友组</span></label></div>}</div>}</div>
+    <div className="event-media-heading"><div><h3>活动照片</h3><p>{eventPhoto ? "1 张照片" : "为这次活动留下一张照片"}</p></div>{showGroupConcept && (groups.length === 1 ? <span className="media-group-label">{groupLabel(groups[0])}</span> : <div className="event-group-picker"><button type="button" aria-expanded={groupMenuOpen} onClick={()=>setGroupMenuOpen((open)=>!open)}>分组 <small>{selectedGroups.length} 个</small><span>⌄</span></button>{groupMenuOpen&&<div className="event-group-menu"><label><input type="checkbox" checked={selectedGroups.includes("besties")} onChange={()=>toggleGroup("besties")}/><span>闺蜜组</span></label><label><input type="checkbox" checked={selectedGroups.includes("friends")} onChange={()=>toggleGroup("friends")}/><span>朋友组</span></label></div>}</div>)}</div>
     {eventPhoto && <div className="event-cover"><ProtectedPhoto photo={eventPhoto} alt={`${event.title} 封面`}/><button onClick={remove} aria-label="移除活动照片" title="保存后从活动移除，原图仍保留在相册">×</button></div>}
     {!eventPhoto && <div className="event-photo-actions"><label className="media-file-picker">＋ 从设备上传<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{uploadingPhoto?"正在上传…":"选择照片"}</span></label><button type="button" className="event-library-picker" onClick={()=>void openLibrary()}><span>＋ 从相册上传</span><b>选择照片</b></button></div>}
     {libraryOpen && <div className="photo-picker"><div className="photo-picker-head"><b>选择已有照片</b><button onClick={()=>setLibraryOpen(false)}>×</button></div><div className="photo-library-grid">{libraryPhotos.map((photo)=><button key={photo.id} onClick={()=>chooseExisting(photo)} disabled={busy}><ProtectedPhoto photo={photo}/></button>)}</div>{libraryLoading?<p>正在读取照片…</p>:!libraryPhotos.length&&<p>这个组的相册里还没有可选照片</p>}</div>}
@@ -726,3 +729,4 @@ export function AlbumsPage({ user, member, members }: { user: User; member: Memb
     {preview&&<div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="相册照片预览" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreview(null)}} onTouchStart={(event)=>{previewTouchStart.current=event.touches[0]?.clientX??null}} onTouchEnd={(event)=>{if(previewTouchStart.current===null)return;const delta=(event.changedTouches[0]?.clientX??previewTouchStart.current)-previewTouchStart.current;if(Math.abs(delta)>40)setPreview((current)=>current?{...current,index:Math.max(0,Math.min(current.photos.length-1,current.index+(delta<0?1:-1)))}:null);previewTouchStart.current=null}}><button type="button" className="moment-photo-preview-close" aria-label="关闭照片预览" onClick={()=>setPreview(null)}>×</button>{preview.photos.length>1&&<button className="moment-preview-nav previous" disabled={preview.index===0} onClick={()=>setPreview({...preview,index:preview.index-1})}>‹</button>}<ProtectedPhoto photo={preview.photos[preview.index]} alt="相册照片预览"/>{preview.photos.length>1&&<><span className="moment-preview-count">{preview.index+1} / {preview.photos.length}</span><button className="moment-preview-nav next" disabled={preview.index===preview.photos.length-1} onClick={()=>setPreview({...preview,index:preview.index+1})}>›</button></>}</div>}
   </section>;
 }
+
