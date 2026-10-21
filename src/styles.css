@@ -2213,9 +2213,23 @@ select option {
   background: transparent;
 }
 .album-exhibition-grid .library-photo-open,
-.album-exhibition-grid .library-photo-select { aspect-ratio: 1.08 / 1; padding: 16px; background: #f3ede4; }
+.album-exhibition-grid .library-photo-select {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 1;
+  padding: 16px;
+  overflow: hidden;
+  background: #f3ede4;
+}
 .album-photo-mat { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; }
-.album-photo-mat img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.albums-page .album-exhibition-grid .album-photo-mat img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
 .albums-page .album-exhibition-grid .library-photo > small { position: static; display: block; margin-top: 6px; padding: 0; background: transparent; color: var(--muted); font-size: 8px; text-transform: uppercase; }
 
 .album-detail-mode { min-height: 72vh; background: var(--album-night); color: #f7f2e8; }
