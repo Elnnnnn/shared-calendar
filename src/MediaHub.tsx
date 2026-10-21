@@ -360,6 +360,8 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const previewTouchStart = useRef<number | null>(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [feedError, setFeedError] = useState("");
+  const [momentFilter, setMomentFilter] = useState<"all" | "photos" | "text">("all");
+  const [authorFilter, setAuthorFilter] = useState("");
 
   async function hydrateMoments(pageMoments: Moment[], replace: boolean, requestId?: number) {
     const ids = pageMoments.map((item) => item.id);
@@ -589,12 +591,23 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const commentsByMoment = useMemo(() => { const map = new Map<number, Comment[]>(); comments.forEach((comment) => map.set(comment.moment_id, [...(map.get(comment.moment_id) || []), comment])); return map; }, [comments]);
   const moodsByEvent = useMemo(() => { const map = new Map<number, EventMood[]>(); eventMoods.forEach((mood) => map.set(mood.event_id, [...(map.get(mood.event_id) || []), mood])); return map; }, [eventMoods]);
   const visible = useMemo(() => moments.filter((moment) => moment.group_key === group || moment.group_key === "both"), [moments, group]);
+  const filteredVisible = useMemo(() => visible.filter((moment) => {
+    if (authorFilter && moment.author_email.toLowerCase() !== authorFilter.toLowerCase()) return false;
+    const hasPhotos = (linksByMoment.get(moment.id) || []).length > 0;
+    if (momentFilter === "photos") return hasPhotos;
+    if (momentFilter === "text") return !hasPhotos;
+    return true;
+  }), [visible, authorFilter, momentFilter, linksByMoment]);
+  const activeMomentAuthors = useMemo(() => members.filter((item) => visible.some((moment) => moment.author_email.toLowerCase() === item.email.toLowerCase())), [members, visible]);
+  const visiblePhotoCount = useMemo(() => visible.reduce((total, moment) => total + (linksByMoment.get(moment.id) || []).length, 0), [visible, linksByMoment]);
+  const visibleCommentCount = useMemo(() => visible.reduce((total, moment) => total + (stats[moment.id]?.comment_count || 0), 0), [visible, stats]);
+  const featuredMoment = useMemo(() => visible.find((moment) => (linksByMoment.get(moment.id) || []).length > 0) || visible[0] || null, [visible, linksByMoment]);
   const unreadNotificationCount = notifications.filter((item) => item.unread).length;
   return <section className="media-page moments-page">
-    <header className="media-page-head">
-      <div><p className="eyebrow">MOMENTS</p><h2>动态</h2><p className="moment-page-intro">记录大家此刻的生活</p></div>
+    <header className="moment-welcome">
+      <div><p className="eyebrow">MOMENTS</p><h2>动态 <span aria-hidden="true">✦</span></h2><p className="moment-page-intro">看看大家最近分享了什么</p></div>
       <div className="media-head-actions">
-        {showGroupConcept && <GroupSelect value={group} onChange={setGroup} email={member.email}/>}
+        {showGroupConcept && <GroupSelect value={group} onChange={(value)=>{setGroup(value);setAuthorFilter("")}} email={member.email}/>}
         <div className="moment-notification-wrap">
           <button className="moment-notification-button" type="button" aria-label="查看通知" title="通知" aria-expanded={notificationsOpen} onClick={()=>{setNotificationsOpen((open)=>!open);void supabase.rpc("mark_shared_calendar_moment_notifications_read");setNotifications((current)=>current.map((item)=>({...item,unread:false})))}}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
@@ -602,13 +615,49 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           </button>
           {notificationsOpen&&<div className="moment-notifications"><header><b>通知</b><button type="button" aria-label="关闭通知" onClick={()=>setNotificationsOpen(false)}>×</button></header>{notifications.map((item)=><button key={item.key} onClick={()=>void openNotification(item.momentId)}><span className={item.unread?"unread":""}/><b>{displayName(item.actorEmail,members)}</b>{item.kind==="like"?"赞了你的动态":"回复了你"}</button>)}{!notifications.length&&<p>暂时没有通知</p>}</div>}
         </div>
-        <button className="primary moment-create-button" onClick={() => setComposer(true)}>＋ 发布</button>
+        <button className="primary moment-create-button" onClick={() => setComposer(true)}>＋ 发布动态</button>
       </div>
     </header>
-    {!!newMomentCount&&<button className="moment-new-posts" onClick={()=>void loadPage(0,true)}>有 {newMomentCount} 条新动态，点击查看</button>}
-    {composer && <div className="moment-composer-overlay" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!busy)setComposer(false)}}><section className="media-composer moment-composer-dialog" role="dialog" aria-modal="true" aria-label="发布动态"><div className="media-composer-head"><div><p className="eyebrow">NEW MOMENT</p><h3>发布动态</h3>{showGroupConcept&&<small>分享给 {groupLabel(group)}</small>}</div><button type="button" aria-label="关闭发布窗口" disabled={busy} onClick={() => setComposer(false)}>×</button></div>{showGroupConcept&&<label className="moment-composer-group">发布到<GroupSelect value={group} onChange={setGroup} email={member.email}/></label>}<textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="记录这一刻……" autoFocus/><div className="moment-draft-photos">{composerPreviews.map(({file,url},index)=><div className={uploadFailures.includes(fileKey(file))?"failed":""} key={fileKey(file)}><img src={url}/><button type="button" aria-label="移除照片" onClick={()=>setFiles((current)=>current.filter((_,i)=>i!==index))}>×</button><span>{uploadFailures.includes(fileKey(file))?"上传失败":""}</span>{index>0&&<button type="button" aria-label="照片前移" className="move previous" onClick={()=>setFiles((current)=>{const next=[...current];[next[index-1],next[index]]=[next[index],next[index-1]];return next})}>‹</button>}{index<files.length-1&&<button type="button" aria-label="照片后移" className="move next" onClick={()=>setFiles((current)=>{const next=[...current];[next[index],next[index+1]]=[next[index+1],next[index]];return next})}>›</button>}</div>)}</div><label className="media-file-picker moment-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => {setFiles(Array.from(e.target.files || []).slice(0, 3));setUploadFailures([]);uploadedDraftPhotos.current.clear()}}/><span>{files.length ? `已选择 ${files.length} / 3 张` : "最多 3 张"}</span></label>{message && <p className="media-error">{message}</p>}<div className="moment-composer-actions"><button type="button" disabled={busy} onClick={()=>setComposer(false)}>取消</button><button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : uploadFailures.length?"重试失败照片":"发布动态"}</button></div></section></div>}
-    <div className="moment-feed">
-      {visible.map((moment) => {
+
+    <div className="moment-dashboard">
+      <aside className="moment-left-rail" aria-label="动态筛选">
+        <div className="moment-rail-block">
+          <p>浏览</p>
+          <button className={momentFilter==="all"?"active":""} onClick={()=>setMomentFilter("all")}><span>⌂</span>全部动态<small>{visible.length}</small></button>
+          <button className={momentFilter==="photos"?"active":""} onClick={()=>setMomentFilter("photos")}><span>▧</span>照片动态<small>{visible.filter((item)=>(linksByMoment.get(item.id)||[]).length>0).length}</small></button>
+          <button className={momentFilter==="text"?"active":""} onClick={()=>setMomentFilter("text")}><span>≡</span>文字动态</button>
+        </div>
+        <div className="moment-rail-block moment-people-filter">
+          <p>成员</p>
+          <button className={!authorFilter?"active":""} onClick={()=>setAuthorFilter("")}><span className="moment-rail-avatar">全</span>所有人</button>
+          {activeMomentAuthors.map((item)=><button key={item.email} className={authorFilter===item.email?"active":""} onClick={()=>setAuthorFilter(item.email)}><span className={`moment-rail-avatar ${item.color}`}>{displayName(item.email,members).slice(0,1)}</span>{displayName(item.email,members)}</button>)}
+        </div>
+        <div className="moment-rail-note"><small>OUR LITTLE DAYS</small><p>普通的日子，也值得被认真记住。</p><span>✿</span></div>
+      </aside>
+
+      <main className="moment-center-column">
+        <section className="moment-stories" aria-label="按成员查看动态">
+          <header><b>最近分享</b><small>{authorFilter?`正在看 ${displayName(authorFilter,members)}`:`${activeMomentAuthors.length} 位成员`}</small></header>
+          <div>
+            <button className={!authorFilter?"active":""} onClick={()=>setAuthorFilter("")}><span className="moment-story-all">全部</span><small>全部</small></button>
+            {activeMomentAuthors.map((item)=><button key={item.email} className={authorFilter===item.email?"active":""} onClick={()=>setAuthorFilter(item.email)}><span className={`moment-avatar ${item.color}`}>{displayName(item.email,members).slice(0,1)}</span><small>{displayName(item.email,members)}</small></button>)}
+          </div>
+        </section>
+
+        <section className="moment-quick-composer">
+          <span className={`moment-avatar ${member.color}`}>{displayName(member.email,members).slice(0,1)}</span>
+          <button className="moment-quick-input" onClick={()=>setComposer(true)}>分享今天发生的小事……</button>
+          <button className="moment-quick-photo" aria-label="发布照片动态" onClick={()=>setComposer(true)}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m6 16 4-4 3 3 2-2 3 3M8.5 9h.01"/></svg></button>
+        </section>
+
+        <div className="moment-filter-row">
+          <div><button className={momentFilter==="all"?"active":""} onClick={()=>setMomentFilter("all")}>全部</button><button className={momentFilter==="photos"?"active":""} onClick={()=>setMomentFilter("photos")}>有照片</button><button className={momentFilter==="text"?"active":""} onClick={()=>setMomentFilter("text")}>只有文字</button></div>
+          {(authorFilter||momentFilter!=="all")&&<button className="moment-clear-filter" onClick={()=>{setAuthorFilter("");setMomentFilter("all")}}>清除筛选</button>}
+        </div>
+
+        {!!newMomentCount&&<button className="moment-new-posts" onClick={()=>void loadPage(0,true)}>有 {newMomentCount} 条新动态，点击查看</button>}
+        <div className="moment-feed">
+      {filteredVisible.map((moment) => {
         const momentPhotos = (linksByMoment.get(moment.id) || []).sort((a,b) => a.position-b.position).map((link) => photoById.get(link.photo_id)).filter(Boolean) as Photo[];
         const momentLikes = likesByMoment.get(moment.id) || [];
         const momentComments = commentsByMoment.get(moment.id) || [];
@@ -627,9 +676,26 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           <div className="moment-comments">{momentStats.comment_count>3&&<button className="moment-comments-toggle" onClick={()=>{if(!expandedComments.includes(moment.id))void loadAllComments(moment.id);setExpandedComments((current)=>current.includes(moment.id)?current.filter((id)=>id!==moment.id):[...current,moment.id])}}>{expandedComments.includes(moment.id)?"收起评论":`展开全部 ${momentStats.comment_count} 条评论`}</button>}{shownEntries.map(({kind,item})=><p key={`${kind}-${item.id}`}><span><b>{displayName(item.author_email,members)}</b>{kind==="comment"&&item.reply_to_email&&<> 回复 <b>@{displayName(item.reply_to_email,members)}</b></>}：{item.body}</span><span className="moment-comment-tools"><button onClick={()=>{setReplyTarget({momentId:moment.id,kind,id:item.id,email:item.author_email});document.getElementById(`moment-comment-${moment.id}`)?.focus()}}>回复</button>{item.author_user_id===user.id&&<button onClick={()=>kind==="comment"?void deleteComment(item):void deleteSyncedMood(item)}>删除</button>}</span></p>)}{replyTarget?.momentId===moment.id&&<div className="moment-replying">回复 @{displayName(replyTarget.email,members)}<button onClick={()=>setReplyTarget(null)}>×</button></div>}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder={replyTarget?.momentId===moment.id?`回复 @${displayName(replyTarget.email,members)}……`:"写评论……"} onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>void addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
-      {loadingInitial&&!visible.length?<div className="media-empty media-loading-state"><span className="media-spinner"/><h3>正在读取动态</h3><p>第一次进入也会自动重试，无需刷新页面。</p></div>:feedError&&!visible.length?<div className="media-empty"><h3>{feedError}</h3><p>网络恢复后可以直接重试。</p><button className="primary" type="button" onClick={()=>void loadPage(0,true)}>重新加载</button></div>:!visible.length&&<div className="media-empty"><h3>还没有动态</h3><p>{showGroupConcept?`在 ${groupLabel(group)} 分享第一张照片吧。`:"分享第一张照片吧。"}</p></div>}
+      {loadingInitial&&!visible.length?<div className="media-empty media-loading-state"><span className="media-spinner"/><h3>正在读取动态</h3><p>第一次进入也会自动重试，无需刷新页面。</p></div>:feedError&&!visible.length?<div className="media-empty"><h3>{feedError}</h3><p>网络恢复后可以直接重试。</p><button className="primary" type="button" onClick={()=>void loadPage(0,true)}>重新加载</button></div>:!visible.length?<div className="media-empty"><h3>还没有动态</h3><p>{showGroupConcept?`在 ${groupLabel(group)} 分享第一张照片吧。`:"分享第一张照片吧。"}</p></div>:!filteredVisible.length&&<div className="media-empty"><h3>没有符合筛选的动态</h3><p>换个成员或内容类型看看。</p><button className="primary" type="button" onClick={()=>{setAuthorFilter("");setMomentFilter("all")}}>查看全部</button></div>}
       {hasMore&&<button className="moment-load-more" disabled={loadingMore} onClick={()=>void loadPage(moments.length)}>{loadingMore?"正在加载…":"加载更多"}</button>}
+        </div>
+      </main>
+
+      <aside className="moment-right-rail">
+        <section className="moment-side-card moment-memory-card">
+          <header><b>一张回忆</b><small>从最近动态里翻到</small></header>
+          <div className="moment-memory-visual"><span>✦</span><strong>{featuredMoment?.caption||"最近还没有写下心情"}</strong></div>
+          {featuredMoment?<><p><b>{displayName(featuredMoment.author_email,members)}</b> · {new Date(featuredMoment.created_at).toLocaleDateString("zh-CN")}</p><button onClick={()=>document.getElementById(`moment-${featuredMoment.id}`)?.scrollIntoView({behavior:"smooth",block:"center"})}>回到这条动态</button></>:<p>发布第一条动态后，这里会出现一张回忆卡。</p>}
+        </section>
+        <section className="moment-side-card moment-summary-card">
+          <header><b>当前记录</b><small>{showGroupConcept?groupLabel(group):"所有动态"}</small></header>
+          <div><span><strong>{visible.length}</strong><small>动态</small></span><span><strong>{visiblePhotoCount}</strong><small>照片</small></span><span><strong>{visibleCommentCount}</strong><small>评论</small></span></div>
+        </section>
+        <section className="moment-side-card moment-together-card"><small>TOGETHER</small><p>这里的动态只属于你们。</p><div>{activeMomentAuthors.slice(0,5).map((item)=><span key={item.email} className={`moment-avatar ${item.color}`}>{displayName(item.email,members).slice(0,1)}</span>)}</div></section>
+      </aside>
     </div>
+
+    {composer && <div className="moment-composer-overlay" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!busy)setComposer(false)}}><section className="media-composer moment-composer-dialog" role="dialog" aria-modal="true" aria-label="发布动态"><div className="media-composer-head"><div><p className="eyebrow">NEW MOMENT</p><h3>发布动态</h3>{showGroupConcept&&<small>分享给 {groupLabel(group)}</small>}</div><button type="button" aria-label="关闭发布窗口" disabled={busy} onClick={() => setComposer(false)}>×</button></div>{showGroupConcept&&<label className="moment-composer-group">发布到<GroupSelect value={group} onChange={setGroup} email={member.email}/></label>}<textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="记录这一刻……" autoFocus/><div className="moment-draft-photos">{composerPreviews.map(({file,url},index)=><div className={uploadFailures.includes(fileKey(file))?"failed":""} key={fileKey(file)}><img src={url}/><button type="button" aria-label="移除照片" onClick={()=>setFiles((current)=>current.filter((_,i)=>i!==index))}>×</button><span>{uploadFailures.includes(fileKey(file))?"上传失败":""}</span>{index>0&&<button type="button" aria-label="照片前移" className="move previous" onClick={()=>setFiles((current)=>{const next=[...current];[next[index-1],next[index]]=[next[index],next[index-1]];return next})}>‹</button>}{index<files.length-1&&<button type="button" aria-label="照片后移" className="move next" onClick={()=>setFiles((current)=>{const next=[...current];[next[index],next[index+1]]=[next[index+1],next[index]];return next})}>›</button>}</div>)}</div><label className="media-file-picker moment-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => {setFiles(Array.from(e.target.files || []).slice(0, 3));setUploadFailures([]);uploadedDraftPhotos.current.clear()}}/><span>{files.length ? `已选择 ${files.length} / 3 张` : "最多 3 张"}</span></label>{message && <p className="media-error">{message}</p>}<div className="moment-composer-actions"><button type="button" disabled={busy} onClick={()=>setComposer(false)}>取消</button><button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : uploadFailures.length?"重试失败照片":"发布动态"}</button></div></section></div>}
     {preview && <div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="照片预览" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreview(null)}} onTouchStart={(event)=>{previewTouchStart.current=event.touches[0]?.clientX??null}} onTouchEnd={(event)=>{if(previewTouchStart.current===null)return;const delta=(event.changedTouches[0]?.clientX??previewTouchStart.current)-previewTouchStart.current;if(Math.abs(delta)>40)setPreview((current)=>current?{...current,index:Math.max(0,Math.min(current.photos.length-1,current.index+(delta<0?1:-1)))}:null);previewTouchStart.current=null}}><button type="button" className="moment-photo-preview-close" aria-label="关闭照片预览" onClick={()=>setPreview(null)}>×</button>{preview.photos.length>1&&<button className="moment-preview-nav previous" disabled={preview.index===0} onClick={()=>setPreview({...preview,index:preview.index-1})}>‹</button>}<ProtectedPhoto photo={preview.photos[preview.index]} alt="动态照片预览"/>{preview.photos.length>1&&<><span className="moment-preview-count">{preview.index+1} / {preview.photos.length}</span><button className="moment-preview-nav next" disabled={preview.index===preview.photos.length-1} onClick={()=>setPreview({...preview,index:preview.index+1})}>›</button></>}</div>}
   </section>;
 }
