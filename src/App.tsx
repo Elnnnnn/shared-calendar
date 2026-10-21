@@ -1,3 +1,4 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 "use client";
 
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -40,6 +41,13 @@ type CalendarEvent = {
   canEdit?: boolean;
   continuesFromPrevious?: boolean;
 };
+type AccessCacheEntry = {
+  members: Member[];
+  visibility: Visibility[];
+  savedAt: number;
+};
+const accessCache = new Map<string, AccessCacheEntry>();
+const ACCESS_CACHE_TTL = 5 * 60 * 1000;
 type SpecialKind = "meet" | "memory" | "travel" | "birthday";
 type SpecialColor =
   | "sage"
@@ -478,9 +486,12 @@ export default function Home() {
   const [monthAgendaDate, setMonthAgendaDate] = useState<string | null>(null);
   const [memberFilterOpen, setMemberFilterOpen] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [calendarMessage, setCalendarMessage] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [eventSheetTab, setEventSheetTab] = useState<"photos" | "edit" | "details">("edit");
+  const [showAdvancedEventOptions, setShowAdvancedEventOptions] = useState(false);
+  const loadRequestRef = useRef(0);
   const today = dateKey(new Date());
   const [draft, setDraft] = useState({
     title: "",
@@ -647,6 +658,7 @@ export default function Home() {
     return lastResult!;
   }
   async function load(current?: User | null, showMemberCheck = false) {
+    const requestId = ++loadRequestRef.current;
     const active =
       current === undefined
         ? (await supabase.auth.getUser()).data.user
@@ -667,13 +679,32 @@ export default function Home() {
     if (showMemberCheck) setMemberLoading(true);
     setMemberLoadError("");
     const email = (active.email || "").toLowerCase();
-    const [{ data: memberRows, error: memberError }, { data: visibilityRows }] =
-      await Promise.all([
+    const cachedAccess = accessCache.get(email);
+    let memberRows: any[] | null = null;
+    let memberError: any = null;
+    let visibilityRows: any[] | null = null;
+    if (cachedAccess && Date.now() - cachedAccess.savedAt < ACCESS_CACHE_TTL) {
+      memberRows = cachedAccess.members;
+      visibilityRows = cachedAccess.visibility;
+    } else {
+      const [memberResult, visibilityResult] = await Promise.all([
         loadMemberAccess(email),
         supabase
           .from("shared_calendar_visibility")
           .select("viewer_email,owner_email"),
       ]);
+      memberRows = memberResult.data;
+      memberError = memberResult.error;
+      visibilityRows = visibilityResult.data;
+      if (!memberError) {
+        accessCache.set(email, {
+          members: (memberRows || []) as Member[],
+          visibility: (visibilityRows || []) as Visibility[],
+          savedAt: Date.now(),
+        });
+      }
+    }
+    if (requestId !== loadRequestRef.current) return;
     if (memberError) {
       setMember(null);
       setMemberLoadError("成员验证暂时失败，请检查网络后重试");
@@ -712,6 +743,16 @@ export default function Home() {
     }
     const needsEvents = section === "calendar";
     const needsSpecialDays = section === "calendar" || section === "special";
+    const rangeStartDate =
+      view === "month"
+        ? new Date(cursor.getFullYear(), cursor.getMonth(), 1 - 7)
+        : monday(cursor);
+    const rangeEndDate =
+      view === "month"
+        ? new Date(cursor.getFullYear(), cursor.getMonth() + 1, 7)
+        : new Date(rangeStartDate.getFullYear(), rangeStartDate.getMonth(), rangeStartDate.getDate() + 6);
+    const rangeStart = dateKey(rangeStartDate);
+    const rangeEnd = dateKey(rangeEndDate);
     const [
       { data },
       { data: specialData },
@@ -722,7 +763,12 @@ export default function Home() {
       { data: pollData },
       { data: eventAudienceData },
     ] = await Promise.all([
-      needsEvents ? supabase.rpc("get_shared_calendar_events") : Promise.resolve({ data: null }),
+      needsEvents
+        ? supabase.rpc("get_shared_calendar_events", {
+            p_start_date: rangeStart,
+            p_end_date: rangeEnd,
+          })
+        : Promise.resolve({ data: null }),
       needsSpecialDays ? supabase.rpc("get_shared_calendar_special_days") : Promise.resolve({ data: null }),
       ["bag", "wishes", "lucky"].includes(section)
         ? supabase.rpc("get_shared_calendar_wishes")
@@ -742,14 +788,9 @@ export default function Home() {
         )
         .order("created_at", { ascending: false }) : Promise.resolve({ data: null }),
       section === "polls" ? supabase.rpc("get_shared_calendar_polls") : Promise.resolve({ data: null }),
-      needsEvents ? supabase.from("shared_calendar_events").select("id,audience_group") : Promise.resolve({ data: null }),
+      Promise.resolve({ data: null }),
     ]);
-    const eventAudience = new Map(
-      (eventAudienceData || []).map((row: any) => [
-        Number(row.id),
-        (row.audience_group || "both") as AudienceGroup,
-      ]),
-    );
+    if (requestId !== loadRequestRef.current) return;
     if (data !== null) setEvents(
       (data || []).map((e: any) => ({
         id: e.id,
@@ -764,7 +805,7 @@ export default function Home() {
         note: e.note,
         timezone: e.timezone,
         allDay: Boolean(e.all_day),
-        audienceGroup: eventAudience.get(Number(e.id)) || "both",
+        audienceGroup: (e.audience_group || "both") as AudienceGroup,
         canEdit: e.can_edit,
       })),
     );
@@ -906,7 +947,24 @@ export default function Home() {
   useEffect(() => {
     if (!user || !member || !["calendar", "special", "bag", "wishes", "lucky", "expenses"].includes(section)) return;
     void load(user);
-  }, [section]);
+  }, [section, cursor, view, user?.id, member?.email]);
+  useEffect(() => {
+    if (section !== "calendar" || !user || !member) return;
+    let timer: number | null = null;
+    const refresh = () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => void load(user), 220);
+    };
+    const channel = supabase
+      .channel(`shared-calendar-events-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shared_calendar_events" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shared_calendar_special_days" }, refresh)
+      .subscribe();
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+      void supabase.removeChannel(channel);
+    };
+  }, [section, user?.id, member?.email]);
   useEffect(() => {
     if (section !== "polls" || !user || !member) return;
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") void refreshPolls(); };
@@ -1034,6 +1092,8 @@ export default function Home() {
     const startDate = date || dateKey(new Date());
     setEditing(null);
     setEventSheetTab("edit");
+    setShowAdvancedEventOptions(false);
+    setCalendarMessage("");
     setAudienceGroup(member?.email === JINYUAN_EMAIL ? "friends" : "besties");
     setDraft({
       title: "",
@@ -1053,6 +1113,8 @@ export default function Home() {
   function prepareEventDraft(e: CalendarEvent) {
     const timezone = e.timezone || "Asia/Shanghai";
     setEditing(e);
+    setShowAdvancedEventOptions(Boolean(e.location || e.note || e.timezone && e.timezone !== "Asia/Shanghai"));
+    setCalendarMessage("");
     setAudienceGroup(e.audienceGroup || "both");
     setDraft({
       title: e.title,
@@ -1090,7 +1152,7 @@ export default function Home() {
   }
   function showMutationError(message: string) {
     finishMutation();
-    window.alert(message);
+    setCalendarMessage(message);
   }
   async function save() {
     if (
@@ -1161,6 +1223,10 @@ export default function Home() {
   }
   async function remove() {
     if (!editing || !user || !beginMutation()) return;
+    if (!window.confirm("删除这个活动？关联的活动照片和心情也会一起移除。")) {
+      finishMutation();
+      return;
+    }
     const previous = events;
     setOpen(false);
     setEvents((current) => current.filter((item) => item.id !== editing.id));
@@ -1380,7 +1446,10 @@ export default function Home() {
       : await supabase
           .from("shared_calendar_visibility")
           .insert({ viewer_email: viewer, owner_email: owner });
-    if (!result.error) await load(user);
+    if (!result.error) {
+      accessCache.delete((user?.email || "").toLowerCase());
+      await load(user);
+    }
   }
   function startAddWish() {
     setEditingWish(null);
@@ -4262,7 +4331,7 @@ export default function Home() {
       )}
       {section === "calendar" && (
         <>
-          <section className="toolbar">
+          <section className="toolbar calendar-toolbar">
             <div className="move">
               <button
                 onClick={() =>
@@ -4292,6 +4361,13 @@ export default function Home() {
               </button>
             </div>
             <strong>{label}</strong>
+            <button
+              type="button"
+              className="calendar-today"
+              onClick={() => setCursor(new Date())}
+            >
+              今天
+            </button>
             <div className="toolbar-right">
               <div
                 className="member-filter"
@@ -4352,6 +4428,11 @@ export default function Home() {
               </button>
             </div>
           </section>
+          {calendarMessage && (
+            <p className="calendar-inline-message" role="status">
+              {calendarMessage}
+            </p>
+          )}
           {view === "month" ? (
             <section className="calendar month">
               <div className="weekdays">
@@ -4396,6 +4477,10 @@ export default function Home() {
                         <span
                           className="day-overflow-count"
                           aria-label={`还有 ${dayEvents.length - 2} 项行程`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setMonthAgendaDate(key);
+                          }}
                         >
                           ＋{dayEvents.length - 2}
                         </span>
@@ -5217,24 +5302,42 @@ export default function Home() {
                 ))}
               {members.length === 1 && <p>目前还没有其他成员</p>}
             </fieldset>
-            <label>
-              地点
-              <input
-                value={draft.location}
-                onChange={(e) =>
-                  setDraft({ ...draft, location: e.target.value })
-                }
-                placeholder="输入地址"
-              />
-            </label>
-            <label>
-              备注
-              <textarea
-                value={draft.note}
-                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-                placeholder="补充信息"
-              />
-            </label>
+            <details
+              className="event-advanced"
+              open={showAdvancedEventOptions}
+              onToggle={(event) =>
+                setShowAdvancedEventOptions(event.currentTarget.open)
+              }
+            >
+              <summary>更多设置 <span>地点、备注</span></summary>
+              <label>
+                地点
+                <input
+                  value={draft.location}
+                  onChange={(e) =>
+                    setDraft({ ...draft, location: e.target.value })
+                  }
+                  placeholder="输入地址"
+                />
+              </label>
+              <label>
+                备注
+                <textarea
+                  value={draft.note}
+                  onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+                  placeholder="补充信息"
+                />
+              </label>
+            </details>
+            <p className="event-access-note">
+              {editing
+                ? editing.owner.toLowerCase() === member.email.toLowerCase()
+                  ? "你是创建者，可以编辑活动并管理活动内容。"
+                  : editing.participants.some((email) => email.toLowerCase() === member.email.toLowerCase())
+                    ? "你是参与者，可以补充活动照片和心情。"
+                    : "你拥有查看权限，活动内容由创建者和参与者维护。"
+                : "创建后，活动会按可见分组展示。参与成员仍需单独勾选。"}
+            </p>
             <p className="owner-line">
               <i className={`dot ${member.color}`} /> 由 {member.display_name}{" "}
               添加
