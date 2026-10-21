@@ -7695,3 +7695,56 @@ body .admin-sheet label {
   .moments-page .moment-notifications { right: 10px; bottom: 10px; left: 10px; }
 }
 
+/* Moments circle contract: prevent inherited flex-basis values from creating ovals. */
+.moments-page .moment-avatar,
+.moments-page .moment-story-all,
+.moments-page .moment-rail-avatar,
+.moments-page .moment-notification-button i,
+.moments-page .moment-notifications span {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+}
+
+.moments-page .moment-stories .moment-avatar,
+.moments-page .moment-story-all {
+  width: 43px;
+  min-width: 43px;
+  height: 43px;
+  min-height: 43px;
+  flex: 0 0 43px;
+}
+
+.moments-page .moment-quick-composer > .moment-avatar {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  flex: 0 0 34px;
+}
+
+.moments-page .moment-post > header .moment-avatar {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  flex: 0 0 36px;
+}
+
+.moments-page .moment-together-card .moment-avatar {
+  width: 27px;
+  min-width: 27px;
+  height: 27px;
+  min-height: 27px;
+  flex: 0 0 27px;
+}
+
+.moments-page .moment-rail-avatar {
+  width: 24px !important;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  flex: 0 0 24px !important;
+}
+
