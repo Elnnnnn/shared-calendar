@@ -744,12 +744,13 @@ export default function Home() {
     const needsSpecialDays = section === "calendar" || section === "special";
     const rangeStartDate =
       view === "month"
-        ? new Date(cursor.getFullYear(), cursor.getMonth(), 1 - 7)
+        ? monday(new Date(cursor.getFullYear(), cursor.getMonth(), 1))
         : monday(cursor);
-    const rangeEndDate =
-      view === "month"
-        ? new Date(cursor.getFullYear(), cursor.getMonth() + 1, 7)
-        : new Date(rangeStartDate.getFullYear(), rangeStartDate.getMonth(), rangeStartDate.getDate() + 6);
+    const rangeEndDate = new Date(
+      rangeStartDate.getFullYear(),
+      rangeStartDate.getMonth(),
+      rangeStartDate.getDate() + (view === "month" ? 41 : 6),
+    );
     const rangeStart = dateKey(rangeStartDate);
     const rangeEnd = dateKey(rangeEndDate);
     const [
