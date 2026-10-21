@@ -5631,22 +5631,6 @@ body input[type="checkbox"] {
   font-size: 16px;
   letter-spacing: .01em;
 }
-.calendar-today {
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--white);
-  color: var(--deep);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.calendar-today:hover,
-.calendar-today:focus-visible {
-  border-color: var(--deep);
-  outline: none;
-}
 .calendar-inline-message {
   margin: -4px 0 10px;
   padding: 7px 10px;
@@ -5711,7 +5695,6 @@ body input[type="checkbox"] {
     font-size: 14px;
     white-space: nowrap;
   }
-  .calendar-toolbar .calendar-today { grid-column: 3; grid-row: 1; }
   .calendar-toolbar .toolbar-right {
     grid-column: 1 / -1;
     grid-row: 2;
