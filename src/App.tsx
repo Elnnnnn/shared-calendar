@@ -4154,6 +4154,7 @@ export default function Home() {
               aria-expanded={profileOpen}
               onClick={() => {
                 setProfileOpen(!profileOpen);
+                setMemberFilterOpen(false);
                 setProfileView("menu");
                 setProfileMessage("");
               }}
