@@ -1190,10 +1190,11 @@ footer span {
   }
   .profile-popover {
     position: fixed;
+    z-index: 30;
     top: max(64px, env(safe-area-inset-top));
     right: 12px;
-    left: 12px;
-    width: auto;
+    left: auto;
+    width: min(300px, calc(100vw - 24px));
     max-height: calc(100dvh - 80px);
     overflow-y: auto;
   }
