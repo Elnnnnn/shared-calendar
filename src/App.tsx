@@ -2622,7 +2622,10 @@ export default function Home() {
           row.viewer_email === item.email && row.owner_email === member.email,
       ),
   );
-  const birthdaySpecialDays = members.flatMap((item, index) => {
+  const birthdayMembers = members.filter(
+    (item) => !(member?.email.toLowerCase() === TEST_EMAIL && item.email.toLowerCase() === ELAINE_EMAIL),
+  );
+  const birthdaySpecialDays = birthdayMembers.flatMap((item, index) => {
     const pendingBirthday = item.email === TEST_EMAIL && !item.birthday;
     return item.birthday || pendingBirthday
       ? [
@@ -2651,7 +2654,7 @@ export default function Home() {
   });
   const specialPageDays = [...specialDays, ...birthdaySpecialDays];
   const birthdayEvents = dates.flatMap((date, dateIndex) =>
-    members.flatMap((item, memberIndex) =>
+    birthdayMembers.flatMap((item, memberIndex) =>
       item.birthday && item.birthday.slice(5) === dateKey(date).slice(5)
         ? [
             {
