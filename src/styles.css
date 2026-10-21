@@ -1,3 +1,4 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 :root {
   --ink: #332f27;
   --muted: #797163;
@@ -5565,14 +5566,14 @@ body input[type="checkbox"] {
 .event-media-panel input[type="checkbox"],
 .event-group-menu input[type="checkbox"] {
   box-sizing: border-box;
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  min-height: 18px !important;
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
   padding: 0 !important;
   border-radius: 4px;
   aspect-ratio: 1 / 1;
-  flex: 0 0 18px;
+  flex: 0 0 14px;
 }
 
 .event-moment-option {
@@ -5620,6 +5621,113 @@ body input[type="checkbox"] {
   font-size: 11px;
   font-weight: 700;
   opacity: 1;
+}
+
+/* Calendar polish: compact controls, clearer hierarchy, and lightweight feedback. */
+.calendar-toolbar {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.calendar-toolbar > strong {
+  font-size: 16px;
+  letter-spacing: .01em;
+}
+.calendar-today {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--deep);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.calendar-today:hover,
+.calendar-today:focus-visible {
+  border-color: var(--deep);
+  outline: none;
+}
+.calendar-inline-message {
+  margin: -4px 0 10px;
+  padding: 7px 10px;
+  border: 1px solid #c6b991;
+  border-radius: 8px;
+  background: #f2ead8;
+  color: #625a43;
+  font-size: 11px;
+}
+.event-advanced {
+  margin-top: 11px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.event-advanced summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--deep);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.event-advanced summary::-webkit-details-marker { display: none; }
+.event-advanced summary::before { content: "＋"; font-size: 13px; }
+.event-advanced[open] summary::before { content: "−"; }
+.event-advanced summary span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+.event-access-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.calendar.week .week-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: rgba(247, 241, 230, .96);
+  backdrop-filter: blur(6px);
+}
+.day-overflow-count {
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .calendar-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 7px;
+  }
+  .calendar-toolbar .move { grid-column: 1; grid-row: 1; }
+  .calendar-toolbar > strong {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .calendar-toolbar .calendar-today { grid-column: 3; grid-row: 1; }
+  .calendar-toolbar .toolbar-right {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    width: 100%;
+    gap: 6px;
+  }
+  .calendar-toolbar .toolbar-right > select { display: none; }
+  .calendar-toolbar .member-filter button { width: 100%; }
+  .calendar-toolbar .segment button { min-width: 32px; height: 30px; font-size: 10px; }
+  .calendar-toolbar .calendar-add { height: 30px; min-width: 34px; }
+  .calendar-inline-message { font-size: 10px; }
+  .event-advanced { margin-top: 9px; }
+  .event-advanced summary { font-size: 10px; }
 }
 
 .event-media-panel .event-mood-actions.single .primary:disabled {
