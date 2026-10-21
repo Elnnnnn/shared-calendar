@@ -2554,6 +2554,7 @@ export default function Home() {
     });
   }
   const isAdmin = user.email?.toLowerCase() === ELAINE_EMAIL;
+  const memberHasMultipleGroups = Boolean(member && BESTIE_EMAILS.includes(member.email.toLowerCase()) && FRIEND_EMAILS.includes(member.email.toLowerCase()));
   const audienceEmails = (group: AudienceGroup) =>
     group === "friends"
       ? FRIEND_EMAILS
@@ -5326,7 +5327,9 @@ export default function Home() {
                   : editing.participants.some((email) => email.toLowerCase() === member.email.toLowerCase())
                     ? "你是参与者，可以补充活动照片和心情。"
                     : "你拥有查看权限，活动内容由创建者和参与者维护。"
-                : "创建后，活动会按可见分组展示。参与成员仍需单独勾选。"}
+                : memberHasMultipleGroups
+                  ? "创建后，活动会按可见分组展示。参与成员仍需单独勾选。"
+                  : "创建后，参与成员可以查看和维护活动内容。"}
             </p>
             <p className="owner-line">
               <i className={`dot ${member.color}`} /> 由 {member.display_name}{" "}
