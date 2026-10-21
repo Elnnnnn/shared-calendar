@@ -1,4 +1,3 @@
-/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 -- Keep the calendar feed small by accepting the visible date range and return
 -- the event audience in the same authorized projection (no second table query).
 drop function if exists public.get_shared_calendar_events();
