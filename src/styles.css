@@ -1185,6 +1185,9 @@ footer span {
   border-left-width: 5px;
 }
 @media (max-width: 760px) {
+  .profile-wrap {
+    z-index: 100;
+  }
   .top-actions > button:first-child {
     display: block;
   }
