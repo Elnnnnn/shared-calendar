@@ -2614,6 +2614,10 @@ export default function Home() {
           row.viewer_email === member.email && row.owner_email === item.email,
       ),
   );
+  const allOwnersSelected = allowedOwners.length > 0 && selectedOwners.length === allowedOwners.length;
+  function selectAllOwners() {
+    setSelectedOwners(allowedOwners.map((item) => item.email));
+  }
   const eligibleSpecialParticipants = audienceMembers.filter(
     (item) =>
       item.email !== member.email &&
@@ -4379,6 +4383,14 @@ export default function Home() {
                 </button>
                 {memberFilterOpen && (
                   <div className="member-filter-menu">
+                    <button
+                      type="button"
+                      className="member-filter-select-all"
+                      disabled={allOwnersSelected}
+                      onClick={selectAllOwners}
+                    >
+                      {allOwnersSelected ? "已全选" : "全选"}
+                    </button>
                     {allowedOwners.map((item) => (
                       <label key={item.email}>
                         <input
