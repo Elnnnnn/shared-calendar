@@ -7748,3 +7748,117 @@ body .admin-sheet label {
   flex: 0 0 24px !important;
 }
 
+/* Calendar mobile geometry contract: keep the modal above the profile menu,
+   centered, compact, and make every toolbar control share one 36px height. */
+.calendar-overlay {
+  z-index: 120;
+}
+
+@media (max-width: 700px) {
+  .calendar-overlay {
+    place-items: center;
+    overflow: hidden;
+    padding: max(10px, env(safe-area-inset-top)) 10px
+      max(10px, env(safe-area-inset-bottom));
+  }
+
+  .calendar-sheet.event-edit-sheet {
+    width: min(100%, 620px);
+    max-width: 620px;
+    max-height: min(84dvh, 760px);
+    margin: 0;
+    padding: 12px 13px calc(13px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
+  .calendar-sheet.event-edit-sheet .sheet-head {
+    min-height: 46px;
+    gap: 8px;
+  }
+
+  .calendar-sheet.event-edit-sheet .sheet-head h2 {
+    font-size: 22px;
+    line-height: 1.08;
+  }
+
+  .calendar-sheet.event-edit-sheet .sheet-head > button {
+    box-sizing: border-box;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+    flex: 0 0 30px;
+  }
+
+  .calendar-sheet.event-edit-sheet .event-detail-tabs {
+    margin-bottom: 9px;
+  }
+
+  .calendar-sheet.event-edit-sheet .audience-picker,
+  .calendar-sheet.event-edit-sheet .participant-picker {
+    margin-top: 7px;
+  }
+
+  .calendar-sheet.event-edit-sheet .event-options,
+  .calendar-sheet.event-edit-sheet .datetime-row {
+    margin-top: 7px;
+  }
+
+  .calendar-sheet.event-edit-sheet .participant-picker label {
+    margin-top: 3px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
+  .calendar-sheet.event-edit-sheet .event-advanced {
+    margin-top: 7px;
+    padding-top: 6px;
+  }
+
+  .calendar-sheet.event-edit-sheet .event-access-note {
+    margin-top: 7px;
+  }
+
+  .calendar-sheet.event-edit-sheet .owner-line {
+    margin: 7px 0;
+  }
+
+  .calendar-toolbar .toolbar-right {
+    grid-template-columns: minmax(0, 1fr) auto 36px;
+    align-items: center;
+  }
+
+  .calendar-toolbar .member-filter,
+  .calendar-toolbar .member-filter > button {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .calendar-toolbar .segment {
+    height: 36px;
+  }
+
+  .calendar-toolbar .segment button {
+    box-sizing: border-box;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .calendar-toolbar .calendar-add {
+    box-sizing: border-box;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    flex: 0 0 36px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+  }
+}
