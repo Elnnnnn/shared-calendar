@@ -7877,7 +7877,7 @@ body .admin-sheet label {
   .wish-control-actions,
   .wish-selects,
   .wish-selects select,
-  .wish-add {
+  .wish-control-actions .wish-add {
     box-sizing: border-box;
     height: 42px !important;
     min-height: 42px !important;
