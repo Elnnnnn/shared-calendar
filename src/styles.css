@@ -1507,13 +1507,14 @@ select option {
   text-align: left;
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(73, 61, 43, 0.08);
+  transition: border-color .16s ease, box-shadow .16s ease;
 }
 .special-card:disabled {
   color: inherit;
   cursor: default;
 }
 .special-card:hover:not(:disabled) {
-  transform: translateY(-2px);
+  border-color: #b9ac92;
   box-shadow: 0 16px 34px rgba(73, 61, 43, 0.12);
 }
 .special-icon {
@@ -2136,9 +2137,8 @@ select option {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  transition: transform .18s ease;
 }
-.albums-page .album-folder.album-portfolio-card:hover { transform: translateY(-2px); }
+
 .albums-page .album-folder.album-portfolio-card > .album-folder-canvas {
   display: grid;
   place-items: center;
@@ -2150,6 +2150,11 @@ select option {
   border: 1px solid rgba(207, 194, 174, .44);
   border-radius: 0;
   background: #f5f0e8;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.albums-page .album-folder.album-portfolio-card:hover > .album-folder-canvas {
+  border-color: rgba(159, 145, 118, .72);
+  box-shadow: 0 12px 28px rgba(73, 61, 43, .1);
 }
 .album-cover-art {
   display: grid;
