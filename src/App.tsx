@@ -203,7 +203,7 @@ const EVENT_LINES: { [key: string]: string } = {
   moss: "#728266",
 };
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
-const TEST_EMAIL = "test@test.com";
+const TEST_EMAIL = "frankyelf1997@outlook.com";
 const BESTIE_EMAILS = [
   ELAINE_EMAIL,
   "zxu1115@icloud.com",
