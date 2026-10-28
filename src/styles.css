@@ -7870,8 +7870,8 @@ body .admin-sheet label {
 @media (min-width: 701px) {
   .special-heading-actions > .primary {
     box-sizing: border-box;
-    height: 42px;
-    min-height: 42px;
+    height: 42px !important;
+    min-height: 42px !important;
   }
 
   .wish-control-actions,
@@ -7879,8 +7879,8 @@ body .admin-sheet label {
   .wish-selects select,
   .wish-add {
     box-sizing: border-box;
-    height: 42px;
-    min-height: 42px;
+    height: 42px !important;
+    min-height: 42px !important;
   }
 
   .moments-page .moment-welcome .themed-dropdown > button,
