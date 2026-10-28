@@ -6,6 +6,7 @@ const MEDIA_API = "https://shared-calendar-media.elaine-shared-calendar.workers.
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
 const TEST_EMAIL = "test@test.com";
 type GroupKey = "besties" | "friends" | "both";
+type MomentGroupFilter = GroupKey | "all";
 type Member = { email: string; display_name: string; color: string };
 type Photo = { id: string; group_key: GroupKey; uploader_email: string; event_id: number | null; file_name: string; created_at: string };
 type Album = { id: number; name: string; group_key: GroupKey; owner_email: string; cover_photo_id: string | null; created_at: string };
@@ -22,6 +23,7 @@ type EventPhotoLink = { event_id: number; photo_id: string };
 const momentsFeedCache = new Map<string, { moments: Moment[]; savedAt: number }>();
 
 function groupLabel(group: GroupKey) { return group === "besties" ? "闺蜜组" : group === "friends" ? "朋友组" : "两个组"; }
+function momentGroupLabel(group: MomentGroupFilter) { return group === "all" ? "全部动态" : groupLabel(group); }
 function allowedGroups(email: string): GroupKey[] {
   return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === TEST_EMAIL ? ["friends"] : ["besties"];
 }
@@ -185,6 +187,12 @@ function GroupSelect({ value, onChange, email, options }: { value: GroupKey; onC
   return <div className="themed-dropdown"><button type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>{groupLabel(value)}<span>⌄</span></button>{open && <div className="themed-dropdown-menu">{groups.map((group) => <button type="button" className={value === group ? "selected" : ""} key={group} onClick={() => { onChange(group); setOpen(false); }}>{groupLabel(group)}</button>)}</div>}</div>;
 }
 
+function MomentGroupSelect({ value, onChange, email }: { value: MomentGroupFilter; onChange: (group: MomentGroupFilter) => void; email: string }) {
+  const groups: MomentGroupFilter[] = ["all", ...allowedGroups(email)];
+  const [open, setOpen] = useState(false);
+  return <div className="themed-dropdown"><button type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>{momentGroupLabel(value)}<span>⌄</span></button>{open && <div className="themed-dropdown-menu">{groups.map((group) => <button type="button" className={value === group ? "selected" : ""} key={group} onClick={() => { onChange(group); setOpen(false); }}>{momentGroupLabel(group)}</button>)}</div>}</div>;
+}
+
 export function EventMediaPanel({ event, user, member, members }: { event: CalendarEvent; user: User; member: Member; members: Member[] }) {
   const accountGroups = allowedGroups(member.email);
   const groups: GroupKey[] = accountGroups.length < 2
@@ -322,9 +330,10 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
 
 export function MomentsPage({ user, member, members }: { user: User; member: Member; members: Member[] }) {
   const PAGE_SIZE = 10;
-  const groups = allowedGroups(member.email);
+  const groups = useMemo(() => allowedGroups(member.email), [member.email]);
   const showGroupConcept = groups.length > 1;
-  const [group, setGroup] = useState<GroupKey>(groups[0]);
+  const [group, setGroup] = useState<MomentGroupFilter>(showGroupConcept ? "all" : groups[0]);
+  const [composerGroup, setComposerGroup] = useState<GroupKey>(groups[0]);
   const [moments, setMoments] = useState<Moment[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [links, setLinks] = useState<MomentPhoto[]>([]);
@@ -395,7 +404,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     if (replace) { setLoadingInitial(true); setFeedError(""); }
     try {
       const result = await withRetry(async () => {
-        const response = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").in("group_key",[group,"both"]).order("created_at", { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
+        const response = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").in("group_key",group === "all" ? [...groups, "both"] : [group,"both"]).order("created_at", { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
         if (response.error) throw response.error;
         return response.data;
       });
@@ -405,7 +414,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
       // without an error. Confirm an initial empty page once before showing it.
       if (replace && offset === 0 && pageMoments.length === 0) {
         await new Promise((resolve) => window.setTimeout(resolve, 500));
-        const confirmation = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").in("group_key",[group,"both"]).order("created_at", { ascending: false }).range(0, PAGE_SIZE - 1);
+        const confirmation = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").in("group_key",group === "all" ? [...groups, "both"] : [group,"both"]).order("created_at", { ascending: false }).range(0, PAGE_SIZE - 1);
         if (confirmation.error) throw confirmation.error;
         pageMoments = (confirmation.data || []) as Moment[];
       }
@@ -446,11 +455,11 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
       if (document.visibilityState !== "visible") return;
       const since=latestMomentCreatedAt.current;
       if(!since) { void loadPage(0, true); return; }
-      void supabase.from("shared_calendar_moments").select("id",{count:"exact",head:true}).in("group_key",[group,"both"]).gt("created_at",since).then(({count})=>setNewMomentCount(count||0));
+      void supabase.from("shared_calendar_moments").select("id",{count:"exact",head:true}).in("group_key",group === "all" ? [...groups, "both"] : [group,"both"]).gt("created_at",since).then(({count})=>setNewMomentCount(count||0));
     };
     const channel = supabase.channel(`moments-feed-${user.id}-${group}`).on("postgres_changes", { event: "INSERT", schema: "public", table: "shared_calendar_moments" }, (payload) => {
       const nextGroup = (payload.new as { group_key?: GroupKey }).group_key;
-      if (nextGroup === group || nextGroup === "both") checkForNew();
+      if (group === "all" ? groups.includes(nextGroup as GroupKey) || nextGroup === "both" : nextGroup === group || nextGroup === "both") checkForNew();
     }).subscribe();
     const timer=window.setInterval(checkForNew,60000);
     document.addEventListener("visibilitychange",checkForNew);
@@ -471,11 +480,11 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     setBusy(true); setMessage("");
     try {
       setUploadFailures([]);
-      const results = await Promise.all(files.slice(0,3).map(async(file)=>{const key=fileKey(file);const cached=uploadedDraftPhotos.current.get(key);if(cached)return {file,photo:cached};try{const photo=await uploadPhoto(file,group);uploadedDraftPhotos.current.set(key,photo);return {file,photo}}catch{return {file,photo:null}}}));
+      const results = await Promise.all(files.slice(0,3).map(async(file)=>{const key=fileKey(file);const cached=uploadedDraftPhotos.current.get(key);if(cached)return {file,photo:cached};try{const photo=await uploadPhoto(file,composerGroup);uploadedDraftPhotos.current.set(key,photo);return {file,photo}}catch{return {file,photo:null}}}));
       const failed=results.filter((item)=>!item.photo).map((item)=>fileKey(item.file));
       if(failed.length){setUploadFailures(failed);setMessage(`${failed.length} 张照片上传失败，可单独重试`);return}
       const uploaded=results.map((item)=>item.photo) as Photo[];
-      const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: group, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: null }).select().single();
+      const { data, error } = await supabase.from("shared_calendar_moments").insert({ group_key: composerGroup, author_user_id: user.id, author_email: member.email, caption: caption.trim(), event_id: null }).select().single();
       if (error) throw error;
       if (uploaded.length) {
         const { error: linkError } = await supabase.from("shared_calendar_moment_photos").insert(uploaded.map((photo, position) => ({ moment_id: data.id, photo_id: photo.id, position, uploaded_from_moment: true })));
@@ -578,7 +587,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     const { data, error } = await supabase.from("shared_calendar_moments").select("id,group_key,author_email,caption,event_id,source_event_mood_id,source_event_photo_id,created_at").eq("id", momentId).maybeSingle();
     if (error || !data) { setMessage("这条动态已删除或你现在无权查看"); return; }
     const target = data as Moment;
-    const targetGroup = target.group_key === "both" ? group : target.group_key;
+    const targetGroup: MomentGroupFilter = group === "all" || target.group_key === "both" ? group : target.group_key;
     if (targetGroup !== group) setGroup(targetGroup);
     setMoments((current) => [target, ...current.filter((item) => item.id !== target.id)]);
     await hydrateMoments([target], false);
@@ -590,7 +599,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
   const likesByMoment = useMemo(() => { const map = new Map<number, Like[]>(); likes.forEach((like) => map.set(like.moment_id, [...(map.get(like.moment_id) || []), like])); return map; }, [likes]);
   const commentsByMoment = useMemo(() => { const map = new Map<number, Comment[]>(); comments.forEach((comment) => map.set(comment.moment_id, [...(map.get(comment.moment_id) || []), comment])); return map; }, [comments]);
   const moodsByEvent = useMemo(() => { const map = new Map<number, EventMood[]>(); eventMoods.forEach((mood) => map.set(mood.event_id, [...(map.get(mood.event_id) || []), mood])); return map; }, [eventMoods]);
-  const visible = useMemo(() => moments.filter((moment) => moment.group_key === group || moment.group_key === "both"), [moments, group]);
+  const visible = useMemo(() => moments.filter((moment) => group === "all" ? groups.includes(moment.group_key) || moment.group_key === "both" : moment.group_key === group || moment.group_key === "both"), [moments, group, groups]);
   const filteredVisible = useMemo(() => visible.filter((moment) => {
     if (authorFilter && moment.author_email.toLowerCase() !== authorFilter.toLowerCase()) return false;
     const hasPhotos = (linksByMoment.get(moment.id) || []).length > 0;
@@ -607,7 +616,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
     <header className="moment-welcome">
       <div><p className="eyebrow">MOMENTS</p><h2>动态 <span aria-hidden="true">✦</span></h2><p className="moment-page-intro">看看大家最近分享了什么</p></div>
       <div className="media-head-actions">
-        {showGroupConcept && <GroupSelect value={group} onChange={(value)=>{setGroup(value);setAuthorFilter("")}} email={member.email}/>}
+        {showGroupConcept && <MomentGroupSelect value={group} onChange={(value)=>{setGroup(value);if(value!=="all")setComposerGroup(value);setAuthorFilter("")}} email={member.email}/>}
         <div className="moment-notification-wrap">
           <button className="moment-notification-button" type="button" aria-label="查看通知" title="通知" aria-expanded={notificationsOpen} onClick={()=>{setNotificationsOpen((open)=>!open);void supabase.rpc("mark_shared_calendar_moment_notifications_read");setNotifications((current)=>current.map((item)=>({...item,unread:false})))}}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
@@ -676,7 +685,7 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           <div className="moment-comments">{momentStats.comment_count>3&&<button className="moment-comments-toggle" onClick={()=>{if(!expandedComments.includes(moment.id))void loadAllComments(moment.id);setExpandedComments((current)=>current.includes(moment.id)?current.filter((id)=>id!==moment.id):[...current,moment.id])}}>{expandedComments.includes(moment.id)?"收起评论":`展开全部 ${momentStats.comment_count} 条评论`}</button>}{shownEntries.map(({kind,item})=><p key={`${kind}-${item.id}`}><span><b>{displayName(item.author_email,members)}</b>{kind==="comment"&&item.reply_to_email&&<> 回复 <b>@{displayName(item.reply_to_email,members)}</b></>}：{item.body}</span><span className="moment-comment-tools"><button onClick={()=>{setReplyTarget({momentId:moment.id,kind,id:item.id,email:item.author_email});document.getElementById(`moment-comment-${moment.id}`)?.focus()}}>回复</button>{item.author_user_id===user.id&&<button onClick={()=>kind==="comment"?void deleteComment(item):void deleteSyncedMood(item)}>删除</button>}</span></p>)}{replyTarget?.momentId===moment.id&&<div className="moment-replying">回复 @{displayName(replyTarget.email,members)}<button onClick={()=>setReplyTarget(null)}>×</button></div>}<div><input id={`moment-comment-${moment.id}`} value={commentDrafts[moment.id]||""} onChange={(e)=>setCommentDrafts((value)=>({...value,[moment.id]:e.target.value}))} placeholder={replyTarget?.momentId===moment.id?`回复 @${displayName(replyTarget.email,members)}……`:"写评论……"} onKeyDown={(e)=>{if(e.key==="Enter")void addComment(moment.id)}}/><button className="moment-comment-send" disabled={!commentDrafts[moment.id]?.trim()} onClick={()=>void addComment(moment.id)}>发送</button></div></div>
         </article>;
       })}
-      {loadingInitial&&!visible.length?<div className="media-empty media-loading-state"><span className="media-spinner"/><h3>正在读取动态</h3><p>第一次进入也会自动重试，无需刷新页面。</p></div>:feedError&&!visible.length?<div className="media-empty"><h3>{feedError}</h3><p>网络恢复后可以直接重试。</p><button className="primary" type="button" onClick={()=>void loadPage(0,true)}>重新加载</button></div>:!visible.length?<div className="media-empty"><h3>还没有动态</h3><p>{showGroupConcept?`在 ${groupLabel(group)} 分享第一张照片吧。`:"分享第一张照片吧。"}</p></div>:!filteredVisible.length&&<div className="media-empty"><h3>没有符合筛选的动态</h3><p>换个成员或内容类型看看。</p><button className="primary" type="button" onClick={()=>{setAuthorFilter("");setMomentFilter("all")}}>查看全部</button></div>}
+      {loadingInitial&&!visible.length?<div className="media-empty media-loading-state"><span className="media-spinner"/><h3>正在读取动态</h3><p>第一次进入也会自动重试，无需刷新页面。</p></div>:feedError&&!visible.length?<div className="media-empty"><h3>{feedError}</h3><p>网络恢复后可以直接重试。</p><button className="primary" type="button" onClick={()=>void loadPage(0,true)}>重新加载</button></div>:!visible.length?<div className="media-empty"><h3>还没有动态</h3><p>{showGroupConcept?`在 ${momentGroupLabel(group)} 分享第一张照片吧。`:"分享第一张照片吧。"}</p></div>:!filteredVisible.length&&<div className="media-empty"><h3>没有符合筛选的动态</h3><p>换个成员或内容类型看看。</p><button className="primary" type="button" onClick={()=>{setAuthorFilter("");setMomentFilter("all")}}>查看全部</button></div>}
       {hasMore&&<button className="moment-load-more" disabled={loadingMore} onClick={()=>void loadPage(moments.length)}>{loadingMore?"正在加载…":"加载更多"}</button>}
         </div>
       </main>
@@ -688,14 +697,14 @@ export function MomentsPage({ user, member, members }: { user: User; member: Mem
           {featuredMoment?<><p><b>{displayName(featuredMoment.author_email,members)}</b> · {new Date(featuredMoment.created_at).toLocaleDateString("zh-CN")}</p><button onClick={()=>document.getElementById(`moment-${featuredMoment.id}`)?.scrollIntoView({behavior:"smooth",block:"center"})}>回到这条动态</button></>:<p>发布第一条动态后，这里会出现一张回忆卡。</p>}
         </section>
         <section className="moment-side-card moment-summary-card">
-          <header><b>当前记录</b><small>{showGroupConcept?groupLabel(group):"所有动态"}</small></header>
+          <header><b>当前记录</b><small>{showGroupConcept?momentGroupLabel(group):"所有动态"}</small></header>
           <div><span><strong>{visible.length}</strong><small>动态</small></span><span><strong>{visiblePhotoCount}</strong><small>照片</small></span><span><strong>{visibleCommentCount}</strong><small>评论</small></span></div>
         </section>
         <section className="moment-side-card moment-together-card"><small>TOGETHER</small><p>这里的动态只属于你们。</p><div>{activeMomentAuthors.slice(0,5).map((item)=><span key={item.email} className={`moment-avatar ${item.color}`}>{displayName(item.email,members).slice(0,1)}</span>)}</div></section>
       </aside>
     </div>
 
-    {composer && <div className="moment-composer-overlay" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!busy)setComposer(false)}}><section className="media-composer moment-composer-dialog" role="dialog" aria-modal="true" aria-label="发布动态"><div className="media-composer-head"><div><p className="eyebrow">NEW MOMENT</p><h3>发布动态</h3>{showGroupConcept&&<small>分享给 {groupLabel(group)}</small>}</div><button type="button" aria-label="关闭发布窗口" disabled={busy} onClick={() => setComposer(false)}>×</button></div>{showGroupConcept&&<label className="moment-composer-group">发布到<GroupSelect value={group} onChange={setGroup} email={member.email}/></label>}<textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="记录这一刻……" autoFocus/><div className="moment-draft-photos">{composerPreviews.map(({file,url},index)=><div className={uploadFailures.includes(fileKey(file))?"failed":""} key={fileKey(file)}><img src={url}/><button type="button" aria-label="移除照片" onClick={()=>setFiles((current)=>current.filter((_,i)=>i!==index))}>×</button><span>{uploadFailures.includes(fileKey(file))?"上传失败":""}</span>{index>0&&<button type="button" aria-label="照片前移" className="move previous" onClick={()=>setFiles((current)=>{const next=[...current];[next[index-1],next[index]]=[next[index],next[index-1]];return next})}>‹</button>}{index<files.length-1&&<button type="button" aria-label="照片后移" className="move next" onClick={()=>setFiles((current)=>{const next=[...current];[next[index],next[index+1]]=[next[index+1],next[index]];return next})}>›</button>}</div>)}</div><label className="media-file-picker moment-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => {setFiles(Array.from(e.target.files || []).slice(0, 3));setUploadFailures([]);uploadedDraftPhotos.current.clear()}}/><span>{files.length ? `已选择 ${files.length} / 3 张` : "最多 3 张"}</span></label>{message && <p className="media-error">{message}</p>}<div className="moment-composer-actions"><button type="button" disabled={busy} onClick={()=>setComposer(false)}>取消</button><button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : uploadFailures.length?"重试失败照片":"发布动态"}</button></div></section></div>}
+    {composer && <div className="moment-composer-overlay" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!busy)setComposer(false)}}><section className="media-composer moment-composer-dialog" role="dialog" aria-modal="true" aria-label="发布动态"><div className="media-composer-head"><div><p className="eyebrow">NEW MOMENT</p><h3>发布动态</h3>{showGroupConcept&&<small>分享给 {groupLabel(composerGroup)}</small>}</div><button type="button" aria-label="关闭发布窗口" disabled={busy} onClick={() => setComposer(false)}>×</button></div>{showGroupConcept&&<label className="moment-composer-group">发布到<GroupSelect value={composerGroup} onChange={setComposerGroup} email={member.email}/></label>}<textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="记录这一刻……" autoFocus/><div className="moment-draft-photos">{composerPreviews.map(({file,url},index)=><div className={uploadFailures.includes(fileKey(file))?"failed":""} key={fileKey(file)}><img src={url}/><button type="button" aria-label="移除照片" onClick={()=>setFiles((current)=>current.filter((_,i)=>i!==index))}>×</button><span>{uploadFailures.includes(fileKey(file))?"上传失败":""}</span>{index>0&&<button type="button" aria-label="照片前移" className="move previous" onClick={()=>setFiles((current)=>{const next=[...current];[next[index-1],next[index]]=[next[index],next[index-1]];return next})}>‹</button>}{index<files.length-1&&<button type="button" aria-label="照片后移" className="move next" onClick={()=>setFiles((current)=>{const next=[...current];[next[index],next[index+1]]=[next[index+1],next[index]];return next})}>›</button>}</div>)}</div><label className="media-file-picker moment-file-picker">＋ 添加照片<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={(e) => {setFiles(Array.from(e.target.files || []).slice(0, 3));setUploadFailures([]);uploadedDraftPhotos.current.clear()}}/><span>{files.length ? `已选择 ${files.length} / 3 张` : "最多 3 张"}</span></label>{message && <p className="media-error">{message}</p>}<div className="moment-composer-actions"><button type="button" disabled={busy} onClick={()=>setComposer(false)}>取消</button><button className="primary media-publish" disabled={busy || (!caption.trim() && !files.length)} onClick={publish}>{busy ? "正在发布…" : uploadFailures.length?"重试失败照片":"发布动态"}</button></div></section></div>}
     {preview && <div className="moment-photo-preview" role="dialog" aria-modal="true" aria-label="照片预览" onMouseDown={(event)=>{if(event.target===event.currentTarget)setPreview(null)}} onTouchStart={(event)=>{previewTouchStart.current=event.touches[0]?.clientX??null}} onTouchEnd={(event)=>{if(previewTouchStart.current===null)return;const delta=(event.changedTouches[0]?.clientX??previewTouchStart.current)-previewTouchStart.current;if(Math.abs(delta)>40)setPreview((current)=>current?{...current,index:Math.max(0,Math.min(current.photos.length-1,current.index+(delta<0?1:-1)))}:null);previewTouchStart.current=null}}><button type="button" className="moment-photo-preview-close" aria-label="关闭照片预览" onClick={()=>setPreview(null)}>×</button>{preview.photos.length>1&&<button className="moment-preview-nav previous" disabled={preview.index===0} onClick={()=>setPreview({...preview,index:preview.index-1})}>‹</button>}<ProtectedPhoto photo={preview.photos[preview.index]} alt="动态照片预览"/>{preview.photos.length>1&&<><span className="moment-preview-count">{preview.index+1} / {preview.photos.length}</span><button className="moment-preview-nav next" disabled={preview.index===preview.photos.length-1} onClick={()=>setPreview({...preview,index:preview.index+1})}>›</button></>}</div>}
   </section>;
 }
