@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 
 const MEDIA_API = "https://shared-calendar-media.elaine-shared-calendar.workers.dev";
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
-const TEST_EMAIL = "test@test.com";
+const TEST_EMAIL = "frankyelf1997@outlook.com";
 type GroupKey = "besties" | "friends" | "both";
 type MomentGroupFilter = GroupKey | "all";
 type Member = { email: string; display_name: string; color: string };
