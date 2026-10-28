@@ -5154,12 +5154,14 @@ export default function Home() {
       )}
       {open && (
         <div
-          className="overlay"
+          className="overlay calendar-overlay"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className={`sheet calendar-sheet ${editing ? "event-detail-sheet" : ""}`}>
+          <div
+            className={`sheet calendar-sheet ${editing ? "event-detail-sheet" : ""} ${editing && eventSheetTab === "edit" ? "event-edit-sheet" : ""}`}
+          >
             <div className="sheet-head">
               <div>
                 <p className="eyebrow">
