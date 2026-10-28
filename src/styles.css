@@ -7862,3 +7862,39 @@ body .admin-sheet label {
     border-radius: 50%;
   }
 }
+
+/* Desktop peer-control geometry contract.
+   Controls that share one visual row use one outer height; segmented options
+   remain inset inside their shared container. Keep this block after the global
+   density rules so compact defaults cannot shrink individual modules again. */
+@media (min-width: 701px) {
+  .special-heading-actions > .primary {
+    box-sizing: border-box;
+    height: 42px;
+    min-height: 42px;
+  }
+
+  .wish-control-actions,
+  .wish-selects,
+  .wish-selects select,
+  .wish-add {
+    box-sizing: border-box;
+    height: 42px;
+    min-height: 42px;
+  }
+
+  .moments-page .moment-welcome .themed-dropdown > button,
+  .moments-page .moment-welcome .moment-notification-button,
+  .moments-page .moment-welcome .moment-create-button {
+    box-sizing: border-box;
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .album-portfolio-actions > button,
+  .album-portfolio-actions .themed-dropdown > button {
+    box-sizing: border-box;
+    height: 36px;
+    min-height: 36px;
+  }
+}
