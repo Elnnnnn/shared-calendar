@@ -7903,3 +7903,28 @@ body .admin-sheet label {
     min-height: 36px;
   }
 }
+
+
+/* Moments solid-circle contract: keep every circular avatar continuous.
+   The previous colored outline + paper border created a visible white gap. */
+.moments-page .moment-avatar {
+  border-color: var(--event-line) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.moments-page .moment-story-all {
+  border-color: var(--moment-green) !important;
+  box-shadow: none !important;
+}
+
+.moments-page .moment-stories button.active .moment-avatar,
+.moments-page .moment-stories button.active .moment-story-all {
+  border-color: var(--moment-green-deep) !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.moments-page .moment-notification-button i {
+  border-color: #a6635d;
+}
