@@ -2138,7 +2138,6 @@ select option {
   background: transparent;
   box-shadow: none;
 }
-
 .albums-page .album-folder.album-portfolio-card > .album-folder-canvas {
   display: grid;
   place-items: center;
@@ -7904,7 +7903,6 @@ body .admin-sheet label {
   }
 }
 
-
 /* Moments solid-circle contract: keep every circular avatar continuous.
    The previous colored outline + paper border created a visible white gap. */
 .moments-page .moment-avatar {
@@ -7928,3 +7926,118 @@ body .admin-sheet label {
 .moments-page .moment-notification-button i {
   border-color: #a6635d;
 }
+
+/* Calendar search: a collapsible toolbar extension that keeps the calendar visible. */
+.calendar-search-toggle {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--deep);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+.calendar-search-toggle:hover,
+.calendar-search-toggle.active {
+  border-color: #aaa083;
+  background: #ece7d9;
+}
+.calendar-search-panel {
+  width: 100%;
+  flex: 0 0 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 253, 248, .96);
+  box-shadow: 0 10px 28px rgba(60, 50, 34, .08);
+}
+.calendar-search-field {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 7px 0 10px;
+  border: 1px solid #d3c7b2;
+  border-radius: 10px;
+  background: var(--white);
+}
+.calendar-search-field > span { color: var(--muted); font-size: 18px; }
+.calendar-search-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 12px;
+}
+.calendar-search-field > button {
+  min-width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.calendar-search-field .calendar-search-collapse {
+  min-width: 48px;
+  margin-left: 5px;
+  border-left: 1px solid var(--line);
+  color: var(--deep);
+  font-size: 10px;
+}
+.calendar-search-results {
+  display: grid;
+  gap: 4px;
+  max-height: 258px;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+.calendar-search-results > button {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.calendar-search-results > button:hover { background: #f1eadc; }
+.calendar-search-results span,
+.calendar-search-results b,
+.calendar-search-results small { display: block; min-width: 0; }
+.calendar-search-results b { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-search-results small { margin-top: 2px; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-search-results i { color: var(--muted); font-style: normal; }
+.calendar-search-results > p { margin: 10px; color: var(--muted); font-size: 11px; text-align: center; }
+.calendar-search-date { padding-right: 9px; border-right: 1px solid var(--line); }
+
+@media (max-width: 700px) {
+  .calendar-toolbar .toolbar-right {
+    grid-template-columns: minmax(0, 1fr) auto 36px 36px;
+  }
+  .calendar-search-toggle {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+  .calendar-search-panel {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    padding: 8px;
+  }
+  .calendar-search-results > button { grid-template-columns: 48px minmax(0, 1fr) auto; }
+}
+

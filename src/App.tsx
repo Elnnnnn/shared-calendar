@@ -484,6 +484,8 @@ export default function Home() {
   );
   const [monthAgendaDate, setMonthAgendaDate] = useState<string | null>(null);
   const [memberFilterOpen, setMemberFilterOpen] = useState(false);
+  const [calendarSearchOpen, setCalendarSearchOpen] = useState(false);
+  const [calendarSearchQuery, setCalendarSearchQuery] = useState("");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [calendarMessage, setCalendarMessage] = useState("");
   const [open, setOpen] = useState(false);
@@ -2467,6 +2469,31 @@ export default function Home() {
       event.participants.some((email) => selectedOwners.includes(email))
     );
   }
+  const calendarSearchResults = (() => {
+    const query = calendarSearchQuery.trim().toLocaleLowerCase("zh-CN");
+    if (!query) return [];
+    return events
+      .filter(matchesFilter)
+      .filter((event) => {
+        const participantNames = event.participants
+          .map((email) => members.find((item) => item.email === email)?.display_name || email)
+          .join(" ");
+        const ownerName = members.find((item) => item.email === event.owner)?.display_name || event.owner;
+        return [event.title, event.location, event.note, ownerName, participantNames]
+          .join(" ")
+          .toLocaleLowerCase("zh-CN")
+          .includes(query);
+      })
+      .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+      .slice(0, 12);
+  })();
+
+  function openSearchResult(event: CalendarEvent) {
+    setCursor(new Date(`${event.date}T12:00:00`));
+    setCalendarSearchOpen(false);
+    setCalendarSearchQuery("");
+    openEventSheet(event);
+  }
   function toggleOwner(email: string) {
     setSelectedOwners((current) =>
       current.includes(email)
@@ -4438,6 +4465,18 @@ export default function Home() {
                 </button>
               </div>
               <button
+                type="button"
+                className={`calendar-search-toggle ${calendarSearchOpen ? "active" : ""}`}
+                aria-label={calendarSearchOpen ? "收起日历搜索" : "搜索日历"}
+                aria-expanded={calendarSearchOpen}
+                onClick={() => {
+                  setCalendarSearchOpen((current) => !current);
+                  setMemberFilterOpen(false);
+                }}
+              >
+                <span aria-hidden="true">⌕</span>
+              </button>
+              <button
                 className="calendar-add"
                 aria-label="添加新行程"
                 title="添加新行程"
@@ -4446,6 +4485,48 @@ export default function Home() {
                 ＋
               </button>
             </div>
+            {calendarSearchOpen && (
+              <div className="calendar-search-panel" onClick={(event) => event.stopPropagation()}>
+                <div className="calendar-search-field">
+                  <span aria-hidden="true">⌕</span>
+                  <input
+                    autoFocus
+                    type="search"
+                    value={calendarSearchQuery}
+                    placeholder="搜索活动、地点、备注或成员"
+                    aria-label="搜索日历"
+                    onChange={(event) => setCalendarSearchQuery(event.target.value)}
+                  />
+                  {calendarSearchQuery && (
+                    <button type="button" aria-label="清空搜索" onClick={() => setCalendarSearchQuery("")}>×</button>
+                  )}
+                  <button
+                    type="button"
+                    className="calendar-search-collapse"
+                    onClick={() => {
+                      setCalendarSearchOpen(false);
+                      setCalendarSearchQuery("");
+                    }}
+                  >
+                    收起
+                  </button>
+                </div>
+                {calendarSearchQuery.trim() && (
+                  <div className="calendar-search-results" role="listbox" aria-label="日历搜索结果">
+                    {calendarSearchResults.length ? calendarSearchResults.map((event) => {
+                      const ownerName = members.find((item) => item.email === event.owner)?.display_name || event.owner;
+                      return (
+                        <button key={event.id} type="button" onClick={() => openSearchResult(event)}>
+                          <span className="calendar-search-date"><b>{event.date.slice(5).replace("-", "/")}</b><small>{event.allDay ? "全天" : event.time}</small></span>
+                          <span><b>{event.title}</b><small>{[event.location, ownerName].filter(Boolean).join(" · ")}</small></span>
+                          <i aria-hidden="true">›</i>
+                        </button>
+                      );
+                    }) : <p>没有找到相关活动</p>}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
           {calendarMessage && (
             <p className="calendar-inline-message" role="status">
