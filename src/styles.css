@@ -8041,3 +8041,38 @@ body .admin-sheet label {
   .calendar-search-results > button { grid-template-columns: 48px minmax(0, 1fr) auto; }
 }
 
+/* Moments mobile group switch: available only when the account has two groups.
+   The component already owns that permission rule; mobile should not hide it. */
+@media (max-width: 700px) {
+  .moments-page .moment-welcome .themed-dropdown {
+    display: block;
+    width: 88px;
+    min-width: 88px;
+  }
+
+  .moments-page .moment-welcome .themed-dropdown > button {
+    width: 88px;
+    min-width: 88px;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 9px;
+    overflow: hidden;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .moments-page .moment-welcome .themed-dropdown-menu {
+    right: 0;
+    left: auto;
+    width: 112px;
+    min-width: 112px;
+  }
+
+  .moments-page .moment-welcome .moment-notification-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+}
+
