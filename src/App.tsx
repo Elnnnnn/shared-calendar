@@ -1472,6 +1472,7 @@ export default function Home() {
   function startEditWish(wish: Wish) {
     if (wish.ownerUserId !== user?.id) return;
     setEditingWish(wish);
+    setAudienceGroup(member?.email === TEST_EMAIL ? "friends" : "besties");
     setWishDraft({
       title: wish.title,
       category: wish.category,
@@ -1491,7 +1492,6 @@ export default function Home() {
       !user ||
       !member ||
       !wishDraft.title.trim() ||
-      (!isWatch && !wishDraft.region.trim()) ||
       !beginMutation()
     )
       return;
@@ -4138,10 +4138,7 @@ export default function Home() {
             </label>
             <button
               className="primary save"
-              disabled={
-                !wishDraft.title.trim() ||
-                (wishDraft.category !== "watch" && !wishDraft.region.trim())
-              }
+              disabled={!wishDraft.title.trim()}
               onClick={saveWish}
             >
               保存{wishDraft.category === "watch" ? "想看" : "愿望"}
