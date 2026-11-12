@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 
 const MEDIA_API = "https://shared-calendar-media.elaine-shared-calendar.workers.dev";
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
-const TEST_EMAIL = "frankyelf1997@outlook.com";
+const FRANK_EMAIL = "frankyelf1997@outlook.com";
 type GroupKey = "besties" | "friends" | "both";
 type MomentGroupFilter = GroupKey | "all";
 type Member = { email: string; display_name: string; color: string };
@@ -25,7 +25,7 @@ const momentsFeedCache = new Map<string, { moments: Moment[]; savedAt: number }>
 function groupLabel(group: GroupKey) { return group === "besties" ? "闺蜜组" : group === "friends" ? "朋友组" : "两个组"; }
 function momentGroupLabel(group: MomentGroupFilter) { return group === "all" ? "全部动态" : groupLabel(group); }
 function allowedGroups(email: string): GroupKey[] {
-  return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === TEST_EMAIL ? ["friends"] : ["besties"];
+  return email.toLowerCase() === ELAINE_EMAIL ? ["besties", "friends"] : email.toLowerCase() === FRANK_EMAIL ? ["friends"] : ["besties"];
 }
 function displayName(email: string, members: Member[]) { return members.find((m) => m.email.toLowerCase() === email.toLowerCase())?.display_name || email.split("@")[0]; }
 function canManagePhoto(photo: Photo, email: string) {
