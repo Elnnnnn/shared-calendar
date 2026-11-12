@@ -141,7 +141,7 @@ const COLORS = [
   "stone", "mist", "sea",
 ] as const;
 const BESTIE_COLORS = ["sage", "clay", "gold", "rose", "lavender", "peach", "moss"] as const;
-const TEST_COLORS = ["stone", "mist", "sea"] as const;
+const FRANK_COLORS = ["stone", "mist", "sea"] as const;
 const COLOR_NAMES: { [key: string]: string } = {
   sage: "鼠尾草绿",
   clay: "陶土橘",
@@ -203,14 +203,14 @@ const EVENT_LINES: { [key: string]: string } = {
   moss: "#728266",
 };
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
-const TEST_EMAIL = "frankyelf1997@outlook.com";
+const FRANK_EMAIL = "frankyelf1997@outlook.com";
 const BESTIE_EMAILS = [
   ELAINE_EMAIL,
   "zxu1115@icloud.com",
   "1914660774@qq.com",
   "mqianw00@163.com",
 ];
-const FRIEND_EMAILS = [ELAINE_EMAIL, TEST_EMAIL];
+const FRIEND_EMAILS = [ELAINE_EMAIL, FRANK_EMAIL];
 const SPECIAL_TYPES: { kind: SpecialKind; label: string; icon: string }[] = [
   { kind: "meet", label: "见面", icon: "✦" },
   { kind: "memory", label: "纪念", icon: "♡" },
@@ -1096,7 +1096,7 @@ export default function Home() {
     setEventSheetTab("edit");
     setShowAdvancedEventOptions(false);
     setCalendarMessage("");
-    setAudienceGroup(member?.email === TEST_EMAIL ? "friends" : "besties");
+    setAudienceGroup(member?.email === FRANK_EMAIL ? "friends" : "besties");
     setDraft({
       title: "",
       date: startDate,
@@ -1247,7 +1247,7 @@ export default function Home() {
   }
   function startAddSpecial() {
     setEditingSpecial(null);
-    setAudienceGroup(member?.email === TEST_EMAIL ? "friends" : "besties");
+    setAudienceGroup(member?.email === FRANK_EMAIL ? "friends" : "besties");
     setSpecialDraft({
       title: "",
       date: today,
@@ -1455,7 +1455,7 @@ export default function Home() {
   }
   function startAddWish() {
     setEditingWish(null);
-    setAudienceGroup(member?.email === TEST_EMAIL ? "friends" : "besties");
+    setAudienceGroup(member?.email === FRANK_EMAIL ? "friends" : "besties");
     setWishDraft({
       title: "",
       category: wishFilter,
@@ -1472,7 +1472,7 @@ export default function Home() {
   function startEditWish(wish: Wish) {
     if (wish.ownerUserId !== user?.id) return;
     setEditingWish(wish);
-    setAudienceGroup(member?.email === TEST_EMAIL ? "friends" : "besties");
+    setAudienceGroup(member?.email === FRANK_EMAIL ? "friends" : "besties");
     setWishDraft({
       title: wish.title,
       category: wish.category,
@@ -1839,7 +1839,7 @@ export default function Home() {
   function openPollBuilder() {
     setPollQuestion("");
     setPollMode("pass");
-    const nextGroup = member?.email === TEST_EMAIL ? "friends" : "besties";
+    const nextGroup = member?.email === FRANK_EMAIL ? "friends" : "besties";
     setAudienceGroup(nextGroup);
     setPollInvited(members.filter((item) => audienceEmails(nextGroup).includes(item.email)).map((item) => item.email));
     setPollMessage("");
@@ -2654,10 +2654,10 @@ export default function Home() {
       ),
   );
   const birthdayMembers = members.filter(
-    (item) => !(member?.email.toLowerCase() === TEST_EMAIL && item.email.toLowerCase() === ELAINE_EMAIL),
+    (item) => !(member?.email.toLowerCase() === FRANK_EMAIL && item.email.toLowerCase() === ELAINE_EMAIL),
   );
   const birthdaySpecialDays = birthdayMembers.flatMap((item, index) => {
-    const pendingBirthday = item.email === TEST_EMAIL && !item.birthday;
+    const pendingBirthday = item.email === FRANK_EMAIL && !item.birthday;
     return item.birthday || pendingBirthday
       ? [
           {
@@ -3051,7 +3051,7 @@ export default function Home() {
             className="primary expense-new-period"
             onClick={() => {
               setExpensePeriodName("");
-              setAudienceGroup(member.email === TEST_EMAIL ? "friends" : "besties");
+              setAudienceGroup(member.email === FRANK_EMAIL ? "friends" : "besties");
               setExpensePeriodOpen(true);
             }}
           >
@@ -3121,7 +3121,7 @@ export default function Home() {
               <button
                 className="primary"
                 onClick={() => {
-                  setAudienceGroup(member.email === TEST_EMAIL ? "friends" : "besties");
+                  setAudienceGroup(member.email === FRANK_EMAIL ? "friends" : "besties");
                   setExpensePeriodOpen(true);
                 }}
               >
@@ -3430,7 +3430,7 @@ export default function Home() {
         <button
           className="lucky-settings-button"
           onClick={() => {
-            setAudienceGroup(member.email === TEST_EMAIL ? "friends" : "besties");
+            setAudienceGroup(member.email === FRANK_EMAIL ? "friends" : "besties");
             setLuckySettingsOpen(true);
           }}
         >
@@ -4264,8 +4264,8 @@ export default function Home() {
                     <h3>选择个人颜色</h3>
                     <div className="profile-colors">
                       {COLORS.filter((color) => {
-                        const pool = member.email === TEST_EMAIL
-                          ? TEST_COLORS
+                        const pool = member.email === FRANK_EMAIL
+                          ? FRANK_COLORS
                           : BESTIE_COLORS;
                         if (!pool.includes(color as never)) return false;
                         return !members.some(
@@ -4780,7 +4780,7 @@ export default function Home() {
                       {day.pendingBirthday
                         ? day.canEdit
                           ? "点击设置生日"
-                          : `等待 ${members.find((item) => item.email.toLowerCase() === TEST_EMAIL)?.display_name || "test"} 设置`
+                          : `等待 ${members.find((item) => item.email.toLowerCase() === FRANK_EMAIL)?.display_name || "Frank Y"} 设置`
                         : remaining === 0
                         ? "就是今天"
                         : remaining > 0
