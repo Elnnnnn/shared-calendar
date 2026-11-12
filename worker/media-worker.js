@@ -1,12 +1,6 @@
 const SUPABASE_URL = "https://yytyntrgqkddfsliooke.supabase.co";
 const SUPABASE_KEY = "sb_publishable_r82IW91PSRwRa_dye0g1Cw_qU0zLeDW";
-const BESTIES = new Set([
-  "elainezhang1110@gmail.com",
-  "zxu1115@icloud.com",
-  "1914660774@qq.com",
-  "mqianw00@163.com",
-]);
-const FRIENDS = new Set([\n  "elainezhang1110@gmail.com",\n  "frankyelf1997@outlook.com",\n]);
+const GROUPS = new Set(["besties", "friends", "both"]);
 const ALLOWED_ORIGINS = new Set([
   "https://elnnnnn.github.io",
   "http://localhost:3000",
@@ -52,15 +46,6 @@ async function currentUser(request) {
   return { ...user, authorization, email: String(user.email || "").toLowerCase() };
 }
 
-function canUseGroup(email, group) {
-  if (group === "both") return email === "elainezhang1110@gmail.com";
-  return group === "besties"
-    ? BESTIES.has(email)
-    : group === "friends"
-      ? FRIENDS.has(email)
-      : false;
-}
-
 async function supabaseRequest(user, path, init = {}) {
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
@@ -82,7 +67,7 @@ async function uploadPhoto(request, env, user) {
       request.headers.get("Content-Length") ||
       0,
   );
-  if (!canUseGroup(user.email, group)) return json(request, { error: "无权上传到这个组" }, 403);
+  if (!GROUPS.has(group)) return json(request, { error: "无效的照片分组" }, 400);
   if (!EXTENSIONS[mime]) return json(request, { error: "目前只支持 JPG、PNG、WebP 和 HEIC 照片" }, 415);
   if (!request.body || !size || size > 10 * 1024 * 1024)
     return json(request, { error: "单张照片需小于 10MB" }, 413);
@@ -110,8 +95,10 @@ async function uploadPhoto(request, env, user) {
     }),
   });
   if (!created.ok) {
+    const failure = await created.json().catch(() => null);
     await env.PHOTOS.delete(key);
-    return json(request, { error: "照片资料保存失败" }, 400);
+    const denied = failure?.code === "42501";
+    return json(request, { error: denied ? "无权上传到这个组" : "照片资料保存失败" }, denied ? 403 : 400);
   }
   const rows = await created.json();
   return json(request, rows[0], 201);
