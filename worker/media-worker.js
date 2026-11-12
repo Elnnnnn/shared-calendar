@@ -6,7 +6,7 @@ const BESTIES = new Set([
   "1914660774@qq.com",
   "mqianw00@163.com",
 ]);
-const FRIENDS = new Set(["elainezhang1110@gmail.com", "test@test.com"]);
+const FRIENDS = new Set([\n  "elainezhang1110@gmail.com",\n  "frankyelf1997@outlook.com",\n]);
 const ALLOWED_ORIGINS = new Set([
   "https://elnnnnn.github.io",
   "http://localhost:3000",
