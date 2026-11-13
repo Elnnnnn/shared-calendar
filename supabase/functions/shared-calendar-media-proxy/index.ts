@@ -6,6 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, content-type, x-file-name, x-file-size",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+  "Access-Control-Expose-Headers": "ETag, X-Media-Variant",
   Vary: "Origin",
 };
 
@@ -43,7 +44,7 @@ Deno.serve(async (request) => {
           : request.body,
     });
     const outgoing = new Headers(corsHeaders);
-    for (const name of ["content-type", "cache-control", "etag"]) {
+    for (const name of ["content-type", "cache-control", "etag", "x-media-variant"]) {
       const value = response.headers.get(name);
       if (value) outgoing.set(name, value);
     }
