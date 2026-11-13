@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
-const MEDIA_API = "https://shared-calendar-media.elaine-shared-calendar.workers.dev";
+const MEDIA_API = "https://yytyntrgqkddfsliooke.supabase.co/functions/v1/shared-calendar-media-proxy";
+const PHOTO_UPLOAD_TIMEOUT_MS = 60_000;
 const ELAINE_EMAIL = "elainezhang1110@gmail.com";
 const FRANK_EMAIL = "frankyelf1997@outlook.com";
 type GroupKey = "besties" | "friends" | "both";
@@ -40,22 +41,30 @@ async function token() {
   return data.session?.access_token || "";
 }
 
-async function uploadPhoto(file: File, group: GroupKey, eventId?: number | null) {
+async function uploadPhoto(file: File, group: GroupKey, eventId?: number | null, onProgress?: (progress: number) => void) {
   const accessToken = await token();
   const query = new URLSearchParams({ group });
   if (eventId) query.set("event_id", String(eventId));
-  const response = await fetch(`${MEDIA_API}/photos?${query}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": file.type,
-      "X-File-Name": encodeURIComponent(file.name),
-      "X-File-Size": String(file.size),
-    },
-    body: file,
+  const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `${MEDIA_API}/photos?${query}`);
+    request.timeout = PHOTO_UPLOAD_TIMEOUT_MS;
+    request.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+    request.setRequestHeader("Content-Type", file.type);
+    request.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
+    request.setRequestHeader("X-File-Size", String(file.size));
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    };
+    request.onload = () => { onProgress?.(100); resolve({ status: request.status, body: request.responseText }); };
+    request.onerror = () => reject(new Error("照片服务连接失败，请检查网络后重试"));
+    request.ontimeout = () => reject(new Error("上传超时，请检查网络后重试"));
+    request.send(file);
   });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "上传失败");
+  let result: Photo & { error?: string };
+  try { result = JSON.parse(response.body) as Photo & { error?: string }; }
+  catch { throw new Error("照片服务返回异常，请重试"); }
+  if (response.status < 200 || response.status >= 300) throw new Error(result.error || "上传失败");
   void createDisplayBlob(file)
     .then((display) => uploadDisplayPhoto(result.id, display, accessToken))
     .catch(() => undefined);
@@ -216,6 +225,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
   const [shareToMoment, setShareToMoment] = useState(false);
   const [pendingPhotoId, setPendingPhotoId] = useState<string | null | undefined>(undefined);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [groupMenuOpen, setGroupMenuOpen] = useState(false);
   const [libraryLoading, setLibraryLoading] = useState(false);
   async function load() {
@@ -258,14 +268,14 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
     const files = Array.from(eventInput.target.files || []);
     if (!files.length) return;
     if (eventPhoto) { setMessage("每个活动只能添加一张照片，请先移除原照片再更换。"); eventInput.target.value = ""; return; }
-    setUploadingPhoto(true); setMessage("");
+    setUploadingPhoto(true); setUploadProgress(0); setMessage("");
     try {
-      const photo = await uploadPhoto(files[0], group);
+      const photo = await uploadPhoto(files[0], group, null, setUploadProgress);
       setPhotos((current) => [photo, ...current.filter((item) => item.id !== photo.id)]);
       setPendingPhotoId(photo.id);
     }
     catch (error) { setMessage(error instanceof Error ? error.message : "上传失败"); }
-    finally { setUploadingPhoto(false); eventInput.target.value = ""; }
+    finally { setUploadingPhoto(false); setUploadProgress(0); eventInput.target.value = ""; }
   }
   function remove() {
     setMessage("");
@@ -316,7 +326,7 @@ export function EventMediaPanel({ event, user, member, members }: { event: Calen
   return <section className="event-media-panel">
     <div className="event-media-heading"><div><h3>活动照片</h3><p>{eventPhoto ? "1 张照片" : "为这次活动留下一张照片"}</p></div>{showGroupConcept && (groups.length === 1 ? <span className="media-group-label">{groupLabel(groups[0])}</span> : <div className="event-group-picker"><button type="button" aria-expanded={groupMenuOpen} onClick={()=>setGroupMenuOpen((open)=>!open)}>分组 <small>{selectedGroups.length} 个</small><span>⌄</span></button>{groupMenuOpen&&<div className="event-group-menu"><label><input type="checkbox" checked={selectedGroups.includes("besties")} onChange={()=>toggleGroup("besties")}/><span>闺蜜组</span></label><label><input type="checkbox" checked={selectedGroups.includes("friends")} onChange={()=>toggleGroup("friends")}/><span>朋友组</span></label></div>}</div>)}</div>
     {eventPhoto && <div className="event-cover"><ProtectedPhoto photo={eventPhoto} alt={`${event.title} 封面`}/><button onClick={remove} aria-label="移除活动照片" title="保存后从活动移除，原图仍保留在相册">×</button></div>}
-    {!eventPhoto && <div className="event-photo-actions"><label className="media-file-picker">＋ 从设备上传<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={add}/><span>{uploadingPhoto?"正在上传…":"选择照片"}</span></label><button type="button" className="event-library-picker" onClick={()=>void openLibrary()}><span>＋ 从相册上传</span><b>选择照片</b></button></div>}
+    {!eventPhoto && <div className="event-photo-actions"><label className="media-file-picker">＋ 从设备上传<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={uploadingPhoto} onChange={add}/><span>{uploadingPhoto?(uploadProgress>=100?"正在处理…":`上传 ${uploadProgress}%`):"选择照片"}</span></label><button type="button" className="event-library-picker" disabled={uploadingPhoto} onClick={()=>void openLibrary()}><span>＋ 从相册上传</span><b>选择照片</b></button></div>}
     {libraryOpen && <div className="photo-picker"><div className="photo-picker-head"><b>选择已有照片</b><button onClick={()=>setLibraryOpen(false)}>×</button></div><div className="photo-library-grid">{libraryPhotos.map((photo)=><button key={photo.id} onClick={()=>chooseExisting(photo)} disabled={busy}><ProtectedPhoto photo={photo}/></button>)}</div>{libraryLoading?<p>正在读取照片…</p>:!libraryPhotos.length&&<p>这个组的相册里还没有可选照片</p>}</div>}
     <div className="event-mood-list">{moods.map((entry)=>{const color=members.find((item)=>item.email.toLowerCase()===entry.author_email.toLowerCase())?.color||"stone";const canDelete=entry.author_user_id===user.id;return <div key={entry.id}><span className={`moment-avatar ${color}`}>{displayName(entry.author_email,members).slice(0,1)}</span><p><b>{displayName(entry.author_email,members)}</b><span>{entry.body}</span>{canDelete&&<button type="button" className="event-mood-delete" onClick={()=>deleteMood(entry)}>删除</button>}</p></div>})}</div>
     <label className="event-mood-field">写心情<textarea value={mood} onChange={(input)=>setMood(input.target.value)} placeholder="记录这一刻……"/></label>
